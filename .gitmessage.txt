@@ -1,0 +1,31 @@
+# type: Subject(50 글자 이내)
+
+# Body(75 글자 이내)
+# - 무엇을 변경했는지
+# - 왜 변경했는지
+
+# Footer
+##################
+#subject : 마침표x, 영문 동사를 앞에, 첫 글자는 대문자로
+#body :  본문에 여러줄의 메시지를 작성할 땐 "-"로 구분
+#footer : issue tracker ID를 명시하고 싶은 경우에 작성합니다.
+##################
+# feat: 새로운 기능 추가
+# fix: 버그 수정
+# docs: 문서 수정
+# style: 코드 포맷팅, 세미콜론 누락, 코드 변경이 없는 경우
+# refactor: 코드 리팩토링
+# test: 테스트 코드, 리팩토링 테스트 코드 추가
+# chore: 빌드 업무 수정, 패키지 매니저 수정, production code와 무관한 부분들 (.gitignore, build.gradle 같은)
+# comment: 주석 추가 및 변경
+# remove: 파일, 폴더 삭제
+# rename: 파일, 폴더명 수정
+##################
+# 예시
+# feat: 로그인 기능 구현
+
+# -로그인 시 JWT 발급
+
+# Resolves: #111
+# Ref: #122
+# related to: #30, #50
