@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/findmymeme_db
+    url: jdbc:h2:mem:testdb
     username: meme
     password: 1234
   jpa:
