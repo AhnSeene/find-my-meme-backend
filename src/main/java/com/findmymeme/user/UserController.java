@@ -1,13 +1,12 @@
 package com.findmymeme.user;
 
 import com.findmymeme.response.ApiResponse;
-import com.findmymeme.response.MessageCode;
+import com.findmymeme.response.SuccessCode;
 import com.findmymeme.response.ResponseUtil;
 import com.findmymeme.user.dto.SignupRequest;
 import com.findmymeme.user.dto.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,6 +22,6 @@ public class UserController {
 
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<UserResponse>> signup(@Valid @RequestBody SignupRequest signupRequest) {
-        return ResponseUtil.success(userService.signup(signupRequest), HttpStatus.CREATED, MessageCode.USER_SIGNUP_SUCCESS);
+        return ResponseUtil.success(userService.signup(signupRequest), SuccessCode.USER_SIGNUP_SUCCESS);
     }
 }
