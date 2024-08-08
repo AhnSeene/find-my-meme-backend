@@ -6,8 +6,8 @@ import lombok.Getter;
 public class FindMyMemeException extends RuntimeException {
 
     private final ErrorCode errorCode;
-    public FindMyMemeException(ErrorCode errorCode, String message) {
-        super(message);
+    public FindMyMemeException(ErrorCode errorCode) {
+        super(errorCode.getMessage());
         this.errorCode = errorCode;
     }
 }
