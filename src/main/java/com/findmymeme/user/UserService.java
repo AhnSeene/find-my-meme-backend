@@ -17,10 +17,12 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @Transactional
     public UserResponse signup(SignupRequest signupRequest) {
         userRepository.findByUsername(signupRequest.getUsername()).ifPresent(user -> {
             throw new FindMyMemeException(ErrorCode.ALREADY_EXIST_USERNAME);
         });
+
         String encodedPassword = passwordEncoder.encode(signupRequest.getPassword());
         User user = SignupRequest.toEntity(signupRequest, encodedPassword);
         return new UserResponse(userRepository.save(user));
