@@ -12,25 +12,25 @@ public class SignupRequest {
 
     @NotBlank
     @Size(min = 5, max = 20)
-    private String username;
+    private final String username;
 
     @NotBlank
     @Size(min = 8, max = 16)
-    private String password;
+    private final String password;
 
     @NotBlank
     @Email
     @Size(max = 100)
-    private String email;
+    private final String email;
 
     @Builder
-    public SignupRequest(String username, String password, String email) {
+    public SignupRequest(final String username, final String password, final String email) {
         this.username = username;
         this.password = password;
         this.email = email;
     }
 
-    public static User toEntity(SignupRequest signupRequest, String encodedPassword) {
+    public static User toEntity(final SignupRequest signupRequest, final String encodedPassword) {
         return User.builder()
                 .username(signupRequest.getUsername())
                 .password(encodedPassword)

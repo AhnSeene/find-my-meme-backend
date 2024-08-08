@@ -6,10 +6,10 @@ import lombok.Getter;
 @Getter
 public class UserResponse {
 
-    private String username;
-    private String email;
+    private final String username;
+    private final String email;
 
-    public UserResponse(User user) {
+    public UserResponse(final User user) {
         this.username = user.getUsername();
         this.email = user.getEmail();
     }
