@@ -4,9 +4,14 @@ import com.findmymeme.response.ApiResponse;
 import com.findmymeme.response.ResponseUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.List;
 
 @Slf4j
 @RestControllerAdvice
@@ -22,6 +27,21 @@ public class FindMyMemeExceptionHandler {
         return ResponseUtil.error(null, errorCode); //TODO null처리 변경
     }
 
+    /**
+     * 유효성 검사에서 실패할 때 발생한다.
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<List<FieldErrorDto>>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        List<FieldErrorDto> fieldErrors = e.getBindingResult().getFieldErrors().stream()
+                .map(fieldError -> FieldErrorDto.builder()
+                        .field(fieldError.getField())
+                        .value(fieldError.getRejectedValue() != null ? fieldError.getRejectedValue().toString() : null)
+                        .reason(messageSource.getMessage(fieldError, LocaleContextHolder.getLocale()))
+                        .build())
+                .toList();
+
+        return ResponseUtil.error(fieldErrors, ErrorCode.INVALID_INPUT_VALUE);
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneralException(final Exception e) {
