@@ -12,8 +12,12 @@ public enum ErrorCode {
 
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "잘못된 입력값입니다."),
 
-    ALREADY_EXIST_USERNAME(HttpStatus.BAD_REQUEST, "이미 존재하는 아이디입니다.");
+    NOT_FOUND_USER(HttpStatus.NOT_FOUND, "해당 유저가 존재하지 않습니다."),
+    NOT_FOUND_FILE(HttpStatus.NOT_FOUND, "해당 파일이 존재하지 않습니다."),
+    NOT_FOUND_FILE_META(HttpStatus.NOT_FOUND, "해당 파일정보가 존재하지 않습니다."),
 
+    ALREADY_EXIST_USERNAME(HttpStatus.CONFLICT, "이미 존재하는 아이디입니다."),
+    ALREADY_EXIST_FILE(HttpStatus.CONFLICT, "파일이 이미 존재합니다.");
     private final HttpStatus httpStatus;
     private final String message;
 }
