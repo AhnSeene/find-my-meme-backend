@@ -5,7 +5,8 @@ import org.springframework.http.HttpStatus;
 import java.util.ResourceBundle;
 
 public enum SuccessCode {
-    USER_SIGNUP_SUCCESS(HttpStatus.CREATED);
+    USER_SIGNUP(HttpStatus.CREATED),
+    FILE_UPLOAD(HttpStatus.OK),
 
     private final HttpStatus status;
     private static final ResourceBundle messages = ResourceBundle.getBundle("messages");
