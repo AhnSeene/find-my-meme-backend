@@ -59,6 +59,11 @@ public class LocalFileStorageService implements FileStorageService {
     }
 
     @Override
+    public String getTempFileUrl(String storedFilename) {
+        return String.format(URL_FORMAT, tempDir, storedFilename);
+    }
+
+    @Override
     public String moveFileToPermanent(String storedFilename) {
         Path tempFilePath = Paths.get(baseDir, tempDir, storedFilename);
         Path permanentFilePath = Paths.get(baseDir, permanentDir, storedFilename);
@@ -72,3 +77,8 @@ public class LocalFileStorageService implements FileStorageService {
         return permanentFilePath.getFileName().toString();
     }
 
+    @Override
+    public String getPermanentFileUrl(String storedFilename) {
+        return String.format(URL_FORMAT, permanentDir, storedFilename);
+    }
+}
