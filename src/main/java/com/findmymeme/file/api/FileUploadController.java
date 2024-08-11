@@ -19,10 +19,10 @@ public class FileUploadController {
     private final FileService fileService;
 
     @PostMapping("/upload")
-    public ResponseEntity<ApiResponse<FileUploadResponse>> upload(@RequestPart("file") MultipartFile file, @RequestParam Long userId) {
+    public ResponseEntity<ApiResponse<FileUploadResponse>> upload(@RequestPart("file") MultipartFile file) {
         if (file.isEmpty()) {
             return ResponseUtil.error(null, ErrorCode.INVALID_INPUT_VALUE);
         }
-        return ResponseUtil.success(fileService.uploadFile(file, userId), SuccessCode.FILE_UPLOAD);
+        return ResponseUtil.success(fileService.uploadFile(file, 1L), SuccessCode.FILE_UPLOAD);
     }
 }
