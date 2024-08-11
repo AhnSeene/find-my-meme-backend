@@ -58,3 +58,17 @@ public class LocalFileStorageService implements FileStorageService {
         }
     }
 
+    @Override
+    public String moveFileToPermanent(String storedFilename) {
+        Path tempFilePath = Paths.get(baseDir, tempDir, storedFilename);
+        Path permanentFilePath = Paths.get(baseDir, permanentDir, storedFilename);
+        try {
+            Files.move(tempFilePath, permanentFilePath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (NoSuchFileException e) {
+            throw new FileStorageException(ErrorCode.NOT_FOUND_FILE);
+        } catch (IOException e) {
+            throw new FileStorageException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
+        return permanentFilePath.getFileName().toString();
+    }
+
