@@ -36,9 +36,8 @@ public class FileService {
     }
 
     private User findUserById(Long userId) {
-        User user = userRepository.findById(userId)
+        return userRepository.findById(userId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
-        return user;
     }
 
     private FileMeta saveFileMeta(MultipartFile file, String fileUrl, User user) {
