@@ -10,4 +10,9 @@ public class FindMyMemeException extends RuntimeException {
         super(errorCode.getMessage());
         this.errorCode = errorCode;
     }
+
+    public FindMyMemeException(String message, Throwable cause, ErrorCode errorCode) {
+        super(message, cause);
+        this.errorCode = errorCode;
+    }
 }
