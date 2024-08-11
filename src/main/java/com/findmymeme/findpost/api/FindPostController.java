@@ -8,10 +8,7 @@ import com.findmymeme.response.ResponseUtil;
 import com.findmymeme.response.SuccessCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -21,7 +18,7 @@ public class FindPostController {
     private final FindPostService findPostService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<FindPostUploadResponse>> upload(@RequestBody FindPostUploadRequest request, Long userId) {
-        return ResponseUtil.success(findPostService.upload(request, userId), SuccessCode.FIND_POST_UPLOAD);
+    public ResponseEntity<ApiResponse<FindPostUploadResponse>> upload(@RequestBody FindPostUploadRequest request) {
+        return ResponseUtil.success(findPostService.upload(request, 1L), SuccessCode.FIND_POST_UPLOAD);
     }
 }
