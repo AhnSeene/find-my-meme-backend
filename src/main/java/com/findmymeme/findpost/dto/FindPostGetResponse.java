@@ -13,12 +13,12 @@ public class FindPostGetResponse {
     private String title;
     private String content;
     private FindStatus status;
-    private boolean isOwner;
+    private boolean owner;
 
     public FindPostGetResponse(FindPost findPost, boolean isOwner) {
         this.title = findPost.getTitle();
         this.content = findPost.getContent();
         this.status = findPost.getFindStatus();
-        this.isOwner = isOwner;
+        this.owner = isOwner;
     }
 }
