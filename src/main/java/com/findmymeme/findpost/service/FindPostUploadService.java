@@ -25,7 +25,7 @@ import java.util.List;
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class FindPostService {
+public class FindPostUploadService {
 
     private static final String IMG_TAG = "img";
     private static final String IMG_SRC = "src";
