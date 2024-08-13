@@ -7,7 +7,8 @@ import java.util.ResourceBundle;
 public enum SuccessCode {
     USER_SIGNUP(HttpStatus.CREATED),
     FILE_UPLOAD(HttpStatus.OK),
-    FIND_POST_UPLOAD(HttpStatus.CREATED);
+    FIND_POST_UPLOAD(HttpStatus.CREATED),
+    FIND_POST_GET(HttpStatus.OK);
 
     private final HttpStatus status;
     private static final ResourceBundle messages = ResourceBundle.getBundle("messages");

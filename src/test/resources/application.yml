@@ -15,6 +15,13 @@ spring:
   messages:
     basename: messages
     encoding: UTF-8
+
 logging:
   level:
     org.hibernate.SQL: debug
+file:
+  upload:
+    temp-dir: /temps
+    image-dir: /images
+  base-dir: C:/Users/ACY/testfilestore
+
