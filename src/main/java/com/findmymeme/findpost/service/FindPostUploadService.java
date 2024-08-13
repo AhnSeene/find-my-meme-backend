@@ -13,18 +13,19 @@ import com.findmymeme.findpost.repository.FindPostImageRepository;
 import com.findmymeme.findpost.repository.FindPostRepository;
 import com.findmymeme.user.User;
 import com.findmymeme.user.UserRepository;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
-@RequiredArgsConstructor
 public class FindPostUploadService {
 
     private static final String IMG_TAG = "img";
@@ -36,17 +37,31 @@ public class FindPostUploadService {
     private final FindPostImageRepository findPostImageRepository;
     private final FileMetaRepository fileMetaRepository;
     private final FileStorageService fileStorageService;
+    private final String serverBaseUrl;
+
+    public FindPostUploadService(UserRepository userRepository,
+                                 FindPostRepository findPostRepository,
+                                 FindPostImageRepository findPostImageRepository,
+                                 FileMetaRepository fileMetaRepository,
+                                 FileStorageService fileStorageService,
+                                 @Value("${server.base-url}") String serverBaseUrl) {
+        this.userRepository = userRepository;
+        this.findPostRepository = findPostRepository;
+        this.findPostImageRepository = findPostImageRepository;
+        this.fileMetaRepository = fileMetaRepository;
+        this.fileStorageService = fileStorageService;
+        this.serverBaseUrl = serverBaseUrl;
+    }
 
     @Transactional
     public FindPostUploadResponse upload(FindPostUploadRequest request, Long userId) {
         User user = findUserById(userId);
 
         FindPost findPost = createFindPost(request, user);
-
         Document doc = Jsoup.parse(request.getHtmlContent());
         List<FindPostImage> findPostImages = processImages(doc, findPost);
 
-        findPost.changeContent(doc.body().html());
+        findPost.changeHtmlContent(doc.body().html());
         FindPost savedFindPost = findPostRepository.save(findPost);
         findPostImageRepository.saveAll(findPostImages);
 
@@ -68,12 +83,13 @@ public class FindPostUploadService {
     private List<FindPostImage> processImages(Document doc, FindPost findPost) {
         List<FindPostImage> findPostImages = new ArrayList<>();
         doc.select(IMG_TAG).forEach(img -> {
-            String tempUrl = img.attr(IMG_SRC);
+            String absoluteTempUrl = img.attr(IMG_SRC);
+            String tempUrl = absoluteTempUrl.replace(serverBaseUrl, "");
             String storedFilename = extractFilenameFromUrl(tempUrl);
             String permanentFilename = fileStorageService.moveFileToPermanent(storedFilename);
             String permanentUrl = fileStorageService.getPermanentFileUrl(permanentFilename);
 
-            img.attr(IMG_SRC, permanentUrl);
+            img.attr(IMG_SRC, serverBaseUrl +  permanentUrl);
 
             FileMeta fileMeta = findFileMetaByFileUrl(tempUrl);
             FindPostImage findPostImage = createFindPostImage(findPost, permanentUrl, fileMeta);
