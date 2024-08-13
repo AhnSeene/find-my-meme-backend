@@ -22,6 +22,6 @@ public class UserController {
 
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<UserResponse>> signup(@Valid @RequestBody SignupRequest signupRequest) {
-        return ResponseUtil.success(userService.signup(signupRequest), SuccessCode.USER_SIGNUP_SUCCESS);
+        return ResponseUtil.success(userService.signup(signupRequest), SuccessCode.USER_SIGNUP);
     }
 }
