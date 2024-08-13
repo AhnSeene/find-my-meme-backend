@@ -146,7 +146,46 @@ class FindPostManageServiceTest {
                 .hasMessageContaining(ErrorCode.NOT_FOUND_FIND_POST.getMessage());
     }
 
+    @Test
+    void getFindPosts_페이지네이션_성공() {
+        // given
+        String username = "testUser";
+        String email = "testUser@example.com";
+        String encodedPassword = "encodedPassword";
 
+        User savedUser = userRepository.save(
+                User.builder()
+                        .username(username)
+                        .password(encodedPassword)
+                        .email(email)
+                        .build()
+        );
+
+        for (int i = 1; i <= 5; i++) {
+            findPostRepository.save(
+                    FindPost.builder()
+                            .title("Title " + i)
+                            .content("Content " + i)
+                            .htmlContent("<p>Content " + i + "</p>")
+                            .user(savedUser)
+                            .build()
+            );
+        }
+
+        int page = 0;
+        int size = 3;
+
+        // when
+        Page<FindPostSummaryResponse> responsePage = findPostManageService.getFindPosts(page, size);
+
+        // then
+        assertThat(responsePage).isNotNull();
+        assertThat(responsePage.getContent().size()).isEqualTo(size);
+        assertThat(responsePage.getTotalElements()).isEqualTo(5);
+        assertThat(responsePage.getTotalPages()).isEqualTo(2);
+        assertThat(responsePage.isFirst()).isTrue();
+        assertThat(responsePage.isLast()).isFalse();
+        assertThat(responsePage.getContent().get(0).getTitle()).isEqualTo("Title 5");
     }
 
 }
