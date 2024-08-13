@@ -1,5 +1,6 @@
 package com.findmymeme.findpost.domain;
 
+import com.findmymeme.BaseEntity;
 import com.findmymeme.user.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -11,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class FindPost {
+public class FindPost extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,6 +20,10 @@ public class FindPost {
 
     @Column(nullable = false)
     private String title;
+
+    @Lob
+    @Column(nullable = false)
+    private String htmlContent;
 
     @Lob
     @Column(nullable = false)
@@ -33,8 +38,9 @@ public class FindPost {
     private User user;
 
     @Builder
-    public FindPost(String title, String content, User user) {
+    public FindPost(String title, String htmlContent, String content, User user) {
         this.title = title;
+        this.htmlContent = htmlContent;
         this.content = content;
         this.findStatus = FindStatus.FIND;
         this.user = user;
