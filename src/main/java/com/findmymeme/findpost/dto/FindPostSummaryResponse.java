@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @Getter
 public class FindPostSummaryResponse {
 
+    private Long id;
     private String title;
     private String content;
     private FindStatus status;
@@ -20,6 +21,7 @@ public class FindPostSummaryResponse {
     private LocalDateTime createdAt;
 
     public FindPostSummaryResponse(final FindPost findPost) {
+        this.id = findPost.getId();
         this.title = findPost.getTitle();
         this.content = findPost.getContent();
         this.status = findPost.getFindStatus();

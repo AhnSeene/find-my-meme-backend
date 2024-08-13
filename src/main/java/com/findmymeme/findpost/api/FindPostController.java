@@ -42,8 +42,8 @@ public class FindPostController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<MyPage<FindPostSummaryResponse>>> getFindPosts(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "5") int size
     ) {
         return ResponseUtil.success(
                 new MyPage<>(findPostManageService.getFindPosts(page, size))
