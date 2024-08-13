@@ -43,7 +43,7 @@ public class FindPostUploadService {
 
         FindPost findPost = createFindPost(request, user);
 
-        Document doc = Jsoup.parse(request.getContent());
+        Document doc = Jsoup.parse(request.getHtmlContent());
         List<FindPostImage> findPostImages = processImages(doc, findPost);
 
         findPost.changeContent(doc.body().html());
@@ -85,6 +85,7 @@ public class FindPostUploadService {
     private FindPost createFindPost(FindPostUploadRequest request, User user) {
         return FindPost.builder()
                 .title(request.getTitle())
+                .htmlContent(request.getHtmlContent())
                 .content(request.getContent())
                 .user(user)
                 .build();
