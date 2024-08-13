@@ -6,38 +6,33 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Page;
 
 import java.time.LocalDateTime;
 
 @Getter
-public class FindPostGetResponse {
+public class FindPostSummaryResponse {
 
     private String title;
-    private String htmlContent;
+    private String content;
     private FindStatus status;
     private String username;
-    private boolean owner;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 
-    public FindPostGetResponse(FindPost findPost, boolean isOwner) {
+    public FindPostSummaryResponse(final FindPost findPost) {
         this.title = findPost.getTitle();
-        this.htmlContent = findPost.getHtmlContent();
+        this.content = findPost.getContent();
         this.status = findPost.getFindStatus();
         this.username = findPost.getUser().getUsername();
-        this.owner = isOwner;
         this.createdAt = findPost.getCreatedAt();
-        this.updatedAt = findPost.getUpdatedAt();
     }
 
     @Builder
-    public FindPostGetResponse(String title, String htmlContent, FindStatus status, String username, boolean owner, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public FindPostSummaryResponse(String title, String content, FindStatus status, String username, LocalDateTime createdAt) {
         this.title = title;
-        this.htmlContent = htmlContent;
+        this.content = content;
         this.status = status;
         this.username = username;
-        this.owner = owner;
         this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
 }

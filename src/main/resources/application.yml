@@ -5,12 +5,11 @@ spring:
     password: 1234
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     properties:
       hibernate:
         format_sql: true
         default_batch_fetch_size: 1000
-        show_sql: true
     open-in-view: false
   messages:
     basename: messages
@@ -24,3 +23,5 @@ file:
     temp-dir: /temps
     image-dir: /images
   base-dir: C:/Users/ACY/filestore
+server:
+  base-url: http://localhost:8080

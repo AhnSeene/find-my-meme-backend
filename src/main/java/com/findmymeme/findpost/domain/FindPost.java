@@ -54,7 +54,7 @@ public class FindPost extends BaseEntity {
         this.title = title;
     }
 
-    public void changeContent(String content) {
-        this.content = content;
+    public void changeHtmlContent(String htmlContent) {
+        this.htmlContent = htmlContent;
     }
 }

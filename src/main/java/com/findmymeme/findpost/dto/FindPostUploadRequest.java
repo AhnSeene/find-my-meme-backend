@@ -10,13 +10,11 @@ public class FindPostUploadRequest {
     private String title;
     private String htmlContent;
     private String content;
-    private FindStatus status;
 
     @Builder
-    public FindPostUploadRequest(String title, String htmlContent, String content, FindStatus status) {
+    public FindPostUploadRequest(String title, String htmlContent, String content) {
         this.title = title;
         this.htmlContent = htmlContent;
         this.content = content;
-        this.status = status;
     }
 }

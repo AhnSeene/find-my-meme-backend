@@ -1,7 +1,6 @@
 package com.findmymeme.file.service;
 
 import com.findmymeme.exception.ErrorCode;
-import com.findmymeme.exception.FindMyMemeException;
 import com.findmymeme.file.exception.FileStorageException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -68,7 +67,7 @@ public class LocalFileStorageService implements FileStorageService {
         Path tempFilePath = Paths.get(baseDir, tempDir, storedFilename);
         Path permanentFilePath = Paths.get(baseDir, permanentDir, storedFilename);
         try {
-            Files.move(tempFilePath, permanentFilePath, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(tempFilePath, permanentFilePath, StandardCopyOption.REPLACE_EXISTING);
         } catch (NoSuchFileException e) {
             throw new FileStorageException(ErrorCode.NOT_FOUND_FILE);
         } catch (IOException e) {
