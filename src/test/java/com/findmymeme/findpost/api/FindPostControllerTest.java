@@ -237,4 +237,69 @@ class FindPostControllerTest {
                 .andExpect(jsonPath("$.data.size").value(10));
     }
 
+    @Test
+    @WithMockUser
+    void updateFindPost_이미지_없을때_성공() throws Exception {
+
+        String title = "Updated Title";
+        String content = "Updated Content";
+        String htmlContent = "<p>Updated Content</p>";
+        // given
+        FindPostUpdateRequest updateRequest = FindPostUpdateRequest.builder()
+                .title(title)
+                .content(content)
+                .htmlContent(htmlContent)
+                .build();
+
+        FindPostUpdateResponse updateResponse = FindPostUpdateResponse.builder()
+                .id(1L)
+                .title(title)
+                .content(content)
+                .status(FindStatus.FIND)
+                .build();
+
+        when(findPostWriteService.updateFindPost(any(FindPostUpdateRequest.class), anyLong(), anyLong()))
+                .thenReturn(updateResponse);
+
+        // when
+        mockMvc.perform(put("/api/v1/find-posts/{id}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(updateRequest))
+                        .accept(MediaType.APPLICATION_JSON)
+                        .with(csrf())
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value(SuccessCode.FIND_POST_UPDATE.getMessage()))
+                .andExpect(jsonPath("$.data.id").value(1L))
+                .andExpect(jsonPath("$.data.title").value(title))
+                .andExpect(jsonPath("$.data.content").value(content))
+                .andExpect(jsonPath("$.data.status").value(FindStatus.FIND.name()));
+    }
+
+    @WithMockUser
+    @ParameterizedTest
+    @CsvSource({
+            "'', <p>Content</p>, Content",
+            "Title, '', Content",
+            "Title, <p>Content</p>, ''",
+    })
+    void update_유효성검사_실패(String title, String htmlContent, String content) throws Exception {
+
+        FindPostUploadRequest invalidRequest = FindPostUploadRequest.builder()
+                .title(title)
+                .htmlContent(htmlContent)
+                .content(content)
+                .build();
+
+        mockMvc.perform(put("/api/v1/find-posts/{id}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidRequest))
+                        .with(csrf())
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value(ErrorCode.INVALID_INPUT_VALUE.getMessage()));
+    }
+
 }
