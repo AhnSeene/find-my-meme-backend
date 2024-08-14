@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @Transactional
-class FindPostManageServiceTest {
+class FindPostReadServiceTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -29,7 +29,7 @@ class FindPostManageServiceTest {
     private FindPostRepository findPostRepository;
 
     @Autowired
-    private FindPostManageService findPostManageService;
+    private FindPostReadService findPostReadService;
 
 
     @Test
@@ -60,7 +60,7 @@ class FindPostManageServiceTest {
         );
 
         // when
-        FindPostGetResponse response = findPostManageService.getFindPost(savedFindPost.getId(), savedUser.getId());
+        FindPostGetResponse response = findPostReadService.getFindPost(savedFindPost.getId(), savedUser.getId());
 
         //then
         assertThat(response).isNotNull();
@@ -114,7 +114,7 @@ class FindPostManageServiceTest {
         );
 
         // when
-        FindPostGetResponse response = findPostManageService.getFindPost(savedFindPost.getId(), otherUser.getId());
+        FindPostGetResponse response = findPostReadService.getFindPost(savedFindPost.getId(), otherUser.getId());
 
         // then
         assertThat(response).isNotNull();
@@ -141,7 +141,7 @@ class FindPostManageServiceTest {
 
         // when & then
         Long invalidFindPostId = 1L;
-        assertThatThrownBy(() -> findPostManageService.getFindPost(invalidFindPostId, savedUser.getId()))
+        assertThatThrownBy(() -> findPostReadService.getFindPost(invalidFindPostId, savedUser.getId()))
                 .isInstanceOf(FindMyMemeException.class)
                 .hasMessageContaining(ErrorCode.NOT_FOUND_FIND_POST.getMessage());
     }
@@ -176,7 +176,7 @@ class FindPostManageServiceTest {
         int size = 3;
 
         // when
-        Page<FindPostSummaryResponse> responsePage = findPostManageService.getFindPosts(page, size);
+        Page<FindPostSummaryResponse> responsePage = findPostReadService.getFindPosts(page, size);
 
         // then
         assertThat(responsePage).isNotNull();
@@ -187,5 +187,4 @@ class FindPostManageServiceTest {
         assertThat(responsePage.isLast()).isFalse();
         assertThat(responsePage.getContent().get(0).getTitle()).isEqualTo("Title 5");
     }
-
 }
