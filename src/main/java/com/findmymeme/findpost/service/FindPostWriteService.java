@@ -7,6 +7,8 @@ import com.findmymeme.file.repository.FileMetaRepository;
 import com.findmymeme.file.service.FileStorageService;
 import com.findmymeme.findpost.domain.FindPost;
 import com.findmymeme.findpost.domain.FindPostImage;
+import com.findmymeme.findpost.dto.FindPostUpdateRequest;
+import com.findmymeme.findpost.dto.FindPostUpdateResponse;
 import com.findmymeme.findpost.dto.FindPostUploadRequest;
 import com.findmymeme.findpost.dto.FindPostUploadResponse;
 import com.findmymeme.findpost.repository.FindPostImageRepository;
@@ -20,13 +22,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@Transactional(readOnly = true)
-public class FindPostUploadService {
+@Transactional
+public class FindPostWriteService {
 
     private static final String IMG_TAG = "img";
     private static final String IMG_SRC = "src";
