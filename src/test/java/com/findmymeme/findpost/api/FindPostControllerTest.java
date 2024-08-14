@@ -209,4 +209,32 @@ class FindPostControllerTest {
                 .andExpect(jsonPath("$.data.size").value(10));
     }
 
+    @Test
+    @WithMockUser
+    void getFindPosts_빈_페이지() throws Exception {
+        // given
+        Page<FindPostSummaryResponse> emptyPage = new PageImpl<>(Collections.emptyList(), PageRequest.of(1, 10), 0); // 빈 페이지
+
+        when(findPostReadService.getFindPosts(1, 10)).thenReturn(emptyPage);
+
+        // when
+        mockMvc.perform(get("/api/v1/find-posts")
+                        .param("page", "1")
+                        .param("size", "10")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .with(csrf())
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value(SuccessCode.FIND_POST_GET.getMessage()))
+                .andExpect(jsonPath("$.data.content").isEmpty())
+                .andExpect(jsonPath("$.data.first").value(false))
+                .andExpect(jsonPath("$.data.last").value(true))
+                .andExpect(jsonPath("$.data.hasNext").value(false))
+                .andExpect(jsonPath("$.data.totalPages").value(0))
+                .andExpect(jsonPath("$.data.totalElements").value(0))
+                .andExpect(jsonPath("$.data.page").value(2))
+                .andExpect(jsonPath("$.data.size").value(10));
+    }
+
 }
