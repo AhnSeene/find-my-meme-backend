@@ -41,12 +41,14 @@ public class FindPostWriteService {
     private final FileStorageService fileStorageService;
     private final String serverBaseUrl;
 
-    public FindPostUploadService(UserRepository userRepository,
-                                 FindPostRepository findPostRepository,
-                                 FindPostImageRepository findPostImageRepository,
-                                 FileMetaRepository fileMetaRepository,
-                                 FileStorageService fileStorageService,
-                                 @Value("${server.base-url}") String serverBaseUrl) {
+    public FindPostWriteService(
+            UserRepository userRepository,
+            FindPostRepository findPostRepository,
+            FindPostImageRepository findPostImageRepository,
+            FileMetaRepository fileMetaRepository,
+            FileStorageService fileStorageService,
+            @Value("${server.base-url}") String serverBaseUrl
+    ) {
         this.userRepository = userRepository;
         this.findPostRepository = findPostRepository;
         this.findPostImageRepository = findPostImageRepository;
@@ -55,9 +57,8 @@ public class FindPostWriteService {
         this.serverBaseUrl = serverBaseUrl;
     }
 
-    @Transactional
-    public FindPostUploadResponse upload(FindPostUploadRequest request, Long userId) {
-        User user = findUserById(userId);
+    public FindPostUploadResponse uploadFindPost(FindPostUploadRequest request, Long userId) {
+        User user = getUserById(userId);
 
         FindPost findPost = createFindPost(request, user);
         Document doc = Jsoup.parse(request.getHtmlContent());
@@ -69,6 +70,83 @@ public class FindPostWriteService {
 
         return new FindPostUploadResponse(savedFindPost);
     }
+
+    public FindPostUpdateResponse updateFindPost(FindPostUpdateRequest request, Long findPostId, Long userId) {
+        User user = getUserById(userId);
+        FindPost findPost = getFindPostById(findPostId);
+
+        if (isNotOwner(findPost, user)) {
+            throw new FindMyMemeException(ErrorCode.FORBIDDEN);
+        }
+
+        Document doc = Jsoup.parse(request.getHtmlContent());
+        Set<String> newImageUrls = extractImageUrls(doc);
+
+        processAndReplaceImageUrls(doc, newImageUrls, findPost);
+        updateFindPost(findPost, request.getTitle(), request.getContent(), doc.body().html());
+        return new FindPostUpdateResponse(findPost);
+    }
+
+    private Set<String> extractImageUrls(Document doc) {
+        return doc.select(IMG_TAG)
+                .stream()
+                .map(img -> img.attr(IMG_SRC))
+                .filter(src -> !src.isEmpty())
+                .map(this::convertToRelativeUrl)
+                .map(this::convertToPermanentUrl)
+                .collect(Collectors.toSet());
+    }
+
+    private void processAndReplaceImageUrls(Document doc, Set<String> newImageUrls, FindPost findPost) {
+        Set<String> existingImageUrls = findPostImageRepository.findImageUrlsByFindPost(findPost);
+
+        Set<String> addedImageUrls = getAddedImageUrls(newImageUrls, existingImageUrls);
+        Set<String> deletedImageUrls = getDeletedImageUrls(newImageUrls, existingImageUrls);
+
+        List<FindPostImage> findPostImages = createFindPostImages(doc, addedImageUrls, findPost);
+
+        findPostImageRepository.saveAll(findPostImages);
+        findPostImageRepository.deleteByImageUrlIn(deletedImageUrls);
+    }
+
+    private Set<String> getAddedImageUrls(Set<String> newImageUrls, Set<String> existingImageUrls) {
+        return newImageUrls.stream()
+                .filter(url -> !existingImageUrls.contains(url))
+                .map(this::convertToTempUrl)
+                .collect(Collectors.toSet());
+    }
+
+    private Set<String> getDeletedImageUrls(Set<String> newImageUrls, Set<String> existingImageUrls) {
+        return existingImageUrls.stream()
+                .filter(url -> !newImageUrls.contains(url))
+                .collect(Collectors.toSet());
+    }
+
+    private List<FindPostImage> createFindPostImages(Document doc, Set<String> addedImageUrls, FindPost findPost) {
+        return doc.select(IMG_TAG)
+                .stream()
+                .map(img -> {
+                    String imgUrl = convertToRelativeUrl(img.attr(IMG_SRC));
+                    if (addedImageUrls.contains(imgUrl)) {
+                        String permanentFilename = fileStorageService.moveFileToPermanent(getFilename(imgUrl));
+                        String permanentUrl = fileStorageService.getPermanentFileUrl(permanentFilename);
+
+                        String originalFilename = findFileMetaByFileUrl(imgUrl).getOriginalFilename();
+
+                        img.attr(IMG_SRC, convertToAbsoluteUrl(permanentUrl));
+
+                        return FindPostImage.builder()
+                                .imageUrl(permanentUrl)
+                                .originalFilename(originalFilename)
+                                .findPost(findPost)
+                                .build();
+                    }
+                    return null;
+                })
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
 
     /**
      * 주어진 문서에서 이미지를 처리합니다:
@@ -85,19 +163,34 @@ public class FindPostWriteService {
     private List<FindPostImage> processImages(Document doc, FindPost findPost) {
         List<FindPostImage> findPostImages = new ArrayList<>();
         doc.select(IMG_TAG).forEach(img -> {
-            String absoluteTempUrl = img.attr(IMG_SRC);
-            String tempUrl = absoluteTempUrl.replace(serverBaseUrl, "");
-            String storedFilename = extractFilenameFromUrl(tempUrl);
+            String tempUrl = convertToRelativeUrl(img.attr(IMG_SRC));
+            String storedFilename = getFilename(tempUrl);
             String permanentFilename = fileStorageService.moveFileToPermanent(storedFilename);
             String permanentUrl = fileStorageService.getPermanentFileUrl(permanentFilename);
 
-            img.attr(IMG_SRC, serverBaseUrl +  permanentUrl);
+            img.attr(IMG_SRC, convertToAbsoluteUrl(permanentUrl));
 
             FileMeta fileMeta = findFileMetaByFileUrl(tempUrl);
             FindPostImage findPostImage = createFindPostImage(findPost, permanentUrl, fileMeta);
             findPostImages.add(findPostImage);
         });
         return findPostImages;
+    }
+
+    private String convertToTempUrl(String permanentUrl) {
+        return fileStorageService.getTempFileUrl(getFilename(permanentUrl));
+    }
+
+    private String convertToPermanentUrl(String tempUrl) {
+        return fileStorageService.getPermanentFileUrl(getFilename(tempUrl));
+    }
+
+    private String convertToAbsoluteUrl(String permanentUrl) {
+        return serverBaseUrl + permanentUrl;
+    }
+
+    private String convertToRelativeUrl(String absoluteTempUrl) {
+        return absoluteTempUrl.replace(serverBaseUrl, "");
     }
 
     private FindPost createFindPost(FindPostUploadRequest request, User user) {
@@ -122,13 +215,28 @@ public class FindPostWriteService {
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FILE_META));
     }
 
-    private User findUserById(Long userId) {
+    private User getUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
     }
 
 
-    private String extractFilenameFromUrl(String url) {
+    private String getFilename(String url) {
         return url.substring(url.lastIndexOf(URL_SLASH) + 1);
+    }
+
+    private FindPost getFindPostById(Long findPostId) {
+        return findPostRepository.findById(findPostId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST));
+    }
+
+    private boolean isNotOwner(FindPost findPost, User user) {
+        return !findPost.isOwner(user);
+    }
+
+    private void updateFindPost(FindPost findPost, String title, String content, String htmlContent) {
+        findPost.changeTitle(title);
+        findPost.changeContent(content);
+        findPost.changeHtmlContent(htmlContent);
     }
 }
