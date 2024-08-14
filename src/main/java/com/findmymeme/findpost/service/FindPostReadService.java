@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class FindPostManageService {
+public class FindPostReadService {
 
     private final UserRepository userRepository;
     private final FindPostRepository findPostRepository;
@@ -39,5 +39,6 @@ public class FindPostManageService {
         return findPostRepository.findAll(pageable)
                 .map(FindPostSummaryResponse::new);
     }
+
 
 }
