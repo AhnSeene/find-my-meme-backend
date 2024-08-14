@@ -1,18 +1,14 @@
 package com.findmymeme.findpost.api;
 
-import com.findmymeme.findpost.dto.FindPostGetResponse;
-import com.findmymeme.findpost.dto.FindPostSummaryResponse;
-import com.findmymeme.findpost.dto.FindPostUploadResponse;
-import com.findmymeme.findpost.service.FindPostManageService;
-import com.findmymeme.findpost.service.FindPostUploadService;
-import com.findmymeme.findpost.dto.FindPostUploadRequest;
+import com.findmymeme.findpost.dto.*;
+import com.findmymeme.findpost.service.FindPostReadService;
+import com.findmymeme.findpost.service.FindPostWriteService;
 import com.findmymeme.response.ApiResponse;
 import com.findmymeme.response.MyPage;
 import com.findmymeme.response.ResponseUtil;
 import com.findmymeme.response.SuccessCode;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,14 +17,14 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/find-posts")
 public class FindPostController {
 
-    private final FindPostUploadService findPostService;
-    private final FindPostManageService findPostManageService;
+    private final FindPostWriteService findPostWriteService;
+    private final FindPostReadService findPostReadService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<FindPostUploadResponse>> upload(
-            @RequestBody FindPostUploadRequest request
+    public ResponseEntity<ApiResponse<FindPostUploadResponse>> uploadFindPost(
+            @Valid @RequestBody FindPostUploadRequest request
     ) {
-        return ResponseUtil.success(findPostService.upload(request, 1L),
+        return ResponseUtil.success(findPostWriteService.uploadFindPost(request, 1L),
                 SuccessCode.FIND_POST_UPLOAD);
     }
 
@@ -36,17 +32,27 @@ public class FindPostController {
     public ResponseEntity<ApiResponse<FindPostGetResponse>> getFindPost(
             @PathVariable("id") Long findPostId
     ) {
-        return ResponseUtil.success(findPostManageService.getFindPost(findPostId, 1L),
+        return ResponseUtil.success(findPostReadService.getFindPost(findPostId, 1L),
                 SuccessCode.FIND_POST_GET);
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<MyPage<FindPostSummaryResponse>>> getFindPosts(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "5") int size
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "5") int size
     ) {
         return ResponseUtil.success(
-                new MyPage<>(findPostManageService.getFindPosts(page, size))
+                new MyPage<>(findPostReadService.getFindPosts(page, size))
                 , SuccessCode.FIND_POST_GET);
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<FindPostUpdateResponse>> updateFindPost(
+            @PathVariable("id") Long findPostId,
+            @Valid @RequestBody FindPostUpdateRequest request
+    ) {
+        return ResponseUtil.success(findPostWriteService.updateFindPost(request, findPostId, 1L),
+                SuccessCode.FIND_POST_UPDATE);
+    }
+
 }
