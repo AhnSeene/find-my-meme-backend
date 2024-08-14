@@ -114,4 +114,45 @@ class FindPostControllerTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value(ErrorCode.INVALID_INPUT_VALUE.getMessage()));
     }
+
+    @Test
+    @WithMockUser
+    void getFindPost_단건조회_성공() throws Exception {
+        // given
+        String htmlContent = "<p>Content</p>";
+        String title = "Title";
+        String username = "testUser";
+        LocalDateTime now = LocalDateTime.now();
+        String formattedNow = now.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+
+        FindPostGetResponse getResponse = FindPostGetResponse.builder()
+                .title(title)
+                .htmlContent(htmlContent)
+                .status(FindStatus.FIND)
+                .username(username)
+                .owner(true)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+
+        // when
+        when(findPostReadService.getFindPost(1L, 1L)).thenReturn(getResponse);
+
+        // then
+        mockMvc.perform(get("/api/v1/find-posts/{id}", 1L)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .with(csrf())
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value(SuccessCode.FIND_POST_GET.getMessage()))
+                .andExpect(jsonPath("$.data.title").value(title))
+                .andExpect(jsonPath("$.data.htmlContent").value(htmlContent))
+                .andExpect(jsonPath("$.data.owner").value(true))
+                .andExpect(jsonPath("$.data.username").value(username))
+                .andExpect(jsonPath("$.data.status").value(FindStatus.FIND.name()))
+                .andExpect(jsonPath("$.data.createdAt").value(formattedNow))
+                .andExpect(jsonPath("$.data.updatedAt").value(formattedNow));
+    }
+
 }
