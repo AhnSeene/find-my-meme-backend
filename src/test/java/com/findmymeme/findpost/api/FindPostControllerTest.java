@@ -155,4 +155,58 @@ class FindPostControllerTest {
                 .andExpect(jsonPath("$.data.updatedAt").value(formattedNow));
     }
 
+    @Test
+    @WithMockUser
+    void getFindPosts_페이지_조회_성공() throws Exception {
+        // given
+        List<FindPostSummaryResponse> findPostSummaryList = Arrays.asList(
+                FindPostSummaryResponse.builder()
+                        .title("Title 1")
+                        .content("Content 1")
+                        .status(FindStatus.FIND)
+                        .username("User1")
+                        .createdAt(LocalDateTime.of(2024, 8, 14, 2, 30, 34))
+                        .build(),
+                FindPostSummaryResponse.builder()
+                        .title("Title 2")
+                        .content("Content 2")
+                        .status(FindStatus.FOUND)
+                        .username("User2")
+                        .createdAt(LocalDateTime.of(2024, 8, 14, 2, 35, 34))
+                        .build()
+        );
+
+        Page<FindPostSummaryResponse> page = new PageImpl<>(findPostSummaryList, PageRequest.of(0, 10), 2);
+
+        when(findPostReadService.getFindPosts(0, 10)).thenReturn(page);
+
+        // when
+        mockMvc.perform(get("/api/v1/find-posts")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .with(csrf())
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value(SuccessCode.FIND_POST_GET.getMessage()))
+                .andExpect(jsonPath("$.data.content[0].title").value("Title 1"))
+                .andExpect(jsonPath("$.data.content[0].content").value("Content 1"))
+                .andExpect(jsonPath("$.data.content[0].status").value(FindStatus.FIND.name()))
+                .andExpect(jsonPath("$.data.content[0].username").value("User1"))
+                .andExpect(jsonPath("$.data.content[0].createdAt").value("2024-08-14T02:30:34"))
+                .andExpect(jsonPath("$.data.content[1].title").value("Title 2"))
+                .andExpect(jsonPath("$.data.content[1].content").value("Content 2"))
+                .andExpect(jsonPath("$.data.content[1].status").value(FindStatus.FOUND.name()))
+                .andExpect(jsonPath("$.data.content[1].username").value("User2"))
+                .andExpect(jsonPath("$.data.content[1].createdAt").value("2024-08-14T02:35:34"))
+                .andExpect(jsonPath("$.data.first").value(true))
+                .andExpect(jsonPath("$.data.last").value(true))
+                .andExpect(jsonPath("$.data.hasNext").value(false))
+                .andExpect(jsonPath("$.data.totalPages").value(1))
+                .andExpect(jsonPath("$.data.totalElements").value(2))
+                .andExpect(jsonPath("$.data.page").value(1))
+                .andExpect(jsonPath("$.data.size").value(10));
+    }
+
 }
