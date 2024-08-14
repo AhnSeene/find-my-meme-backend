@@ -22,11 +22,11 @@ public class FindPost extends BaseEntity {
     private String title;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String htmlContent;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @Enumerated(value = EnumType.STRING)
@@ -56,5 +56,9 @@ public class FindPost extends BaseEntity {
 
     public void changeHtmlContent(String htmlContent) {
         this.htmlContent = htmlContent;
+    }
+
+    public void changeContent(String content) {
+        this.content = content;
     }
 }
