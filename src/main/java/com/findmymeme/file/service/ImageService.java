@@ -41,9 +41,11 @@ public class ImageService {
 
     public List<ImageMeta> convertAndMoveImageUrls(Document doc) {
         List<ImageMeta> imageMetas = new ArrayList<>();
-        doc.select(IMG_TAG).forEach(img -> {
-            String tempUrl = convertAndMoveImageUrl(img);
-            imageMetas.add(new ImageMeta(findFileMetaByFileUrl(tempUrl), tempUrl));
+        doc.select("img").forEach(img -> {
+            String tempUrl = convertToRelativeUrl(img.attr(IMG_SRC));
+            String permanentUrl = fileStorageService.moveFileToPermanent(tempUrl);
+            img.attr(IMG_SRC, convertToAbsoluteUrl(permanentUrl));
+            imageMetas.add(new ImageMeta(findFileMetaByFileUrl(tempUrl), permanentUrl));
         });
         return imageMetas;
     }
@@ -61,27 +63,23 @@ public class ImageService {
     public List<ImageMeta> handleAddedImages(Document doc, Set<String> newImageUrls, Set<String> existingImageUrls) {
         Set<String> addedImageUrls = getAddedImageUrls(newImageUrls, existingImageUrls);
         replaceImageUrls(doc, addedImageUrls);
+        log.info("add ={}", addedImageUrls);
         return getImageMetasFromUrls(addedImageUrls);
     }
 
     public Set<String> handleDeletedImages(Set<String> newImageUrls, Set<String> existingImageUrls) {
         Set<String> deletedImageUrls = getDeletedImageUrls(newImageUrls, existingImageUrls);
         deleteImages(deletedImageUrls);
+        log.info("delete ={}", deletedImageUrls);
         return deletedImageUrls;
     }
 
     private List<ImageMeta> getImageMetasFromUrls(Set<String> imageUrls) {
+        log.info("getMete ={}", imageUrls);
         return imageUrls.stream()
                 .map(this::findFileMetaByFileUrl)
                 .map(fileMeta -> new ImageMeta(fileMeta, fileMeta.getFileUrl()))
                 .collect(Collectors.toList());
-    }
-
-    private String convertAndMoveImageUrl(Element img) {
-        String tempUrl = convertToRelativeUrl(img.attr(IMG_SRC));
-        String permanentUrl = fileStorageService.moveFileToPermanent(tempUrl);
-        img.attr(IMG_SRC, convertToAbsoluteUrl(permanentUrl));
-        return tempUrl;
     }
 
     private FileMeta findFileMetaByFileUrl(String fileUrl) {

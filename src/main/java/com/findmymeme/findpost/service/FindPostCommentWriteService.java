@@ -85,6 +85,7 @@ public class FindPostCommentWriteService {
             parentComment = getParentCommentById(request.getParentCommentId());
         }
         return FindPostComment.builder()
+                .htmlContent(request.getHtmlContent())
                 .content(request.getContent())
                 .parentComment(parentComment)
                 .findPost(findPost)
