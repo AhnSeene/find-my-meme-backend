@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @Getter
 public class FindPostGetResponse {
 
+    private Long id;
     private String title;
     private String htmlContent;
     private FindStatus status;
