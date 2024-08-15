@@ -41,5 +41,27 @@ public class FindPostCommentReadService {
         return new FindPostCommentGetResponse(comment, comment.isOwner(user));
     }
 
+    public List<FindPostCommentSummaryResponse> getCommentsWithReplys(Long postId) {
+        FindPost findPost = findPostRepository.findWithUserById(postId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST));
+
+        Map<Long, FindPostCommentSummaryResponse> commentMaps = new HashMap<>();
+        List<FindPostCommentSummaryResponse> response = new ArrayList<>();
+
+        //TODO 게시글 상태확인하기
+        List<FindPostComment> comments = commentRepository.findAllCommentsAndReplies(postId);
+        for (FindPostComment comment : comments) {
+            if (comment.getParentComment() == null) {
+                FindPostCommentSummaryResponse commentSummaryResponse = new FindPostCommentSummaryResponse(comment);
+                commentMaps.put(comment.getId(), commentSummaryResponse);
+                response.add(commentSummaryResponse);
+            } else {
+                commentMaps.get(comment.getParentComment().getId())
+                                .addReply(comment);
+            }
+        }
+        return response;
+    }
+
 
 }
