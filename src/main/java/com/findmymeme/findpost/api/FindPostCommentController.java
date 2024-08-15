@@ -42,6 +42,16 @@ public class FindPostCommentController {
         );
     }
 
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<FindPostCommentSummaryResponse>>> getComment(
+            @PathVariable("postId") Long postId
+    ) {
+        return ResponseUtil.success(
+                commentReadService.getCommentsWithReplys(postId),
+                SuccessCode.FIND_POST_COMMENT_LIST
+        );
+    }
+
     @PutMapping("/{commentId}")
     public ResponseEntity<ApiResponse<FindPostCommentUpdateResponse>> updateComment(
             @PathVariable("postId") Long postId,
