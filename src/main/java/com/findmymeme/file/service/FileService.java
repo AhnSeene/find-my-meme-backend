@@ -23,14 +23,13 @@ public class FileService {
 
     public FileUploadResponse uploadFile(MultipartFile file, Long userId) {
         User user = findUserById(userId);
-        String storedFilename = null;
+        String tempUrl = null;
         try {
-            storedFilename = fileStorageService.storeTempFile(file);
-            String fileUrl = fileStorageService.getTempFileUrl(storedFilename);
-            FileMeta fileMeta = saveFileMeta(file, fileUrl, user);
+            tempUrl = fileStorageService.storeTempFile(file);
+            FileMeta fileMeta = saveFileMeta(file, tempUrl, user);
             return new FileUploadResponse(fileMeta);
         } catch (Exception e) {
-            deleteFile(storedFilename);
+            deleteFile(tempUrl);
             throw new FindMyMemeException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
@@ -49,11 +48,9 @@ public class FileService {
         return fileMetaRepository.save(fileMeta);
     }
 
-    private void deleteFile(String storedFilename) {
-        if (storedFilename != null) {
-            fileStorageService.deleteTempFile(storedFilename);
+    private void deleteFile(String tempUrl) {
+        if (tempUrl != null) {
+            fileStorageService.deleteTempFile(tempUrl);
         }
     }
-
-
 }

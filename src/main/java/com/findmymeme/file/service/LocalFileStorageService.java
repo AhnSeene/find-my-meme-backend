@@ -17,6 +17,7 @@ import java.nio.file.*;
 public class LocalFileStorageService implements FileStorageService {
 
     private static final String URL_FORMAT = "%s/%s";
+    private static final String URL_SLASH = "/";
     private final String tempDir;
     private final String baseDir;
     private final String permanentDir;
@@ -33,8 +34,8 @@ public class LocalFileStorageService implements FileStorageService {
 
     @Override
     public String storeTempFile(MultipartFile file) {
-        String storedFilename = generateStoredFilename(file.getOriginalFilename());
-        Path filePath = Paths.get(baseDir, tempDir, storedFilename);
+        String savedFilename = generateStoredFilename(file.getOriginalFilename());
+        Path filePath = getTempFilePath(savedFilename);
         try {
             Files.copy(file.getInputStream(), filePath);
         } catch (FileAlreadyExistsException e) {
@@ -42,12 +43,27 @@ public class LocalFileStorageService implements FileStorageService {
         } catch (IOException e) {
             throw new FileStorageException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
-        return storedFilename;
+        return getTempFileUrl(savedFilename);
     }
 
     @Override
-    public void deleteTempFile(String storedFilename) {
-        Path filePath = Paths.get(baseDir, tempDir, storedFilename);
+    public String moveFileToPermanent(String tempUrl) {
+        String savedFilename = getFilename(tempUrl);
+        Path tempFilePath = getTempFilePath(savedFilename);
+        Path permanentFilePath = getPermanentFilePath(savedFilename);
+        try {
+            Files.copy(tempFilePath, permanentFilePath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (NoSuchFileException e) {
+            throw new FileStorageException(ErrorCode.NOT_FOUND_FILE);
+        } catch (IOException e) {
+            throw new FileStorageException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
+        return getPermanentFileUrl(savedFilename);
+    }
+
+    @Override
+    public void deleteTempFile(String tempUrl) {
+        Path filePath = getTempFilePath(getFilename(tempUrl));
         try {
             Files.deleteIfExists(filePath);
         } catch (NoSuchFileException e) {
@@ -58,26 +74,45 @@ public class LocalFileStorageService implements FileStorageService {
     }
 
     @Override
-    public String getTempFileUrl(String storedFilename) {
-        return String.format(URL_FORMAT, tempDir, storedFilename);
-    }
-
-    @Override
-    public String moveFileToPermanent(String storedFilename) {
-        Path tempFilePath = Paths.get(baseDir, tempDir, storedFilename);
-        Path permanentFilePath = Paths.get(baseDir, permanentDir, storedFilename);
+    public void deletePermanentFile(String permanentUrl) {
+        Path filePath = getPermanentFilePath(getFilename(permanentUrl));
         try {
-            Files.copy(tempFilePath, permanentFilePath, StandardCopyOption.REPLACE_EXISTING);
+            Files.deleteIfExists(filePath);
         } catch (NoSuchFileException e) {
             throw new FileStorageException(ErrorCode.NOT_FOUND_FILE);
         } catch (IOException e) {
             throw new FileStorageException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
-        return permanentFilePath.getFileName().toString();
+    }
+    @Override
+    public String convertToPermanentUrl(String tempUrl) {
+        return getPermanentFileUrl(getFilename(tempUrl));
     }
 
     @Override
-    public String getPermanentFileUrl(String storedFilename) {
+    public String convertToTempUrl(String permanentUrl) {
+        return getTempFileUrl(getFilename(permanentUrl));
+    }
+
+
+    private String getTempFileUrl(String storedFilename) {
+        return String.format(URL_FORMAT, tempDir, storedFilename);
+    }
+
+
+    private String getPermanentFileUrl(String storedFilename) {
         return String.format(URL_FORMAT, permanentDir, storedFilename);
+    }
+
+    private String getFilename(String url) {
+        return url.substring(url.lastIndexOf(URL_SLASH) + 1);
+    }
+
+    private Path getTempFilePath(String savedFilename) {
+        return Paths.get(baseDir, tempDir, savedFilename);
+    }
+
+    private Path getPermanentFilePath(String savedFilename) {
+        return Paths.get(baseDir, permanentDir, savedFilename);
     }
 }

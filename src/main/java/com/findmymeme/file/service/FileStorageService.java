@@ -6,10 +6,11 @@ import java.util.UUID;
 
 public interface FileStorageService {
     String storeTempFile(MultipartFile file);
-    void deleteTempFile(String storedFilename);
-    String getTempFileUrl(String storedFilename);
+    void deleteTempFile(String tempUrl);
+    void deletePermanentFile(String permanentUrl);
     String moveFileToPermanent(String tempFileUrl);
-    String getPermanentFileUrl(String storedFilename);
+    String convertToPermanentUrl(String permanentUrl);
+    String convertToTempUrl(String tempUrl);
     default String generateStoredFilename(String originalFilename) {
         String ext = extractExtension(originalFilename);
         String uuid = UUID.randomUUID().toString();
