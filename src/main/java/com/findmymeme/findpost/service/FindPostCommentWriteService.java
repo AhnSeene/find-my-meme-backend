@@ -52,6 +52,33 @@ public class FindPostCommentWriteService {
         return new FindPostCommentAddResponse(savedComment);
     }
 
+    public FindPostCommentUpdateResponse updateComment(FindPostCommentUpdateRequest request, Long findPostId, Long commentId, Long userId) {
+        User user = getUserById(userId);
+        FindPost findPost = getFindPostById(findPostId);
+        //TODO 게시글이 삭제되었는지 검증
+        FindPostComment comment = getCommentById(commentId);
+
+        if (isNotOwner(comment, user)) {
+            throw new FindMyMemeException(ErrorCode.FORBIDDEN);
+        }
+
+        Document doc = Jsoup.parse(request.getHtmlContent());
+        Set<String> existingImageUrls = commentImageRepository.findImageUrlsByComment(comment);
+        Set<String> newImageUrls = imageService.extractImageUrls(doc);
+        List<ImageService.ImageMeta> addedImageMetas = imageService.handleAddedImages(doc, newImageUrls, existingImageUrls);
+        Set<String> deletedImageUrls = imageService.handleDeletedImages(newImageUrls, existingImageUrls);
+        updateCommentImages(comment, addedImageMetas, deletedImageUrls);
+
+        updateFindPostComment(comment, request.getContent(), doc.body().html());
+        return new FindPostCommentUpdateResponse(comment);
+    }
+
+    private FindPostComment getCommentById(Long commentId) {
+        return commentRepository.findById(commentId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST_COMMENT));
+    }
+
+
     private FindPostComment createFindPostComment(FindPostCommentAddRequest request, FindPost findPost, User user) {
         FindPostComment parentComment = null;
         if (request.getParentCommentId() != null) {
@@ -63,6 +90,17 @@ public class FindPostCommentWriteService {
                 .findPost(findPost)
                 .user(user)
                 .build();
+    }
+
+    private FindPostComment getParentCommentById(Long parentCommentId) {
+        return commentRepository.findById(parentCommentId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST_COMMENT));
+    }
+
+    private void updateCommentImages(FindPostComment comment, List<ImageService.ImageMeta> addedImageMetas, Set<String> deletedImageUrls) {
+        List<FindPostCommentImage> commentImages = createCommentImages(addedImageMetas, comment);
+        commentImageRepository.saveAll(commentImages);
+        commentImageRepository.deleteByImageUrlIn(deletedImageUrls);
     }
 
 
@@ -91,4 +129,8 @@ public class FindPostCommentWriteService {
         return !comment.isOwner(user);
     }
 
+    private void updateFindPostComment(FindPostComment comment, String content, String htmlContent) {
+        comment.changeContent(content);
+        comment.changeHtmlContent(htmlContent);
+    }
 }
