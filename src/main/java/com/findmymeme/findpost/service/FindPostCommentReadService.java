@@ -10,6 +10,7 @@ import com.findmymeme.findpost.repository.FindPostRepository;
 import com.findmymeme.user.User;
 import com.findmymeme.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -51,14 +53,14 @@ public class FindPostCommentReadService {
         //TODO 게시글 상태확인하기
         List<FindPostComment> comments = commentRepository.findAllCommentsAndReplies(postId);
         for (FindPostComment comment : comments) {
+            FindPostCommentSummaryResponse commentSummaryResponse = new FindPostCommentSummaryResponse(comment);
             if (comment.getParentComment() == null) {
-                FindPostCommentSummaryResponse commentSummaryResponse = new FindPostCommentSummaryResponse(comment);
-                commentMaps.put(comment.getId(), commentSummaryResponse);
                 response.add(commentSummaryResponse);
             } else {
                 commentMaps.get(comment.getParentComment().getId())
-                                .addReply(comment);
+                                .addReply(commentSummaryResponse);
             }
+            commentMaps.put(comment.getId(), commentSummaryResponse);
         }
         return response;
     }
