@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Getter
 @NoArgsConstructor
@@ -20,9 +21,11 @@ public class FindPostCommentGetResponse {
 
     public FindPostCommentGetResponse(FindPostComment comment, boolean isOwner) {
         this.id = comment.getId();
-        this.parentCommentId = comment.getParentComment().getId();
+        this.parentCommentId = Optional.ofNullable(comment.getParentComment())
+                .map(FindPostComment::getId)
+                .orElse(null);
         this.findPostId = comment.getFindPost().getId();
-        this.htmlContent = getHtmlContent();
+        this.htmlContent = comment.getHtmlContent();
         this.username = comment.getUser().getUsername();
         this.owner = isOwner;
         this.createdAt = comment.getCreatedAt();

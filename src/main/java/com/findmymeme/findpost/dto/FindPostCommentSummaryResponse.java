@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Getter
 @NoArgsConstructor
@@ -65,7 +66,9 @@ public class FindPostCommentSummaryResponse {
         public ReplyResponse(FindPostComment comment) {
             this.id = comment.getId();
             this.postId = comment.getId();
-            this.parentCommentId = comment.getParentComment().getId();
+            this.parentCommentId = Optional.ofNullable(comment.getParentComment())
+                    .map(FindPostComment::getId)
+                    .orElse(null);
             this.htmlContent = comment.getHtmlContent();
             this.username = comment.getUser().getUsername();
             this.createdAt = comment.getCreatedAt();
