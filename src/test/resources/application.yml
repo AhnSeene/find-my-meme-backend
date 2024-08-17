@@ -1,4 +1,7 @@
 spring:
+  sql:
+    init:
+      mode: always
   datasource:
     url: jdbc:h2:mem:testdb
     username: meme
@@ -11,6 +14,7 @@ spring:
         format_sql: true
         default_batch_fetch_size: 1000
     open-in-view: false
+    defer-datasource-initialization: true
   messages:
     basename: messages
     encoding: UTF-8
