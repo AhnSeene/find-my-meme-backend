@@ -6,6 +6,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -18,6 +21,9 @@ public class Tag {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_tag_id")
     private Tag parentTag;
+
+    @OneToMany(mappedBy = "parentTag")
+    private List<Tag> subTags = new ArrayList<>();
 
     @Column(nullable = false)
     private String name;
