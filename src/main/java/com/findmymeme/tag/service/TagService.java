@@ -5,10 +5,13 @@ import com.findmymeme.exception.FindMyMemeException;
 import com.findmymeme.tag.domain.Tag;
 import com.findmymeme.tag.dto.TagCreateRequest;
 import com.findmymeme.tag.dto.TagCreateResponse;
+import com.findmymeme.tag.dto.TagSummaryResponse;
 import com.findmymeme.tag.repository.TagRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @Transactional
@@ -24,6 +27,13 @@ public class TagService {
         }
         Tag savedTag = tagRepository.save(createTag(request, parentTag));
         return new TagCreateResponse(savedTag);
+    }
+
+    public List<TagSummaryResponse> getTagsWithSubTags() {
+        return tagRepository.findAllTagsWithSubTags()
+                .stream()
+                .map(TagSummaryResponse::fromEntity)
+                .toList();
     }
 
     private Tag createTag(TagCreateRequest request, Tag parentTag) {
