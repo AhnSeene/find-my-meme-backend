@@ -1,5 +1,6 @@
 package com.findmymeme.file.domain;
 
+import com.findmymeme.memepost.domain.Resolution;
 import com.findmymeme.user.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -22,14 +23,25 @@ public class FileMeta {
     @Column(nullable = false)
     private String fileUrl;
 
+    @Column(nullable = false)
+    private String extension;
+
+    private Resolution resolution;
+
+    @Column(nullable = false)
+    private Long size;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Builder
-    public FileMeta(String originalFilename, String fileUrl, User user) {
+    public FileMeta(String originalFilename, String fileUrl, String extension, Resolution resolution, Long size, User user) {
         this.originalFilename = originalFilename;
         this.fileUrl = fileUrl;
+        this.extension = extension;
+        this.resolution = resolution;
+        this.size = size;
         this.user = user;
     }
 }
