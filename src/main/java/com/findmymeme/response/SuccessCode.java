@@ -19,7 +19,8 @@ public enum SuccessCode {
     FIND_POST_COMMENT_LIST(HttpStatus.OK),
     FIND_POST_COMMENT_UPDATE(HttpStatus.OK),
 
-    TAG_CREATE(HttpStatus.CREATED);
+    TAG_CREATE(HttpStatus.CREATED),
+    TAG_LIST(HttpStatus.OK);
 
     private final HttpStatus status;
     private static final ResourceBundle messages = ResourceBundle.getBundle("messages");
