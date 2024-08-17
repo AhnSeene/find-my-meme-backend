@@ -16,7 +16,6 @@ public class TagCreateRequest {
     @NotBlank
     private String slug;
 
-    @NotNull
     private Long parentTagId;
 
     @Builder
