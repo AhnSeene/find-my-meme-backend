@@ -6,6 +6,7 @@ import com.findmymeme.findpost.service.FindPostCommentWriteService;
 import com.findmymeme.response.ApiResponse;
 import com.findmymeme.response.ResponseUtil;
 import com.findmymeme.response.SuccessCode;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +24,7 @@ public class FindPostCommentController {
     @PostMapping
     public ResponseEntity<ApiResponse<FindPostCommentAddResponse>> addComment(
             @PathVariable("postId") Long postId,
-            @RequestBody FindPostCommentAddRequest request
+            @Valid @RequestBody FindPostCommentAddRequest request
     ) {
         return ResponseUtil.success(
                 commentWriteService.addComment(request, postId, 1L),
@@ -43,7 +44,7 @@ public class FindPostCommentController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<FindPostCommentSummaryResponse>>> getComment(
+    public ResponseEntity<ApiResponse<List<FindPostCommentSummaryResponse>>> getComments(
             @PathVariable("postId") Long postId
     ) {
         return ResponseUtil.success(
@@ -56,7 +57,7 @@ public class FindPostCommentController {
     public ResponseEntity<ApiResponse<FindPostCommentUpdateResponse>> updateComment(
             @PathVariable("postId") Long postId,
             @PathVariable("commentId") Long commentId,
-            @RequestBody FindPostCommentUpdateRequest request
+            @Valid @RequestBody FindPostCommentUpdateRequest request
     ) {
         return ResponseUtil.success(
                 commentWriteService.updateComment(request, postId, commentId, 1L),

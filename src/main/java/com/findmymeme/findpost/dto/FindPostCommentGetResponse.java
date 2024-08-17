@@ -1,6 +1,7 @@
 package com.findmymeme.findpost.dto;
 
 import com.findmymeme.findpost.domain.FindPostComment;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -29,5 +30,16 @@ public class FindPostCommentGetResponse {
         this.username = comment.getUser().getUsername();
         this.owner = isOwner;
         this.createdAt = comment.getCreatedAt();
+    }
+
+    @Builder
+    public FindPostCommentGetResponse(Long id, Long parentCommentId, Long findPostId, String htmlContent, String username, boolean owner, LocalDateTime createdAt) {
+        this.id = id;
+        this.parentCommentId = parentCommentId;
+        this.findPostId = findPostId;
+        this.htmlContent = htmlContent;
+        this.username = username;
+        this.owner = owner;
+        this.createdAt = createdAt;
     }
 }
