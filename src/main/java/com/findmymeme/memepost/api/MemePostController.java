@@ -1,6 +1,6 @@
 package com.findmymeme.memepost.api;
 
-import com.findmymeme.memepost.domain.MemePostService;
+import com.findmymeme.memepost.service.MemePostService;
 import com.findmymeme.memepost.dto.MemePostUploadRequest;
 import com.findmymeme.memepost.dto.MemePostUploadResponse;
 import com.findmymeme.response.ApiResponse;

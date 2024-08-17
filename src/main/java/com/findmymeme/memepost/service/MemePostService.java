@@ -1,10 +1,12 @@
-package com.findmymeme.memepost.domain;
+package com.findmymeme.memepost.service;
 
 import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.exception.FindMyMemeException;
 import com.findmymeme.file.domain.FileMeta;
 import com.findmymeme.file.repository.FileMetaRepository;
 import com.findmymeme.file.service.FileStorageService;
+import com.findmymeme.memepost.domain.MemePost;
+import com.findmymeme.memepost.repository.MemePostRepository;
 import com.findmymeme.memepost.dto.MemePostUploadRequest;
 import com.findmymeme.memepost.dto.MemePostUploadResponse;
 import com.findmymeme.tag.service.PostTagService;
