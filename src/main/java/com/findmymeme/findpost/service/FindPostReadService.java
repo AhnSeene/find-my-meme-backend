@@ -6,6 +6,8 @@ import com.findmymeme.findpost.domain.FindPost;
 import com.findmymeme.findpost.dto.FindPostGetResponse;
 import com.findmymeme.findpost.dto.FindPostSummaryResponse;
 import com.findmymeme.findpost.repository.FindPostRepository;
+import com.findmymeme.tag.domain.PostType;
+import com.findmymeme.tag.service.PostTagService;
 import com.findmymeme.user.User;
 import com.findmymeme.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
+import static com.findmymeme.tag.domain.PostType.*;
+
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -23,6 +29,7 @@ public class FindPostReadService {
 
     private final UserRepository userRepository;
     private final FindPostRepository findPostRepository;
+    private final PostTagService postTagService;
 
     public FindPostGetResponse getFindPost(Long findPostId, Long userId) {
         User user = userRepository.findById(userId)
@@ -31,13 +38,18 @@ public class FindPostReadService {
         FindPost findPost = findPostRepository.findWithUserById(findPostId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST));
 
-        return new FindPostGetResponse(findPost, findPost.isOwner(user));
+        List<String> tagNames = postTagService.getTagNames(findPost.getId(), FIND_POST);
+        return new FindPostGetResponse(findPost, findPost.isOwner(user), tagNames);
     }
 
     public Page<FindPostSummaryResponse> getFindPosts(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         return findPostRepository.findAll(pageable)
-                .map(FindPostSummaryResponse::new);
+                .map(findPost ->
+                        new FindPostSummaryResponse(findPost,
+                                postTagService.getTagNames(findPost.getId(), FIND_POST)
+                        )
+                );
     }
 
 

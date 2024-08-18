@@ -10,6 +10,8 @@ import com.findmymeme.findpost.domain.FindPostImage;
 import com.findmymeme.findpost.dto.*;
 import com.findmymeme.findpost.repository.FindPostImageRepository;
 import com.findmymeme.findpost.repository.FindPostRepository;
+import com.findmymeme.tag.domain.PostType;
+import com.findmymeme.tag.service.PostTagService;
 import com.findmymeme.user.User;
 import com.findmymeme.user.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
+import static com.findmymeme.tag.domain.PostType.*;
+
 @Slf4j
 @Service
 @Transactional
@@ -29,17 +33,20 @@ public class FindPostWriteService {
     private final FindPostRepository findPostRepository;
     private final FindPostImageRepository findPostImageRepository;
     private final ImageService imageService;
+    private final PostTagService postTagService;
 
     public FindPostWriteService(
             UserRepository userRepository,
             FindPostRepository findPostRepository,
             FindPostImageRepository findPostImageRepository,
-            ImageService imageService
+            ImageService imageService,
+            PostTagService postTagService
     ) {
         this.userRepository = userRepository;
         this.findPostRepository = findPostRepository;
         this.findPostImageRepository = findPostImageRepository;
         this.imageService = imageService;
+        this.postTagService = postTagService;
     }
 
     public FindPostUploadResponse uploadFindPost(FindPostUploadRequest request, Long userId) {
@@ -52,8 +59,8 @@ public class FindPostWriteService {
         findPost.changeHtmlContent(doc.body().html());
         FindPost savedFindPost = findPostRepository.save(findPost);
         findPostImageRepository.saveAll(findPostImages);
-
-        return new FindPostUploadResponse(savedFindPost);
+        List<String> tags = postTagService.applyTagsToPost(request.getTags(), savedFindPost.getId(), FIND_POST);
+        return new FindPostUploadResponse(savedFindPost, tags);
     }
 
     public FindPostUpdateResponse updateFindPost(FindPostUpdateRequest request, Long findPostId, Long userId) {
