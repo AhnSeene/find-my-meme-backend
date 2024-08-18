@@ -38,6 +38,13 @@ public class PostTagService {
                 .toList();
     }
 
+    public List<String> getTagNames(Long postId, PostType postType) {
+        return postTagRepository.findAllByPostIdAndPostType(postId, postType)
+                .stream()
+                .map(postTag -> postTag.getTag().getName())
+                .toList();
+    }
+
     private Tag getTagById(Long tagId) {
         return tagRepository.findById(tagId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_TAG));
