@@ -23,6 +23,7 @@ public enum SuccessCode {
     TAG_LIST(HttpStatus.OK),
 
     MEME_POST_UPLOAD(HttpStatus.CREATED),
+    MEME_POST_GET(HttpStatus.OK),
     MEME_POST_LIST(HttpStatus.OK);
 
     private final HttpStatus status;
