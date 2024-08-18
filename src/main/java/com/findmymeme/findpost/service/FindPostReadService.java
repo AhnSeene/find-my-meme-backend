@@ -45,7 +45,11 @@ public class FindPostReadService {
     public Page<FindPostSummaryResponse> getFindPosts(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         return findPostRepository.findAll(pageable)
-                .map(FindPostSummaryResponse::new);
+                .map(findPost ->
+                        new FindPostSummaryResponse(findPost,
+                                postTagService.getTagNames(findPost.getId(), FIND_POST)
+                        )
+                );
     }
 
 
