@@ -1,16 +1,24 @@
-package com.findmymeme.memepost.domain;
+package com.findmymeme.memepost.service;
 
 import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.exception.FindMyMemeException;
 import com.findmymeme.file.domain.FileMeta;
 import com.findmymeme.file.repository.FileMetaRepository;
 import com.findmymeme.file.service.FileStorageService;
+import com.findmymeme.memepost.domain.MemePost;
+import com.findmymeme.memepost.dto.MemePostGetResponse;
+import com.findmymeme.memepost.dto.MemePostSummaryResponse;
+import com.findmymeme.memepost.repository.MemePostRepository;
 import com.findmymeme.memepost.dto.MemePostUploadRequest;
 import com.findmymeme.memepost.dto.MemePostUploadResponse;
 import com.findmymeme.tag.service.PostTagService;
 import com.findmymeme.user.User;
 import com.findmymeme.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +47,14 @@ public class MemePostService {
         return new MemePostUploadResponse(memePost.getImageUrl(), tagNames);
     }
 
+    public Slice<MemePostSummaryResponse> getMemePosts(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Slice<MemePost> memePosts = memePostRepository.findSliceAll(pageable);
+        List<MemePostSummaryResponse> responses = memePosts.stream()
+                .map(memePost -> new MemePostSummaryResponse(memePost, postTagService.getTagNames(memePost.getId(), MEME_POST)))
+                .toList();
+        return new SliceImpl<>(responses, pageable, memePosts.hasNext());
+    }
 
     private MemePost createMemePost(String permanentImageUrl, User user, FileMeta fileMeta) {
         return MemePost.builder()
