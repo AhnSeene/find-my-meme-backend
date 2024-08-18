@@ -1,16 +1,20 @@
 package com.findmymeme.memepost.repository;
 
 import com.findmymeme.memepost.domain.MemePost;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+
+import java.util.Optional;
 
 public interface MemePostRepository extends JpaRepository<MemePost, Long> {
     @Query("SELECT mp FROM MemePost mp")
     Slice<MemePost> findSliceAll(Pageable pageable);
 
+    @EntityGraph(attributePaths = {"user"})
+    Optional<MemePost> findWithUserById(Long id);
 
 //    @Query("select new com.findmymeme.memepost.dto.MemePostSummaryResponse(" +
 //            "mp.id, mp.imageUrl, mp.likeCount, mp.viewCount, " +
