@@ -47,6 +47,15 @@ public class MemePostService {
         return new MemePostUploadResponse(memePost.getImageUrl(), tagNames);
     }
 
+    public MemePostGetResponse getMemePost(Long memePostId, Long userId) {
+        User user = getUserById(userId);
+        MemePost memePost = memePostRepository.findWithUserById(memePostId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST));
+        List<String> tagNames = postTagService.getTagNames(memePostId, MEME_POST);
+
+        return new MemePostGetResponse(memePost, memePost.isOwner(user), tagNames);
+    }
+
     public Slice<MemePostSummaryResponse> getMemePosts(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Slice<MemePost> memePosts = memePostRepository.findSliceAll(pageable);
