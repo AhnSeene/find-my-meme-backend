@@ -1,5 +1,6 @@
 package com.findmymeme.memepost.api;
 
+import com.findmymeme.memepost.dto.MemePostGetResponse;
 import com.findmymeme.memepost.dto.MemePostSummaryResponse;
 import com.findmymeme.memepost.service.MemePostService;
 import com.findmymeme.memepost.dto.MemePostUploadRequest;
@@ -27,6 +28,16 @@ public class MemePostController {
             ) {
         return ResponseUtil.success(memePostService.uploadMemePost(request, 1L),
                 SuccessCode.FIND_POST_GET
+        );
+    }
+
+    @GetMapping("/{memePostId}")
+    public ResponseEntity<ApiResponse<MemePostGetResponse>> getMemePost(
+            @PathVariable("memePostId") Long memePostId
+    ) {
+        return ResponseUtil.success(
+                memePostService.getMemePost(memePostId, 1L),
+                SuccessCode.MEME_POST_LIST
         );
     }
 
