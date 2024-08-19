@@ -5,6 +5,7 @@ import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.response.SuccessCode;
 import com.findmymeme.user.dto.SignupRequest;
 import com.findmymeme.user.dto.UserResponse;
+import com.findmymeme.user.service.UserService;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class UserControllerTest {
+class AuthControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
