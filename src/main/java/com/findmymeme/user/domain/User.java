@@ -1,4 +1,4 @@
-package com.findmymeme.user;
+package com.findmymeme.user.domain;
 
 import com.findmymeme.BaseEntity;
 import jakarta.persistence.*;
@@ -26,10 +26,15 @@ public class User extends BaseEntity {
     @Column(unique = true, nullable = false, length = 100)
     private String email;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
     @Builder
-    public User(String username, String password, String email) {
+    public User(String username, String password, String email, Role role) {
         this.username = username;
         this.password = password;
         this.email = email;
+        this.role = role;
     }
 }

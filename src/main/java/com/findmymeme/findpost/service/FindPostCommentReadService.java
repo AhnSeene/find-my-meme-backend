@@ -7,14 +7,10 @@ import com.findmymeme.findpost.domain.FindPostComment;
 import com.findmymeme.findpost.dto.*;
 import com.findmymeme.findpost.repository.FindPostCommentRepository;
 import com.findmymeme.findpost.repository.FindPostRepository;
-import com.findmymeme.user.User;
-import com.findmymeme.user.UserRepository;
+import com.findmymeme.user.domain.User;
+import com.findmymeme.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

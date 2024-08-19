@@ -1,6 +1,7 @@
 package com.findmymeme.user.dto;
 
-import com.findmymeme.user.User;
+import com.findmymeme.user.domain.Role;
+import com.findmymeme.user.domain.User;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -41,6 +42,7 @@ public class SignupRequest {
                 .username(signupRequest.getUsername())
                 .password(encodedPassword)
                 .email(signupRequest.getEmail())
+                .role(Role.USER)
                 .build();
     }
 }

@@ -2,8 +2,11 @@ package com.findmymeme.user;
 
 import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.exception.FindMyMemeException;
+import com.findmymeme.user.domain.User;
 import com.findmymeme.user.dto.SignupRequest;
 import com.findmymeme.user.dto.UserResponse;
+import com.findmymeme.user.repository.UserRepository;
+import com.findmymeme.user.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

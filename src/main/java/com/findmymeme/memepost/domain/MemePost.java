@@ -1,7 +1,7 @@
 package com.findmymeme.memepost.domain;
 
 import com.findmymeme.BaseEntity;
-import com.findmymeme.user.User;
+import com.findmymeme.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

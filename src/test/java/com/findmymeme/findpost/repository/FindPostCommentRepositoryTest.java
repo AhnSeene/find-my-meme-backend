@@ -2,18 +2,15 @@ package com.findmymeme.findpost.repository;
 
 import com.findmymeme.findpost.domain.FindPost;
 import com.findmymeme.findpost.domain.FindPostComment;
-import com.findmymeme.user.User;
-import com.findmymeme.user.UserRepository;
+import com.findmymeme.user.domain.User;
+import com.findmymeme.user.repository.UserRepository;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 @EnableJpaAuditing

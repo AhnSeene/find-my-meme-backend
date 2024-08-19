@@ -5,7 +5,8 @@ import org.springframework.http.HttpStatus;
 import java.util.ResourceBundle;
 
 public enum SuccessCode {
-    USER_SIGNUP(HttpStatus.CREATED),
+    SIGNUP(HttpStatus.CREATED),
+    LOGIN(HttpStatus.OK),
 
     FILE_UPLOAD(HttpStatus.OK),
 
