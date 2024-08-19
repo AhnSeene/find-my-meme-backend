@@ -2,7 +2,6 @@ package com.findmymeme.findpost.service;
 
 import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.exception.FindMyMemeException;
-import com.findmymeme.file.domain.FileMeta;
 import com.findmymeme.file.service.ImageService;
 import com.findmymeme.findpost.domain.FindPost;
 import com.findmymeme.findpost.domain.FindPostComment;
@@ -11,8 +10,8 @@ import com.findmymeme.findpost.dto.*;
 import com.findmymeme.findpost.repository.FindPostCommentImageRepository;
 import com.findmymeme.findpost.repository.FindPostCommentRepository;
 import com.findmymeme.findpost.repository.FindPostRepository;
-import com.findmymeme.user.User;
-import com.findmymeme.user.UserRepository;
+import com.findmymeme.user.domain.User;
+import com.findmymeme.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;

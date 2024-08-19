@@ -1,6 +1,6 @@
 package com.findmymeme.user.dto;
 
-import com.findmymeme.user.User;
+import com.findmymeme.user.domain.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
