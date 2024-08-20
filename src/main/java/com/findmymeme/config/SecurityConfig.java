@@ -4,7 +4,6 @@ import com.findmymeme.config.jwt.JwtAccessDeniedHandler;
 import com.findmymeme.config.jwt.JwtAuthFilter;
 import com.findmymeme.config.jwt.JwtAuthenticationEntryPoint;
 import com.findmymeme.config.jwt.JwtTokenProvider;
-import com.findmymeme.user.domain.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,7 +20,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
-    private final CustomUserDetailsService customUserDetailsService;
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final JwtAccessDeniedHandler accessDeniedHandler;
 
@@ -46,7 +44,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/signup", "/api/v1/login")
                         .permitAll()
                         .anyRequest()
-                        .authenticated()
+                        .permitAll()
                 );
 
 
