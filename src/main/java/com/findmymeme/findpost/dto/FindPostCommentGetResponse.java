@@ -17,6 +17,7 @@ public class FindPostCommentGetResponse {
     private Long findPostId;
     private String htmlContent;
     private String username;
+    private Boolean selected;
     private boolean owner;
     private LocalDateTime createdAt;
 
@@ -28,17 +29,20 @@ public class FindPostCommentGetResponse {
         this.findPostId = comment.getFindPost().getId();
         this.htmlContent = comment.getHtmlContent();
         this.username = comment.getUser().getUsername();
+        this.selected = comment.isSelected();
         this.owner = isOwner;
         this.createdAt = comment.getCreatedAt();
     }
 
     @Builder
-    public FindPostCommentGetResponse(Long id, Long parentCommentId, Long findPostId, String htmlContent, String username, boolean owner, LocalDateTime createdAt) {
+    public FindPostCommentGetResponse(Long id, Long parentCommentId, Long findPostId, String htmlContent,
+                                      String username, boolean selected, boolean owner, LocalDateTime createdAt) {
         this.id = id;
         this.parentCommentId = parentCommentId;
         this.findPostId = findPostId;
         this.htmlContent = htmlContent;
         this.username = username;
+        this.selected = selected;
         this.owner = owner;
         this.createdAt = createdAt;
     }
