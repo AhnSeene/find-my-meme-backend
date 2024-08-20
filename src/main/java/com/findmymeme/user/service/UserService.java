@@ -37,7 +37,7 @@ public class UserService {
     public LoginResponse login(LoginRequest loginRequest) {
         User user = getUserByUsername(loginRequest.getUsername());
         validatePassword(loginRequest.getPassword(), user.getPassword());
-        return new LoginResponse(jwtTokenProvider.generateToken(new CustomUserDetails(user)));
+        return new LoginResponse(jwtTokenProvider.generateToken(new CustomUserDetails(user), user.getId()));
     }
 
     private void validatePassword(String rawPassword, String encodedPassword) {
