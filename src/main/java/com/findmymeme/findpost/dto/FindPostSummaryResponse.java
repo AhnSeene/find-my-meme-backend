@@ -19,6 +19,7 @@ public class FindPostSummaryResponse {
     private String content;
     private FindStatus status;
     private String username;
+    private Long viewCount;
     private LocalDateTime createdAt;
     private List<String> tags;
 
@@ -28,17 +29,19 @@ public class FindPostSummaryResponse {
         this.content = findPost.getContent();
         this.status = findPost.getFindStatus();
         this.username = findPost.getUser().getUsername();
+        this.viewCount = findPost.getViewCount();
         this.createdAt = findPost.getCreatedAt();
         this.tags = tags;
     }
 
     @Builder
-    public FindPostSummaryResponse(String title, String content, FindStatus status,
+    public FindPostSummaryResponse(String title, String content, FindStatus status, Long viewCount,
                                    String username, LocalDateTime createdAt, List<String> tags) {
         this.title = title;
         this.content = content;
         this.status = status;
         this.username = username;
+        this.viewCount = viewCount;
         this.createdAt = createdAt;
         this.tags = tags;
     }
