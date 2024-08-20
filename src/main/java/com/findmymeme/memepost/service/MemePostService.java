@@ -57,6 +57,7 @@ public class MemePostService {
         MemePost memePost = getMemePostWithUserById(memePostId);
         List<String> tagNames = getTagNames(memePostId);
 
+        memePost.incrementViewCount();
         return new MemePostGetResponse(memePost, false, false, tagNames);
     }
 
