@@ -43,8 +43,10 @@ public class MemePostService {
 
     public MemePostUploadResponse uploadMemePost(MemePostUploadRequest request, Long userId) {
         User user = getUserById(userId);
+
         FileMeta fileMeta = findFileMetaByFileUrl(request.getImageUrl());
         String permanentImageUrl = fileStorageService.moveFileToPermanent(request.getImageUrl());
+
         MemePost memePost = createMemePost(permanentImageUrl, user, fileMeta);
         memePostRepository.save(memePost);
         List<String> tagNames = postTagService.applyTagsToPost(request.getTags(), memePost.getId(), MEME_POST);
@@ -52,20 +54,20 @@ public class MemePostService {
     }
 
     public MemePostGetResponse getMemePost(Long memePostId) {
-        MemePost memePost = memePostRepository.findWithUserById(memePostId)
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST));
-        List<String> tagNames = postTagService.getTagNames(memePostId, MEME_POST);
+        MemePost memePost = getMemePostWithUserById(memePostId);
+        List<String> tagNames = getTagNames(memePostId);
 
+        memePost.incrementViewCount();
         return new MemePostGetResponse(memePost, false, false, tagNames);
     }
 
     public MemePostGetResponse getMemePost(Long memePostId, Long userId) {
         User user = getUserById(userId);
-        MemePost memePost = memePostRepository.findWithUserById(memePostId)
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST));
+        MemePost memePost = getMemePostWithUserById(memePostId);
         boolean isLiked = memePostLikeRepository.existsByMemePostIdAndUserId(memePostId, userId);
-        List<String> tagNames = postTagService.getTagNames(memePostId, MEME_POST);
+        List<String> tagNames = getTagNames(memePostId);
 
+        memePost.incrementViewCount();
         return new MemePostGetResponse(memePost, memePost.isOwner(user), isLiked, tagNames);
     }
 
@@ -73,7 +75,7 @@ public class MemePostService {
         Pageable pageable = PageRequest.of(page, size);
         Slice<MemePostSummaryResponse> memePosts = memePostRepository.findMemePostSummariesWithLike(pageable, userId);
 
-        memePosts.forEach(response -> response.setTags(postTagService.getTagNames(response.getId(), MEME_POST)));
+        memePosts.forEach(response -> response.setTags(getTagNames(response.getId())));
         return memePosts;
     }
 
@@ -81,11 +83,10 @@ public class MemePostService {
         Pageable pageable = PageRequest.of(page, size);
         Slice<MemePost> memePosts = memePostRepository.findSliceAll(pageable);
         List<MemePostSummaryResponse> responses = memePosts.stream()
-                .map(memePost -> new MemePostSummaryResponse(memePost, false, postTagService.getTagNames(memePost.getId(), MEME_POST)))
+                .map(memePost -> new MemePostSummaryResponse(memePost, false, getTagNames(memePost.getId())))
                 .toList();
         return new SliceImpl<>(responses, pageable, memePosts.hasNext());
     }
-
 
 
     private MemePost createMemePost(String permanentImageUrl, User user, FileMeta fileMeta) {
@@ -107,6 +108,15 @@ public class MemePostService {
     private FileMeta findFileMetaByFileUrl(String fileUrl) {
         return fileMetaRepository.findByFileUrl(fileUrl)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FILE_META));
+    }
+
+    private MemePost getMemePostWithUserById(Long memePostId) {
+        return memePostRepository.findWithUserById(memePostId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST));
+    }
+
+    private List<String> getTagNames(Long memePostId) {
+        return postTagService.getTagNames(memePostId, MEME_POST);
     }
 
 }

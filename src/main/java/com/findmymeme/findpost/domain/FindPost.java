@@ -33,6 +33,9 @@ public class FindPost extends BaseEntity {
     @Column(nullable = false)
     private FindStatus findStatus;
 
+    @Column(nullable = false)
+    private Long viewCount = 0L;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -60,5 +63,13 @@ public class FindPost extends BaseEntity {
 
     public void changeContent(String content) {
         this.content = content;
+    }
+
+    public void incrementViewCount() {
+        this.viewCount++;
+    }
+
+    public void decrementViewCount() {
+        this.viewCount--;
     }
 }

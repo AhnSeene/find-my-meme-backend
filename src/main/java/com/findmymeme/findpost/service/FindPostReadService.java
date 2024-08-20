@@ -30,6 +30,7 @@ public class FindPostReadService {
     private final FindPostRepository findPostRepository;
     private final PostTagService postTagService;
 
+    @Transactional
     public FindPostGetResponse getFindPost(Long findPostId, Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
@@ -38,6 +39,8 @@ public class FindPostReadService {
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST));
 
         List<String> tagNames = postTagService.getTagNames(findPost.getId(), FIND_POST);
+
+        findPost.incrementViewCount();
         return new FindPostGetResponse(findPost, findPost.isOwner(user), tagNames);
     }
 
