@@ -25,7 +25,8 @@ public enum SuccessCode {
 
     MEME_POST_UPLOAD(HttpStatus.CREATED),
     MEME_POST_GET(HttpStatus.OK),
-    MEME_POST_LIST(HttpStatus.OK);
+    MEME_POST_LIST(HttpStatus.OK),
+    MEME_POST_LIKE(HttpStatus.OK);
 
     private final HttpStatus status;
     private static final ResourceBundle messages = ResourceBundle.getBundle("messages");

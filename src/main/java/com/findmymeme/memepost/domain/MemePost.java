@@ -56,4 +56,12 @@ public class MemePost extends BaseEntity {
     public boolean isOwner(User user) {
         return this.user.getId().equals(user.getId());
     }
+
+    public void incrementLikeCount() {
+        this.likeCount++;
+    }
+
+    public void decrementLikeCount() {
+        this.likeCount--;
+    }
 }
