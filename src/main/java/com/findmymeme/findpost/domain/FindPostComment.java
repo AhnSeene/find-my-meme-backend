@@ -24,6 +24,9 @@ public class FindPostComment extends BaseEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String htmlContent;
 
+    @Column(nullable = false)
+    private boolean selected = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_comment_id")
     private FindPostComment parentComment;
@@ -56,4 +59,8 @@ public class FindPostComment extends BaseEntity {
     public void changeContent(String content) {
         this.content = content;
     }
+    public void selected() {
+        this.selected = true;
+    }
+
 }

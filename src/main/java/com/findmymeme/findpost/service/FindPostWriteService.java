@@ -4,8 +4,10 @@ import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.exception.FindMyMemeException;
 import com.findmymeme.file.service.ImageService;
 import com.findmymeme.findpost.domain.FindPost;
+import com.findmymeme.findpost.domain.FindPostComment;
 import com.findmymeme.findpost.domain.FindPostImage;
 import com.findmymeme.findpost.dto.*;
+import com.findmymeme.findpost.repository.FindPostCommentRepository;
 import com.findmymeme.findpost.repository.FindPostImageRepository;
 import com.findmymeme.findpost.repository.FindPostRepository;
 import com.findmymeme.tag.service.PostTagService;
@@ -29,6 +31,7 @@ public class FindPostWriteService {
     private final UserRepository userRepository;
     private final FindPostRepository findPostRepository;
     private final FindPostImageRepository findPostImageRepository;
+    private final FindPostCommentRepository findPostCommentRepository;
     private final ImageService imageService;
     private final PostTagService postTagService;
 
@@ -37,13 +40,15 @@ public class FindPostWriteService {
             FindPostRepository findPostRepository,
             FindPostImageRepository findPostImageRepository,
             ImageService imageService,
-            PostTagService postTagService
+            PostTagService postTagService,
+            FindPostCommentRepository findPostCommentRepository
     ) {
         this.userRepository = userRepository;
         this.findPostRepository = findPostRepository;
         this.findPostImageRepository = findPostImageRepository;
         this.imageService = imageService;
         this.postTagService = postTagService;
+        this.findPostCommentRepository = findPostCommentRepository;
     }
 
     public FindPostUploadResponse uploadFindPost(FindPostUploadRequest request, Long userId) {
@@ -63,10 +68,7 @@ public class FindPostWriteService {
     public FindPostUpdateResponse updateFindPost(FindPostUpdateRequest request, Long findPostId, Long userId) {
         User user = getUserById(userId);
         FindPost findPost = getFindPostById(findPostId);
-
-        if (isNotOwner(findPost, user)) {
-            throw new FindMyMemeException(ErrorCode.FORBIDDEN);
-        }
+        verifyOwnership(findPost, user);
 
         Document doc = Jsoup.parse(request.getHtmlContent());
         Set<String> existingImageUrls = findPostImageRepository.findImageUrlsByFindPost(findPost);
@@ -79,6 +81,20 @@ public class FindPostWriteService {
         return new FindPostUpdateResponse(findPost);
     }
 
+    public FindPostFoundResponse selectComment(Long findPostId, Long commentId, Long userId) {
+        FindPost findPost = getFindPostWithUserById(findPostId);
+        User user = getUserById(userId);
+        verifyOwnership(findPost, user);
+
+        if (findPost.isFound()) {
+            throw new FindMyMemeException(ErrorCode.FIND_POST_ALREADY_FOUND);
+        }
+        FindPostComment comment = findPostCommentRepository.findById(commentId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST_COMMENT));
+
+        findPost.foundByComment(comment);
+        return new FindPostFoundResponse(findPost);
+    }
 
     private void updateFindPostImages(FindPost findPost, List<ImageService.ImageMeta> addedImageMetas, Set<String> deletedImageUrls) {
         List<FindPostImage> findPostImages = createFindPostImages(addedImageMetas, findPost);
@@ -118,8 +134,15 @@ public class FindPostWriteService {
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST));
     }
 
-    private boolean isNotOwner(FindPost findPost, User user) {
-        return !findPost.isOwner(user);
+    private FindPost getFindPostWithUserById(Long findPostId) {
+        return findPostRepository.findWithUserById(findPostId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST));
+    }
+
+    private void verifyOwnership(FindPost findPost, User user) {
+        if (!findPost.isOwner(user)) {
+            throw new FindMyMemeException(ErrorCode.FORBIDDEN);
+        }
     }
 
     private void updateFindPost(FindPost findPost, String title, String content, String htmlContent) {

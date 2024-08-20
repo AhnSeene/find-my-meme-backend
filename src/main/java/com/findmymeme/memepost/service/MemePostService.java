@@ -29,8 +29,7 @@ import java.util.List;
 import static com.findmymeme.tag.domain.PostType.*;
 
 @Service
-@Slf4j
-@Transactional
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class MemePostService {
 
@@ -41,6 +40,7 @@ public class MemePostService {
     private final FileMetaRepository fileMetaRepository;
     private final MemePostLikeRepository memePostLikeRepository;
 
+    @Transactional
     public MemePostUploadResponse uploadMemePost(MemePostUploadRequest request, Long userId) {
         User user = getUserById(userId);
 
@@ -53,6 +53,7 @@ public class MemePostService {
         return new MemePostUploadResponse(memePost.getImageUrl(), tagNames);
     }
 
+    @Transactional
     public MemePostGetResponse getMemePost(Long memePostId) {
         MemePost memePost = getMemePostWithUserById(memePostId);
         List<String> tagNames = getTagNames(memePostId);
@@ -61,6 +62,7 @@ public class MemePostService {
         return new MemePostGetResponse(memePost, false, false, tagNames);
     }
 
+    @Transactional
     public MemePostGetResponse getMemePost(Long memePostId, Long userId) {
         User user = getUserById(userId);
         MemePost memePost = getMemePostWithUserById(memePostId);

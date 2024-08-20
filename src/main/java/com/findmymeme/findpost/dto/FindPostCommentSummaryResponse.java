@@ -20,16 +20,19 @@ public class FindPostCommentSummaryResponse {
     private String sendTo;
     private String htmlContent;
     private String username;
+    private Boolean selected;
     private LocalDateTime createdAt;
 
     private List<FindPostCommentSummaryResponse> replys = new ArrayList<>();
 
     @Builder
-    public FindPostCommentSummaryResponse(Long id, Long postId, String htmlContent, String username, LocalDateTime createdAt) {
+    public FindPostCommentSummaryResponse(Long id, Long postId, String htmlContent,
+                                          String username, boolean selected, LocalDateTime createdAt) {
         this.id = id;
         this.postId = postId;
         this.htmlContent = htmlContent;
         this.username = username;
+        this.selected = selected;
         this.createdAt = createdAt;
     }
 
@@ -38,6 +41,7 @@ public class FindPostCommentSummaryResponse {
         this.postId = comment.getId();
         this.htmlContent = comment.getHtmlContent();
         this.username = comment.getUser().getUsername();
+        this.selected = comment.isSelected();
         this.createdAt = comment.getCreatedAt();
     }
 

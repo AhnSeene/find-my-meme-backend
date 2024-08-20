@@ -10,6 +10,7 @@ import com.findmymeme.response.SuccessCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -55,4 +56,14 @@ public class FindPostController {
                 SuccessCode.FIND_POST_UPDATE);
     }
 
+    @PostMapping("/{postId}/comments/{commentId}/select")
+    public ResponseEntity<ApiResponse<FindPostFoundResponse>> found(
+            @PathVariable("postId") Long findPostId,
+            @PathVariable("commentId") Long commentId,
+            Authentication authentication
+    ) {
+        Long userId = Long.parseLong(authentication.getName());
+        return ResponseUtil.success(findPostWriteService.selectComment(findPostId, commentId, userId),
+                SuccessCode.FIND_POST_FOUND);
+    }
 }

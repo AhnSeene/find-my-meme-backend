@@ -40,6 +40,10 @@ public class FindPost extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "selected_comment_id")
+    private FindPostComment selectedComment;
+
     @Builder
     public FindPost(String title, String htmlContent, String content, User user) {
         this.title = title;
@@ -71,5 +75,15 @@ public class FindPost extends BaseEntity {
 
     public void decrementViewCount() {
         this.viewCount--;
+    }
+
+    public void foundByComment(FindPostComment comment) {
+        this.findStatus = FindStatus.FOUND;
+        this.selectedComment = comment;
+        comment.selected();
+    }
+
+    public boolean isFound() {
+        return this.findStatus.equals(FindStatus.FOUND);
     }
 }

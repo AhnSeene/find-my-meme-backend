@@ -23,7 +23,8 @@ public enum ErrorCode {
     NOT_FOUND_MEME_POST(HttpStatus.NOT_FOUND, "해당 밈게시글이 존재하지 않습니다."),
 
     ALREADY_EXIST_USERNAME(HttpStatus.CONFLICT, "이미 존재하는 아이디입니다."),
-    ALREADY_EXIST_FILE(HttpStatus.CONFLICT, "파일이 이미 존재합니다.");
+    ALREADY_EXIST_FILE(HttpStatus.CONFLICT, "파일이 이미 존재합니다."),
+    FIND_POST_ALREADY_FOUND(HttpStatus.CONFLICT, "이미 채택된 댓글이 있습니다.");
     private final HttpStatus httpStatus;
     private final String message;
 }
