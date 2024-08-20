@@ -63,10 +63,7 @@ public class FindPostWriteService {
     public FindPostUpdateResponse updateFindPost(FindPostUpdateRequest request, Long findPostId, Long userId) {
         User user = getUserById(userId);
         FindPost findPost = getFindPostById(findPostId);
-
-        if (isNotOwner(findPost, user)) {
-            throw new FindMyMemeException(ErrorCode.FORBIDDEN);
-        }
+        verifyOwnership(findPost, user);
 
         Document doc = Jsoup.parse(request.getHtmlContent());
         Set<String> existingImageUrls = findPostImageRepository.findImageUrlsByFindPost(findPost);
@@ -79,6 +76,14 @@ public class FindPostWriteService {
         return new FindPostUpdateResponse(findPost);
     }
 
+    public FindPostFoundResponse markFindPostAsFound(Long findPostId, Long userId) {
+        FindPost findPost = getFindPostWithUserById(findPostId);
+        User user = getUserById(userId);
+        verifyOwnership(findPost, user);
+
+        findPost.markAsFound();
+        return new FindPostFoundResponse(findPost.getFindStatus());
+    }
 
     private void updateFindPostImages(FindPost findPost, List<ImageService.ImageMeta> addedImageMetas, Set<String> deletedImageUrls) {
         List<FindPostImage> findPostImages = createFindPostImages(addedImageMetas, findPost);
@@ -118,8 +123,15 @@ public class FindPostWriteService {
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST));
     }
 
-    private boolean isNotOwner(FindPost findPost, User user) {
-        return !findPost.isOwner(user);
+    private FindPost getFindPostWithUserById(Long findPostId) {
+        return findPostRepository.findWithUserById(findPostId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST));
+    }
+
+    private void verifyOwnership(FindPost findPost, User user) {
+        if (!findPost.isOwner(user)) {
+            throw new FindMyMemeException(ErrorCode.FORBIDDEN);
+        }
     }
 
     private void updateFindPost(FindPost findPost, String title, String content, String htmlContent) {
