@@ -1,10 +1,8 @@
 package com.findmymeme.memepost.api;
 
-import com.findmymeme.memepost.dto.MemePostGetResponse;
-import com.findmymeme.memepost.dto.MemePostSummaryResponse;
+import com.findmymeme.memepost.dto.*;
+import com.findmymeme.memepost.service.MemePostLikeService;
 import com.findmymeme.memepost.service.MemePostService;
-import com.findmymeme.memepost.dto.MemePostUploadRequest;
-import com.findmymeme.memepost.dto.MemePostUploadResponse;
 import com.findmymeme.response.ApiResponse;
 import com.findmymeme.response.MySlice;
 import com.findmymeme.response.ResponseUtil;
@@ -21,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 public class MemePostController {
 
     private final MemePostService memePostService;
+    private final MemePostLikeService memePostLikeService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<MemePostUploadResponse>> uploadMemePost(
@@ -49,6 +48,18 @@ public class MemePostController {
         return ResponseUtil.success(
                 new MySlice<>(memePostService.getMemePosts(page, size)),
                 SuccessCode.MEME_POST_LIST
+        );
+    }
+
+    @PostMapping("/{memePostId}/toggleLike")
+    public ResponseEntity<ApiResponse<MemePostLikeResponse>> toggleLikeMemePost(
+            @PathVariable("memePostId") Long memePostId,
+            Authentication authentication
+    ) {
+        Long userId = Long.parseLong(authentication.getName());
+        return ResponseUtil.success(
+                memePostLikeService.toggleLike(memePostId, userId),
+                SuccessCode.MEME_POST_LIKE
         );
     }
 }
