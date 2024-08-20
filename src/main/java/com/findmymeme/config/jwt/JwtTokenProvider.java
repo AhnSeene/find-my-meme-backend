@@ -1,5 +1,6 @@
 package com.findmymeme.config.jwt;
 
+import com.findmymeme.user.domain.CustomUserDetails;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -19,7 +20,7 @@ import java.util.Date;
 @Service
 public class JwtTokenProvider {
 
-    private static final String USERNAME = "USERNAME";
+    private static final String USER_ID = "USER_ID";
     private static final String USER_ROLE = "ROLE";
     private final JwtProperties jwtProperties;
     private final UserDetailsService userDetailsService;
@@ -31,7 +32,7 @@ public class JwtTokenProvider {
         this.key = getSigningKey();
     }
 
-    public String generateToken(UserDetails userDetails) {
+    public String generateToken(UserDetails userDetails, Long userId) {
         ZonedDateTime now = ZonedDateTime.now();
         ZonedDateTime tokenExpireTime = now.plusSeconds(jwtProperties.getExpireTime());
 
@@ -40,15 +41,18 @@ public class JwtTokenProvider {
                 .setIssuer(jwtProperties.getIssuer())
                 .setIssuedAt(Date.from(now.toInstant()))
                 .setExpiration(Date.from(tokenExpireTime.toInstant()))
-                .claim(USERNAME, userDetails.getUsername())
+                .setSubject(userDetails.getUsername())
+                .claim(USER_ID, userId)
                 .claim(USER_ROLE, userDetails.getAuthorities())
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public Authentication getAuthentication(String token) {
+        Claims claims = parseClaims(token);
+        System.out.println("JwtTokenProvider.getAuthentication");
         UserDetails userDetails = loadUserDetailsFromToken(token);
-        return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
+        return new UsernamePasswordAuthenticationToken(claims.get(USER_ID), null, userDetails.getAuthorities());
     }
 
     public boolean validateToken(String token) {
@@ -80,12 +84,15 @@ public class JwtTokenProvider {
         }
     }
 
+    public Long getUserIdFromToken(String token) {
+        Claims claims = parseClaims(token);
+        return claims.get(USER_ID, Long.class);
+    }
+
+
     private UserDetails loadUserDetailsFromToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        System.out.println("JwtTokenProvider.loadUserDetailsFromToken");
+        Claims claims = parseClaims(token);
         String username = claims.getSubject();
         return userDetailsService.loadUserByUsername(username);
     }
