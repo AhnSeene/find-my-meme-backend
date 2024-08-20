@@ -68,16 +68,25 @@ public class MemePostService {
 
         return new MemePostGetResponse(memePost, memePost.isOwner(user), isLiked, tagNames);
     }
+
+    public Slice<MemePostSummaryResponse> getMemePosts(int page, int size, Long userId) {
+        Pageable pageable = PageRequest.of(page, size);
+        Slice<MemePostSummaryResponse> memePosts = memePostRepository.findMemePostSummariesWithLike(pageable, userId);
+
+        memePosts.forEach(response -> response.setTags(postTagService.getTagNames(response.getId(), MEME_POST)));
+        return memePosts;
     }
 
     public Slice<MemePostSummaryResponse> getMemePosts(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Slice<MemePost> memePosts = memePostRepository.findSliceAll(pageable);
         List<MemePostSummaryResponse> responses = memePosts.stream()
-                .map(memePost -> new MemePostSummaryResponse(memePost, postTagService.getTagNames(memePost.getId(), MEME_POST)))
+                .map(memePost -> new MemePostSummaryResponse(memePost, false, postTagService.getTagNames(memePost.getId(), MEME_POST)))
                 .toList();
         return new SliceImpl<>(responses, pageable, memePosts.hasNext());
     }
+
+
 
     private MemePost createMemePost(String permanentImageUrl, User user, FileMeta fileMeta) {
         return MemePost.builder()
