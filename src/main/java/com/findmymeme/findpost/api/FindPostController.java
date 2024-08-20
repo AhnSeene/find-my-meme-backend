@@ -56,13 +56,14 @@ public class FindPostController {
                 SuccessCode.FIND_POST_UPDATE);
     }
 
-    @PostMapping("/{id}/found")
+    @PostMapping("/{postId}/comments/{commentId}/select")
     public ResponseEntity<ApiResponse<FindPostFoundResponse>> found(
-            @PathVariable("id") Long findPostId,
+            @PathVariable("postId") Long findPostId,
+            @PathVariable("commentId") Long commentId,
             Authentication authentication
     ) {
         Long userId = Long.parseLong(authentication.getName());
-        return ResponseUtil.success(findPostWriteService.markFindPostAsFound(findPostId, userId),
+        return ResponseUtil.success(findPostWriteService.selectComment(findPostId, commentId, userId),
                 SuccessCode.FIND_POST_FOUND);
     }
 }
