@@ -32,10 +32,10 @@ public class MemePost extends BaseEntity {
     private String originalFilename;
 
     @Column(nullable = false)
-    private Long likeCount;
+    private Long likeCount = 0L;
 
     @Column(nullable = false)
-    private Long viewCount;
+    private Long viewCount = 0L;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -48,8 +48,6 @@ public class MemePost extends BaseEntity {
         this.resolution = resolution;
         this.size = size;
         this.originalFilename = originalFilename;
-        this.likeCount = 0L;
-        this.viewCount = 0L;
         this.user = user;
     }
 
@@ -63,5 +61,13 @@ public class MemePost extends BaseEntity {
 
     public void decrementLikeCount() {
         this.likeCount--;
+    }
+
+    public void incrementViewCount() {
+        this.viewCount++;
+    }
+
+    public void decrementViewCount() {
+        this.viewCount--;
     }
 }
