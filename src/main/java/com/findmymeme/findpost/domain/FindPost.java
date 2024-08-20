@@ -72,4 +72,8 @@ public class FindPost extends BaseEntity {
     public void decrementViewCount() {
         this.viewCount--;
     }
+
+    public void markAsFound() {
+        this.findStatus = FindStatus.FOUND;
+    }
 }
