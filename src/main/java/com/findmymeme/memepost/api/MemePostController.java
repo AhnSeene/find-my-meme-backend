@@ -11,7 +11,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,10 +37,18 @@ public class MemePostController {
 
     @GetMapping("/{memePostId}")
     public ResponseEntity<ApiResponse<MemePostGetResponse>> getMemePost(
-            @PathVariable("memePostId") Long memePostId
+            @PathVariable("memePostId") Long memePostId,
+            Authentication authentication
     ) {
+        MemePostGetResponse responses = null;
+        if (authentication == null) {
+            responses = memePostService.getMemePost(memePostId);
+        } else {
+            Long userId = Long.parseLong(authentication.getName());
+            responses = memePostService.getMemePost(memePostId, userId);
+        }
         return ResponseUtil.success(
-                memePostService.getMemePost(memePostId, 1L),
+                responses,
                 SuccessCode.MEME_POST_LIST
         );
     }
