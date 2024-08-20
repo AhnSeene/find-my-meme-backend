@@ -56,10 +56,18 @@ public class MemePostController {
     @GetMapping
     public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMemePosts(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            Authentication authentication
     ) {
+        Slice<MemePostSummaryResponse> responses = null;
+        if (authentication == null) {
+            responses = memePostService.getMemePosts(page, size);
+        } else {
+            Long userId = Long.parseLong(authentication.getName());
+            responses = memePostService.getMemePosts(page, size, userId);
+        }
         return ResponseUtil.success(
-                new MySlice<>(memePostService.getMemePosts(page, size)),
+                new MySlice<>(responses),
                 SuccessCode.MEME_POST_LIST
         );
     }
