@@ -4,8 +4,10 @@ import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.exception.FindMyMemeException;
 import com.findmymeme.file.service.ImageService;
 import com.findmymeme.findpost.domain.FindPost;
+import com.findmymeme.findpost.domain.FindPostComment;
 import com.findmymeme.findpost.domain.FindPostImage;
 import com.findmymeme.findpost.dto.*;
+import com.findmymeme.findpost.repository.FindPostCommentRepository;
 import com.findmymeme.findpost.repository.FindPostImageRepository;
 import com.findmymeme.findpost.repository.FindPostRepository;
 import com.findmymeme.tag.service.PostTagService;
@@ -29,6 +31,7 @@ public class FindPostWriteService {
     private final UserRepository userRepository;
     private final FindPostRepository findPostRepository;
     private final FindPostImageRepository findPostImageRepository;
+    private final FindPostCommentRepository findPostCommentRepository;
     private final ImageService imageService;
     private final PostTagService postTagService;
 
@@ -37,13 +40,15 @@ public class FindPostWriteService {
             FindPostRepository findPostRepository,
             FindPostImageRepository findPostImageRepository,
             ImageService imageService,
-            PostTagService postTagService
+            PostTagService postTagService,
+            FindPostCommentRepository findPostCommentRepository
     ) {
         this.userRepository = userRepository;
         this.findPostRepository = findPostRepository;
         this.findPostImageRepository = findPostImageRepository;
         this.imageService = imageService;
         this.postTagService = postTagService;
+        this.findPostCommentRepository = findPostCommentRepository;
     }
 
     public FindPostUploadResponse uploadFindPost(FindPostUploadRequest request, Long userId) {
@@ -76,13 +81,19 @@ public class FindPostWriteService {
         return new FindPostUpdateResponse(findPost);
     }
 
-    public FindPostFoundResponse markFindPostAsFound(Long findPostId, Long userId) {
+    public FindPostFoundResponse selectComment(Long findPostId, Long commentId, Long userId) {
         FindPost findPost = getFindPostWithUserById(findPostId);
         User user = getUserById(userId);
         verifyOwnership(findPost, user);
 
-        findPost.markAsFound();
-        return new FindPostFoundResponse(findPost.getFindStatus());
+        if (findPost.isFound()) {
+            throw new FindMyMemeException(ErrorCode.FIND_POST_ALREADY_FOUND);
+        }
+        FindPostComment comment = findPostCommentRepository.findById(commentId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST_COMMENT));
+
+        findPost.foundByComment(comment);
+        return new FindPostFoundResponse(findPost);
     }
 
     private void updateFindPostImages(FindPost findPost, List<ImageService.ImageMeta> addedImageMetas, Set<String> deletedImageUrls) {
