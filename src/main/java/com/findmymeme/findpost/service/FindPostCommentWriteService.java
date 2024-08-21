@@ -55,11 +55,10 @@ public class FindPostCommentWriteService {
         User user = getUserById(userId);
         FindPost findPost = getFindPostById(findPostId);
         //TODO 게시글이 삭제되었는지 검증
-        FindPostComment comment = getCommentById(commentId);
+        FindPostComment comment = getCommentWithUserById(commentId);
+        verifyOwnership(comment, user);
+        validateCommentBelongsToPost(findPostId, comment);
 
-        if (isNotOwner(comment, user)) {
-            throw new FindMyMemeException(ErrorCode.FORBIDDEN);
-        }
 
         Document doc = Jsoup.parse(request.getHtmlContent());
         Set<String> existingImageUrls = commentImageRepository.findImageUrlsByComment(comment);
@@ -72,8 +71,20 @@ public class FindPostCommentWriteService {
         return new FindPostCommentUpdateResponse(comment);
     }
 
-    private FindPostComment getCommentById(Long commentId) {
-        return commentRepository.findById(commentId)
+
+
+    public FindPostCommentDeleteResponse softDelete(Long postId, Long commentId, Long userId) {
+        User user =  getUserById(userId);
+        FindPostComment comment = getCommentWithUserById(commentId);
+        validateCommentBelongsToPost(postId, comment);
+        verifyOwnership(comment, user);
+        comment.softDelete();
+        return new FindPostCommentDeleteResponse(comment, comment.isOwner(user));
+    }
+
+
+    private FindPostComment getCommentWithUserById(Long commentId) {
+        return commentRepository.findWithUserById(commentId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST_COMMENT));
     }
 
@@ -125,8 +136,16 @@ public class FindPostCommentWriteService {
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST));
     }
 
-    private boolean isNotOwner(FindPostComment comment, User user) {
-        return !comment.isOwner(user);
+    private void verifyOwnership(FindPostComment comment, User user) {
+        if (!comment.isOwner(user)) {
+            throw new FindMyMemeException(ErrorCode.FORBIDDEN);
+        }
+    }
+
+    private void validateCommentBelongsToPost(Long postId, FindPostComment comment) {
+        if (!comment.isBelongsToPost(postId)) {
+            throw new FindMyMemeException(ErrorCode.INVALID_COMMENT_POST_RELATION);
+        }
     }
 
     private void updateFindPostComment(FindPostComment comment, String content, String htmlContent) {
