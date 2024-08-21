@@ -21,6 +21,7 @@ public enum SuccessCode {
     FIND_POST_COMMENT_GET(HttpStatus.OK),
     FIND_POST_COMMENT_LIST(HttpStatus.OK),
     FIND_POST_COMMENT_UPDATE(HttpStatus.OK),
+    FIND_POST_COMMENT_DELETE(HttpStatus.OK),
 
     TAG_CREATE(HttpStatus.CREATED),
     TAG_LIST(HttpStatus.OK),
