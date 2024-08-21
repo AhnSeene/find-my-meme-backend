@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -26,6 +28,8 @@ public class FindPostComment extends BaseEntity {
 
     @Column(nullable = false)
     private boolean selected = false;
+
+    private LocalDateTime deletedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_comment_id")
@@ -63,4 +67,12 @@ public class FindPostComment extends BaseEntity {
         this.selected = true;
     }
 
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+
+    public boolean isDeleted() {
+        return this.deletedAt != null;
+    }
 }
