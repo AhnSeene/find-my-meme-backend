@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 
 @Entity
 @Getter
@@ -35,6 +37,8 @@ public class FindPost extends BaseEntity {
 
     @Column(nullable = false)
     private Long viewCount = 0L;
+
+    private LocalDateTime deletedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -85,5 +89,9 @@ public class FindPost extends BaseEntity {
 
     public boolean isFound() {
         return this.findStatus.equals(FindStatus.FOUND);
+    }
+
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
     }
 }
