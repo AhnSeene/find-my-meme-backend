@@ -71,8 +71,11 @@ public class FindPostComment extends BaseEntity {
         this.deletedAt = LocalDateTime.now();
     }
 
-
     public boolean isDeleted() {
         return this.deletedAt != null;
+    }
+
+    public boolean isBelongsToPost(Long findPostId) {
+        return findPost != null && this.findPost.getId().equals(findPostId);
     }
 }
