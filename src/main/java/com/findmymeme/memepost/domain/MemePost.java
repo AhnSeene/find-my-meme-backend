@@ -40,7 +40,6 @@ public class MemePost extends BaseEntity {
     @Column(nullable = false)
     private Long viewCount = 0L;
 
-    @Column(nullable = false)
     private LocalDateTime deletedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
