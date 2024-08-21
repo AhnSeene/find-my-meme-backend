@@ -129,7 +129,7 @@ public class MemePostService {
 
     private void verifyOwnership(MemePost memePost, User user) {
         if (!memePost.isOwner(user)) {
-            throw new FindMyMemeException(ErrorCode.INVALID_CREDENTIALS);
+            throw new FindMyMemeException(ErrorCode.FORBIDDEN);
         }
     }
 
