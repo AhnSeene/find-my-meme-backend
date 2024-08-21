@@ -9,6 +9,7 @@ import com.findmymeme.response.SuccessCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -62,6 +63,19 @@ public class FindPostCommentController {
         return ResponseUtil.success(
                 commentWriteService.updateComment(request, postId, commentId, 1L),
                 SuccessCode.FIND_POST_COMMENT_UPDATE
+        );
+    }
+
+    @DeleteMapping("/{commentId}")
+    public ResponseEntity<ApiResponse<FindPostCommentDeleteResponse>> softDelete(
+            @PathVariable("postId") Long postId,
+            @PathVariable("commentId") Long commentId,
+            Authentication authentication
+    ) {
+        Long userId = Long.parseLong(authentication.getName());
+        return ResponseUtil.success(
+                commentWriteService.softDelete(postId, commentId, userId),
+                SuccessCode.FIND_POST_COMMENT_DELETE
         );
     }
 }

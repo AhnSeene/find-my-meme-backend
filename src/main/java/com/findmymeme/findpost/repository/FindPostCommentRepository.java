@@ -4,7 +4,9 @@ import com.findmymeme.findpost.domain.FindPost;
 import com.findmymeme.findpost.domain.FindPostComment;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,5 +24,9 @@ public interface FindPostCommentRepository extends JpaRepository<FindPostComment
             "WHERE c.findPost.id = :postId " +
             "order by c.parentComment.id, c.id")
     List<FindPostComment> findAllCommentsAndReplies(Long postId);
+
+    @Modifying
+    @Query("UPDATE FindPostComment c SET c.deletedAt = CURRENT_TIMESTAMP WHERE c.findPost.id = :postId AND c.deletedAt IS NULL")
+    void softDeleteByFindPostId(@Param("postId") Long postId);
 
 }

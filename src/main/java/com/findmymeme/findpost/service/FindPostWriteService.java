@@ -96,6 +96,14 @@ public class FindPostWriteService {
         return new FindPostFoundResponse(findPost);
     }
 
+    public void softDelete(Long findPostId, Long userId) {
+        User user = getUserById(userId);
+        FindPost findPost = getFindPostWithUserById(findPostId);
+        verifyOwnership(findPost, user);
+        findPost.softDelete();
+        findPostCommentRepository.softDeleteByFindPostId(findPost.getId());
+    }
+
     private void updateFindPostImages(FindPost findPost, List<ImageService.ImageMeta> addedImageMetas, Set<String> deletedImageUrls) {
         List<FindPostImage> findPostImages = createFindPostImages(addedImageMetas, findPost);
         findPostImageRepository.saveAll(findPostImages);
