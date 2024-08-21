@@ -83,4 +83,17 @@ public class MemePostController {
                 SuccessCode.MEME_POST_LIKE
         );
     }
+
+    @DeleteMapping("/{memePostId}")
+    public ResponseEntity<ApiResponse<Void>> softDelete(
+            @PathVariable("memePostId") Long memePostId,
+            Authentication authentication
+    ) {
+        Long userId = Long.parseLong(authentication.getName());
+        memePostService.softDelete(memePostId, userId);
+        return ResponseUtil.success(
+                null,
+                SuccessCode.MEME_POST_DELETE
+        );
+    }
 }
