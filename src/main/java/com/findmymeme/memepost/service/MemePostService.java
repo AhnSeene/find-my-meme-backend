@@ -16,7 +16,6 @@ import com.findmymeme.tag.service.PostTagService;
 import com.findmymeme.user.domain.User;
 import com.findmymeme.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -90,6 +89,13 @@ public class MemePostService {
         return new SliceImpl<>(responses, pageable, memePosts.hasNext());
     }
 
+    @Transactional
+    public void softDelete(Long memePostId, Long userId) {
+        User user = getUserById(userId);
+        MemePost memePost = getMemePostWithUserById(memePostId);
+        verifyOwnership(memePost, user);
+        memePost.softDelete();
+    }
 
     private MemePost createMemePost(String permanentImageUrl, User user, FileMeta fileMeta) {
         return MemePost.builder()
@@ -119,6 +125,12 @@ public class MemePostService {
 
     private List<String> getTagNames(Long memePostId) {
         return postTagService.getTagNames(memePostId, MEME_POST);
+    }
+
+    private void verifyOwnership(MemePost memePost, User user) {
+        if (!memePost.isOwner(user)) {
+            throw new FindMyMemeException(ErrorCode.INVALID_CREDENTIALS);
+        }
     }
 
 }
