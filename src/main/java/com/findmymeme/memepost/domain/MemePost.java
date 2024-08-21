@@ -7,6 +7,9 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -36,6 +39,9 @@ public class MemePost extends BaseEntity {
 
     @Column(nullable = false)
     private Long viewCount = 0L;
+
+    @Column(nullable = false)
+    private LocalDateTime deletedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -69,5 +75,9 @@ public class MemePost extends BaseEntity {
 
     public void decrementViewCount() {
         this.viewCount--;
+    }
+
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
     }
 }
