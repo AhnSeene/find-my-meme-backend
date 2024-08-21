@@ -15,6 +15,7 @@ public enum SuccessCode {
     FIND_POST_LIST(HttpStatus.OK),
     FIND_POST_UPDATE(HttpStatus.OK),
     FIND_POST_FOUND(HttpStatus.OK),
+    FIND_POST_DELETE(HttpStatus.OK),
 
     FIND_POST_COMMENT_UPLOAD(HttpStatus.CREATED),
     FIND_POST_COMMENT_GET(HttpStatus.OK),

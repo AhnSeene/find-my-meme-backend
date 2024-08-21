@@ -66,4 +66,15 @@ public class FindPostController {
         return ResponseUtil.success(findPostWriteService.selectComment(findPostId, commentId, userId),
                 SuccessCode.FIND_POST_FOUND);
     }
+
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<ApiResponse<Void>> softDelete(
+            @PathVariable("postId") Long findPostId,
+            Authentication authentication
+    ) {
+        Long userId = Long.parseLong(authentication.getName());
+        findPostWriteService.softDelete(findPostId, userId);
+        return ResponseUtil.success(null,
+                SuccessCode.FIND_POST_DELETE);
+    }
 }
