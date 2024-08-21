@@ -16,7 +16,8 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long> {
     Slice<MemePost> findSliceAll(Pageable pageable);
 
     @EntityGraph(attributePaths = {"user"})
-    Optional<MemePost> findWithUserById(Long id);
+    @Query("SELECT mp FROM MemePost mp WHERE mp.id = :id AND mp.deletedAt IS NULL")
+    Optional<MemePost> findWithUserById(@Param("id") Long id);
     
     @Query("SELECT new com.findmymeme.memepost.dto.MemePostSummaryResponse(mp, " +
             "EXISTS (SELECT 1 FROM MemePostLike mpl WHERE mpl.memePost = mp AND mpl.user.id = :userId)) " +
