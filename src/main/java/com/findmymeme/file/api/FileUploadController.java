@@ -8,6 +8,7 @@ import com.findmymeme.response.ResponseUtil;
 import com.findmymeme.response.SuccessCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,10 +20,14 @@ public class FileUploadController {
     private final FileService fileService;
 
     @PostMapping("/upload")
-    public ResponseEntity<ApiResponse<FileUploadResponse>> upload(@RequestPart("file") MultipartFile file) {
+    public ResponseEntity<ApiResponse<FileUploadResponse>> upload(
+            @RequestPart("file") MultipartFile file,
+            Authentication authentication
+    ) {
+        Long userId = Long.parseLong(authentication.getName());
         if (file.isEmpty()) {
             return ResponseUtil.error(null, ErrorCode.INVALID_INPUT_VALUE);
         }
-        return ResponseUtil.success(fileService.uploadFile(file, 1L), SuccessCode.FILE_UPLOAD);
+        return ResponseUtil.success(fileService.uploadFile(file, userId), SuccessCode.FILE_UPLOAD);
     }
 }

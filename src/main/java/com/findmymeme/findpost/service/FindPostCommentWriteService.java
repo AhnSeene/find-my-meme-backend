@@ -74,6 +74,7 @@ public class FindPostCommentWriteService {
 
 
     public FindPostCommentDeleteResponse softDelete(Long postId, Long commentId, Long userId) {
+        //TODO 이미 삭제된 댓글인지 확인
         User user =  getUserById(userId);
         FindPostComment comment = getCommentWithUserById(commentId);
         validateCommentBelongsToPost(postId, comment);

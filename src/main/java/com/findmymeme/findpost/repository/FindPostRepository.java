@@ -20,4 +20,7 @@ public interface FindPostRepository extends JpaRepository<FindPost, Long> {
     @EntityGraph(attributePaths = {"user"})
     @Query("SELECT fp FROM FindPost fp WHERE fp.deletedAt IS NULL")
     Page<FindPost> findAll(Pageable pageable);
+
+    @Query("SELECT fp FROM FindPost fp WHERE fp.deletedAt IS NULL AND fp.user.id = :userId")
+    Page<FindPost> findAllByUserId(Pageable pageable, @Param("userId") Long userId);
 }
