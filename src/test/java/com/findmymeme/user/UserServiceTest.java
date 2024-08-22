@@ -4,7 +4,7 @@ import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.exception.FindMyMemeException;
 import com.findmymeme.user.domain.User;
 import com.findmymeme.user.dto.SignupRequest;
-import com.findmymeme.user.dto.UserResponse;
+import com.findmymeme.user.dto.SignupResponse;
 import com.findmymeme.user.repository.UserRepository;
 import com.findmymeme.user.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -58,12 +58,12 @@ public class UserServiceTest {
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
         //when
-        UserResponse userResponse = userService.signup(signupRequest);
+        SignupResponse signupResponse = userService.signup(signupRequest);
 
         //then
-        assertThat(userResponse).isNotNull();
-        assertThat(userResponse.getUsername()).isEqualTo(signupRequest.getUsername());
-        assertThat(userResponse.getEmail()).isEqualTo(signupRequest.getEmail());
+        assertThat(signupResponse).isNotNull();
+        assertThat(signupResponse.getUsername()).isEqualTo(signupRequest.getUsername());
+        assertThat(signupResponse.getEmail()).isEqualTo(signupRequest.getEmail());
 
         verify(userRepository, times(1)).findByUsername(username);
         verify(passwordEncoder, times(1)).encode(rawPassword);

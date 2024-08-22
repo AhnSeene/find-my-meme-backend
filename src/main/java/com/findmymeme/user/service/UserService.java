@@ -4,14 +4,10 @@ import com.findmymeme.config.jwt.JwtTokenProvider;
 import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.exception.FindMyMemeException;
 import com.findmymeme.user.domain.CustomUserDetails;
-import com.findmymeme.user.dto.LoginRequest;
-import com.findmymeme.user.dto.LoginResponse;
+import com.findmymeme.user.dto.*;
 import com.findmymeme.user.repository.UserRepository;
 import com.findmymeme.user.domain.User;
-import com.findmymeme.user.dto.SignupRequest;
-import com.findmymeme.user.dto.UserResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,18 +22,24 @@ public class UserService {
     private final JwtTokenProvider jwtTokenProvider;
 
     @Transactional
-    public UserResponse signup(SignupRequest signupRequest) {
+    public SignupResponse signup(SignupRequest signupRequest) {
         checkDuplicateUsername(signupRequest.getUsername());
 
         String encodedPassword = passwordEncoder.encode(signupRequest.getPassword());
         User user = SignupRequest.toEntity(signupRequest, encodedPassword);
-        return new UserResponse(userRepository.save(user));
+        return new SignupResponse(userRepository.save(user));
     }
 
     public LoginResponse login(LoginRequest loginRequest) {
         User user = getUserByUsername(loginRequest.getUsername());
         validatePassword(loginRequest.getPassword(), user.getPassword());
         return new LoginResponse(jwtTokenProvider.generateToken(new CustomUserDetails(user), user.getId()));
+    }
+
+    public UserInfoResponse getMyInfo(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
+        return new UserInfoResponse(user);
     }
 
     private void validatePassword(String rawPassword, String encodedPassword) {
