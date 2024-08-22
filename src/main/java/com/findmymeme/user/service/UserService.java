@@ -3,18 +3,17 @@ package com.findmymeme.user.service;
 import com.findmymeme.config.jwt.JwtTokenProvider;
 import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.exception.FindMyMemeException;
+import com.findmymeme.file.service.FileStorageService;
 import com.findmymeme.user.domain.CustomUserDetails;
-import com.findmymeme.user.dto.LoginRequest;
-import com.findmymeme.user.dto.LoginResponse;
+import com.findmymeme.user.dto.*;
 import com.findmymeme.user.repository.UserRepository;
 import com.findmymeme.user.domain.User;
-import com.findmymeme.user.dto.SignupRequest;
-import com.findmymeme.user.dto.UserResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Transactional(readOnly = true)
@@ -24,20 +23,40 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final FileStorageService fileStorageService;
+    @Value("${default.profile-image-url}")
+    private String defaultProfileImageUrl;
 
     @Transactional
-    public UserResponse signup(SignupRequest signupRequest) {
+    public SignupResponse signup(SignupRequest signupRequest) {
         checkDuplicateUsername(signupRequest.getUsername());
 
         String encodedPassword = passwordEncoder.encode(signupRequest.getPassword());
-        User user = SignupRequest.toEntity(signupRequest, encodedPassword);
-        return new UserResponse(userRepository.save(user));
+        User user = SignupRequest.toEntity(signupRequest, encodedPassword, defaultProfileImageUrl);
+        return new SignupResponse(userRepository.save(user));
     }
 
     public LoginResponse login(LoginRequest loginRequest) {
         User user = getUserByUsername(loginRequest.getUsername());
         validatePassword(loginRequest.getPassword(), user.getPassword());
         return new LoginResponse(jwtTokenProvider.generateToken(new CustomUserDetails(user), user.getId()));
+    }
+
+    public UserInfoResponse getMyInfo(Long userId) {
+        User user = getUserById(userId);
+        return new UserInfoResponse(user);
+    }
+
+    public UserProfileImageResponse updateProfileImage(MultipartFile file, Long userId) {
+        User user = getUserById(userId);
+        String profileImageUrl = fileStorageService.storePermanentFile(file);
+        user.updateProfileImageUrl(profileImageUrl);
+        return new UserProfileImageResponse(profileImageUrl);
+    }
+
+    private User getUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
     }
 
     private void validatePassword(String rawPassword, String encodedPassword) {

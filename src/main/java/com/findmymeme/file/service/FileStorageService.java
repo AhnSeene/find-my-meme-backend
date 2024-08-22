@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public interface FileStorageService {
     String storeTempFile(MultipartFile file);
+    String storePermanentFile(MultipartFile file);
     void deleteTempFile(String tempUrl);
     void deletePermanentFile(String permanentUrl);
     String moveFileToPermanent(String tempFileUrl);

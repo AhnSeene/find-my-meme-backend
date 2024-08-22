@@ -6,7 +6,7 @@ import com.findmymeme.response.ResponseUtil;
 import com.findmymeme.user.dto.LoginRequest;
 import com.findmymeme.user.dto.LoginResponse;
 import com.findmymeme.user.dto.SignupRequest;
-import com.findmymeme.user.dto.UserResponse;
+import com.findmymeme.user.dto.SignupResponse;
 import com.findmymeme.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ public class AuthController {
     private final UserService userService;
 
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<UserResponse>> signup(@Valid @RequestBody SignupRequest signupRequest) {
+    public ResponseEntity<ApiResponse<SignupResponse>> signup(@Valid @RequestBody SignupRequest signupRequest) {
         return ResponseUtil.success(userService.signup(signupRequest), SuccessCode.SIGNUP);
     }
 

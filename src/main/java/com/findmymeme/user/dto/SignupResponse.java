@@ -6,13 +6,13 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class UserResponse {
+public class SignupResponse {
 
     private final String username;
     private final String email;
 
 
-    public UserResponse(final User user) {
+    public SignupResponse(final User user) {
         this.username = user.getUsername();
         this.email = user.getEmail();
     }

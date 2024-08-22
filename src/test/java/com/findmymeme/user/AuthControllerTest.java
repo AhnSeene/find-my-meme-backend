@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.response.SuccessCode;
 import com.findmymeme.user.dto.SignupRequest;
-import com.findmymeme.user.dto.UserResponse;
+import com.findmymeme.user.dto.SignupResponse;
 import com.findmymeme.user.service.UserService;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,10 +51,10 @@ class AuthControllerTest {
                 .email("test@example.com")
                 .build();
 
-        UserResponse userResponse = new UserResponse("testuser", "test@example.com");
+        SignupResponse signupResponse = new SignupResponse("testuser", "test@example.com");
 
         // when
-        when(userService.signup(any(SignupRequest.class))).thenReturn(userResponse);
+        when(userService.signup(any(SignupRequest.class))).thenReturn(signupResponse);
 
         // then
         mockMvc.perform(post("/api/v1/signup")
