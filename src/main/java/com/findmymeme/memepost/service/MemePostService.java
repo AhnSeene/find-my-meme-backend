@@ -97,6 +97,16 @@ public class MemePostService {
         memePost.softDelete();
     }
 
+    public Slice<MemePostSummaryResponse> getMyMemePosts(int page, int size, Long userId) {
+        Pageable pageable = PageRequest.of(page, size);
+        return memePostRepository.findMemePostSummariesWithLikeByUserId(pageable, userId, userId);
+    }
+
+    public Slice<MemePostSummaryResponse> getMemePostsByAuthorId(int page, int size, Long authorId, Long userId) {
+        Pageable pageable = PageRequest.of(page, size);
+        return memePostRepository.findMemePostSummariesWithLikeByUserId(pageable, authorId, userId);
+    }
+
     private MemePost createMemePost(String permanentImageUrl, User user, FileMeta fileMeta) {
         return MemePost.builder()
                 .imageUrl(permanentImageUrl)

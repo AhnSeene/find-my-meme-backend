@@ -24,6 +24,14 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long> {
             "FROM MemePost mp WHERE mp.deletedAt IS NULL")
     Slice<MemePostSummaryResponse> findMemePostSummariesWithLike(Pageable pageable, @Param("userId") Long userId);
 
+    @Query("SELECT new com.findmymeme.memepost.dto.MemePostSummaryResponse(mp, " +
+            "EXISTS (SELECT 1 FROM MemePostLike mpl WHERE mpl.memePost = mp AND mpl.user.id = :currentUserId)) " +
+            "FROM MemePost mp WHERE mp.deletedAt IS NULL AND mp.user.id = :targetUserId")
+    Slice<MemePostSummaryResponse> findMemePostSummariesWithLikeByUserId(
+            Pageable pageable,
+            @Param("targetUserId") Long targetUserId,
+            @Param("currentUserId") Long currentUserId);
+
 
 //    @Query("select new com.findmymeme.memepost.dto.MemePostSummaryResponse(" +
 //            "mp.id, mp.imageUrl, mp.likeCount, mp.viewCount, " +
