@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.function.Function;
 
 @Slf4j
 @Service
@@ -63,27 +64,14 @@ public class LocalFileStorageService implements FileStorageService {
 
     @Override
     public void deleteTempFile(String tempUrl) {
-        Path filePath = getTempFilePath(getFilename(tempUrl));
-        try {
-            Files.deleteIfExists(filePath);
-        } catch (NoSuchFileException e) {
-            throw new FileStorageException(ErrorCode.NOT_FOUND_FILE);
-        } catch (IOException e) {
-            throw new FileStorageException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
+        deleteFile(tempUrl, this::getTempFilePath);
     }
 
     @Override
     public void deletePermanentFile(String permanentUrl) {
-        Path filePath = getPermanentFilePath(getFilename(permanentUrl));
-        try {
-            Files.deleteIfExists(filePath);
-        } catch (NoSuchFileException e) {
-            throw new FileStorageException(ErrorCode.NOT_FOUND_FILE);
-        } catch (IOException e) {
-            throw new FileStorageException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
+        deleteFile(permanentUrl, this::getPermanentFilePath);
     }
+
     @Override
     public String convertToPermanentUrl(String tempUrl) {
         return getPermanentFileUrl(getFilename(tempUrl));
@@ -94,6 +82,16 @@ public class LocalFileStorageService implements FileStorageService {
         return getTempFileUrl(getFilename(permanentUrl));
     }
 
+    private void deleteFile(String fileUrl, Function<String, Path> pathFunction) {
+        Path filePath = pathFunction.apply(getFilename(fileUrl));
+        try {
+            Files.deleteIfExists(filePath);
+        } catch (NoSuchFileException e) {
+            throw new FileStorageException(ErrorCode.NOT_FOUND_FILE);
+        } catch (IOException e) {
+            throw new FileStorageException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     private String getTempFileUrl(String storedFilename) {
         return String.format(URL_FORMAT, tempDir, storedFilename);
