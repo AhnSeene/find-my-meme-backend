@@ -13,14 +13,13 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class CustomUserDetails implements UserDetails {
 
-    private static final String AUTHORITY_PREFIX = "ROLE_";
     private final User user;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.singleton(
                 new SimpleGrantedAuthority(
-                        AUTHORITY_PREFIX + user.getRole().name())
+                        user.getRole().name())
         );
     }
 

@@ -42,7 +42,7 @@ public class SignupRequest {
                 .username(signupRequest.getUsername())
                 .password(encodedPassword)
                 .email(signupRequest.getEmail())
-                .role(Role.USER)
+                .role(Role.ROLE_USER)
                 .build();
     }
 }
