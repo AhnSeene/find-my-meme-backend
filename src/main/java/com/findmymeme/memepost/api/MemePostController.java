@@ -29,7 +29,7 @@ public class MemePostController {
     ) {
         Long userId = Long.parseLong(authentication.getName());
         return ResponseUtil.success(memePostService.uploadMemePost(request, userId),
-                SuccessCode.FIND_POST_GET
+                SuccessCode.MEME_POST_UPLOAD
         );
     }
 
@@ -47,7 +47,7 @@ public class MemePostController {
         }
         return ResponseUtil.success(
                 responses,
-                SuccessCode.MEME_POST_LIST
+                SuccessCode.MEME_POST_GET
         );
     }
 
@@ -104,7 +104,7 @@ public class MemePostController {
         Long userId = Long.parseLong(authentication.getName());
         return ResponseUtil.success(
                 new MySlice<>(memePostService.getMyMemePosts(page, size, userId)),
-                SuccessCode.MEME_POST_LIST
+                SuccessCode.MEME_POST_ME_LIST
         );
     }
 
@@ -118,7 +118,7 @@ public class MemePostController {
         Long userId = Long.parseLong(authentication.getName());
         return ResponseUtil.success(
                 new MySlice<>(memePostService.getMemePostsByAuthorId(page, size, authorId, userId)),
-                SuccessCode.MEME_POST_LIST
+                SuccessCode.MEME_POST_AUTHOR_LIST
         );
     }
 }

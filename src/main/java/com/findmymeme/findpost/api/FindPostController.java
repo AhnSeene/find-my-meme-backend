@@ -58,7 +58,7 @@ public class FindPostController {
         Long userId = Long.parseLong(authentication.getName());
         return ResponseUtil.success(
                 new MyPage<>(findPostReadService.getMyFindPosts(page, size, userId))
-                , SuccessCode.FIND_POST_GET
+                , SuccessCode.FIND_POST_ME_LIST
         );
     }
 

@@ -14,6 +14,7 @@ public enum SuccessCode {
 
     FIND_POST_UPLOAD(HttpStatus.CREATED),
     FIND_POST_GET(HttpStatus.OK),
+    FIND_POST_ME_LIST(HttpStatus.OK),
     FIND_POST_LIST(HttpStatus.OK),
     FIND_POST_UPDATE(HttpStatus.OK),
     FIND_POST_FOUND(HttpStatus.OK),
@@ -31,6 +32,8 @@ public enum SuccessCode {
     MEME_POST_UPLOAD(HttpStatus.CREATED),
     MEME_POST_GET(HttpStatus.OK),
     MEME_POST_LIST(HttpStatus.OK),
+    MEME_POST_ME_LIST(HttpStatus.OK),
+    MEME_POST_AUTHOR_LIST(HttpStatus.OK),
     MEME_POST_LIKE(HttpStatus.OK),
     MEME_POST_DELETE(HttpStatus.OK);
 
