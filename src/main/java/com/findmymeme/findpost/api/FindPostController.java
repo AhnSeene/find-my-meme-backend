@@ -23,9 +23,11 @@ public class FindPostController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<FindPostUploadResponse>> uploadFindPost(
-            @Valid @RequestBody FindPostUploadRequest request
+            @Valid @RequestBody FindPostUploadRequest request,
+            Authentication authentication
     ) {
-        return ResponseUtil.success(findPostWriteService.uploadFindPost(request, 1L),
+        Long userId = Long.parseLong(authentication.getName());
+        return ResponseUtil.success(findPostWriteService.uploadFindPost(request, userId),
                 SuccessCode.FIND_POST_UPLOAD);
     }
 
@@ -50,9 +52,11 @@ public class FindPostController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<FindPostUpdateResponse>> updateFindPost(
             @PathVariable("id") Long findPostId,
-            @Valid @RequestBody FindPostUpdateRequest request
+            @Valid @RequestBody FindPostUpdateRequest request,
+            Authentication authentication
     ) {
-        return ResponseUtil.success(findPostWriteService.updateFindPost(request, findPostId, 1L),
+        Long userId = Long.parseLong(authentication.getName());
+        return ResponseUtil.success(findPostWriteService.updateFindPost(request, findPostId, userId),
                 SuccessCode.FIND_POST_UPDATE);
     }
 

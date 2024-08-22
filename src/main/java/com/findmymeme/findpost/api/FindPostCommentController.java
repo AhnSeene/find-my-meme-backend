@@ -25,10 +25,12 @@ public class FindPostCommentController {
     @PostMapping
     public ResponseEntity<ApiResponse<FindPostCommentAddResponse>> addComment(
             @PathVariable("postId") Long postId,
-            @Valid @RequestBody FindPostCommentAddRequest request
+            @Valid @RequestBody FindPostCommentAddRequest request,
+            Authentication authentication
     ) {
+        Long userId = Long.parseLong(authentication.getName());
         return ResponseUtil.success(
-                commentWriteService.addComment(request, postId, 1L),
+                commentWriteService.addComment(request, postId, userId),
                 SuccessCode.FIND_POST_COMMENT_UPLOAD
         );
     }
@@ -36,10 +38,12 @@ public class FindPostCommentController {
     @GetMapping("/{commentId}")
     public ResponseEntity<ApiResponse<FindPostCommentGetResponse>> getComment(
             @PathVariable("postId") Long postId,
-            @PathVariable("commentId") Long commentId
+            @PathVariable("commentId") Long commentId,
+            Authentication authentication
     ) {
+        Long userId = Long.parseLong(authentication.getName());
         return ResponseUtil.success(
-                commentReadService.getComment(postId, commentId, 1L),
+                commentReadService.getComment(postId, commentId, userId),
                 SuccessCode.FIND_POST_COMMENT_GET
         );
     }
@@ -58,10 +62,12 @@ public class FindPostCommentController {
     public ResponseEntity<ApiResponse<FindPostCommentUpdateResponse>> updateComment(
             @PathVariable("postId") Long postId,
             @PathVariable("commentId") Long commentId,
-            @Valid @RequestBody FindPostCommentUpdateRequest request
+            @Valid @RequestBody FindPostCommentUpdateRequest request,
+            Authentication authentication
     ) {
+        Long userId = Long.parseLong(authentication.getName());
         return ResponseUtil.success(
-                commentWriteService.updateComment(request, postId, commentId, 1L),
+                commentWriteService.updateComment(request, postId, commentId, userId),
                 SuccessCode.FIND_POST_COMMENT_UPDATE
         );
     }
