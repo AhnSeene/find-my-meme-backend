@@ -3,6 +3,7 @@ package com.findmymeme.findpost.service;
 import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.exception.FindMyMemeException;
 import com.findmymeme.findpost.domain.FindPost;
+import com.findmymeme.findpost.domain.FindStatus;
 import com.findmymeme.findpost.dto.FindPostGetResponse;
 import com.findmymeme.findpost.dto.FindPostSummaryResponse;
 import com.findmymeme.findpost.dto.MyFindPostSummaryResponse;
@@ -55,9 +56,29 @@ public class FindPostReadService {
                 );
     }
 
+    public Page<FindPostSummaryResponse> getFindPostsByFindStatus(int page, int size, FindStatus findStatus) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return findPostRepository.findAllByFindStatus(pageable, findStatus)
+                .map(findPost ->
+                        new FindPostSummaryResponse(findPost,
+                                postTagService.getTagNames(findPost.getId(), FIND_POST)
+                        )
+                );
+    }
+
     public Page<MyFindPostSummaryResponse> getMyFindPosts(int page, int size, Long userId) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         return findPostRepository.findAllByUserId(pageable, userId)
+                .map(findPost ->
+                        new MyFindPostSummaryResponse(findPost,
+                                postTagService.getTagNames(findPost.getId(), FIND_POST)
+                        )
+                );
+    }
+
+    public Page<MyFindPostSummaryResponse> getMyFindPostsByFindStatus(int page, int size, Long userId, FindStatus findStatus) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return findPostRepository.findAllByUserIdAndFindStatus(pageable, userId, findStatus)
                 .map(findPost ->
                         new MyFindPostSummaryResponse(findPost,
                                 postTagService.getTagNames(findPost.getId(), FIND_POST)
