@@ -75,4 +75,14 @@ public class FindPostReadService {
                         )
                 );
     }
+
+    public Page<MyFindPostSummaryResponse> getMyFindPostsByFindStatus(int page, int size, Long userId, FindStatus findStatus) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return findPostRepository.findAllByUserIdAndFindStatus(pageable, userId, findStatus)
+                .map(findPost ->
+                        new MyFindPostSummaryResponse(findPost,
+                                postTagService.getTagNames(findPost.getId(), FIND_POST)
+                        )
+                );
+    }
 }

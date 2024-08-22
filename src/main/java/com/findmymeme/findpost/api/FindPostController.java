@@ -59,13 +59,17 @@ public class FindPostController {
     public ResponseEntity<ApiResponse<MyPage<MyFindPostSummaryResponse>>> getMyFindPosts(
             @RequestParam(name = "page", defaultValue = "1") int page,
             @RequestParam(name = "size", defaultValue = "5") int size,
+            @RequestParam(name = "status", required = false) FindStatus findStatus,
             Authentication authentication
     ) {
         Long userId = Long.parseLong(authentication.getName());
-        return ResponseUtil.success(
-                new MyPage<>(findPostReadService.getMyFindPosts(page, size, userId))
-                , SuccessCode.FIND_POST_ME_LIST
-        );
+        MyPage<MyFindPostSummaryResponse> posts;
+        if (findStatus != null) {
+            posts = new MyPage<>(findPostReadService.getMyFindPostsByFindStatus(page, size, userId, findStatus));
+        } else {
+            posts = new MyPage<>(findPostReadService.getMyFindPosts(page, size, userId));
+        }
+        return ResponseUtil.success(posts, SuccessCode.FIND_POST_ME_LIST);
     }
 
     @PutMapping("/{id}")
