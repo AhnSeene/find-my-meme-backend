@@ -12,6 +12,7 @@ public class UserInfoResponse {
     private Long id;
     private String username;
     private String email;
+    private String profileImageUrl;
     private LocalDateTime createdAt;
     private String roles;
 
@@ -19,6 +20,7 @@ public class UserInfoResponse {
         this.id = user.getId();
         this.username = user.getUsername();
         this.email = user.getEmail();
+        this.profileImageUrl = user.getProfileImageUrl();
         this.createdAt = user.getCreatedAt();
         this.roles = user.getRole().name();
     }
