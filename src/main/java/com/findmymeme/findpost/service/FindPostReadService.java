@@ -5,6 +5,7 @@ import com.findmymeme.exception.FindMyMemeException;
 import com.findmymeme.findpost.domain.FindPost;
 import com.findmymeme.findpost.dto.FindPostGetResponse;
 import com.findmymeme.findpost.dto.FindPostSummaryResponse;
+import com.findmymeme.findpost.dto.MyFindPostSummaryResponse;
 import com.findmymeme.findpost.repository.FindPostRepository;
 import com.findmymeme.tag.service.PostTagService;
 import com.findmymeme.user.domain.User;
@@ -54,5 +55,13 @@ public class FindPostReadService {
                 );
     }
 
-
+    public Page<MyFindPostSummaryResponse> getMyFindPosts(int page, int size, Long userId) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return findPostRepository.findAllByUserId(pageable, userId)
+                .map(findPost ->
+                        new MyFindPostSummaryResponse(findPost,
+                                postTagService.getTagNames(findPost.getId(), FIND_POST)
+                        )
+                );
+    }
 }
