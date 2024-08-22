@@ -47,6 +47,7 @@ public class UserService {
         return new UserInfoResponse(user);
     }
 
+    @Transactional
     public UserProfileImageResponse updateProfileImage(MultipartFile file, Long userId) {
         User user = getUserById(userId);
         String profileImageUrl = fileStorageService.storePermanentFile(file);

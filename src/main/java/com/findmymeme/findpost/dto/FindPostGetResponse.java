@@ -21,6 +21,7 @@ public class FindPostGetResponse {
     private boolean owner;
     private List<String> tags;
     private Long viewCount;
+    private int commentCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -33,6 +34,7 @@ public class FindPostGetResponse {
         this.owner = isOwner;
         this.tags = tags;
         this.viewCount = findPost.getViewCount();
+        this.commentCount = findPost.getCommentCount();
         this.createdAt = findPost.getCreatedAt();
         this.updatedAt = findPost.getUpdatedAt();
     }
@@ -40,7 +42,7 @@ public class FindPostGetResponse {
     @Builder
     public FindPostGetResponse(String title, String htmlContent, FindStatus status,
                                String username, boolean owner, List<String> tags, Long viewCount,
-                               LocalDateTime createdAt, LocalDateTime updatedAt) {
+                               int commentCount, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.title = title;
         this.htmlContent = htmlContent;
         this.status = status;
@@ -48,6 +50,7 @@ public class FindPostGetResponse {
         this.owner = owner;
         this.tags = tags;
         this.viewCount = viewCount;
+        this.commentCount = commentCount;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }

@@ -65,15 +65,13 @@ public class MemePost extends BaseEntity {
     }
 
     public void decrementLikeCount() {
-        this.likeCount--;
+        if (this.likeCount > 0) {
+            this.likeCount--;
+        }
     }
 
     public void incrementViewCount() {
         this.viewCount++;
-    }
-
-    public void decrementViewCount() {
-        this.viewCount--;
     }
 
     public void softDelete() {
