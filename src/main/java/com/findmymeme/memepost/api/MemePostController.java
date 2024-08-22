@@ -12,11 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,9 +24,11 @@ public class MemePostController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<MemePostUploadResponse>> uploadMemePost(
-            @Valid @RequestBody MemePostUploadRequest request
-            ) {
-        return ResponseUtil.success(memePostService.uploadMemePost(request, 1L),
+            @Valid @RequestBody MemePostUploadRequest request,
+            Authentication authentication
+    ) {
+        Long userId = Long.parseLong(authentication.getName());
+        return ResponseUtil.success(memePostService.uploadMemePost(request, userId),
                 SuccessCode.FIND_POST_GET
         );
     }
@@ -94,6 +92,33 @@ public class MemePostController {
         return ResponseUtil.success(
                 null,
                 SuccessCode.MEME_POST_DELETE
+        );
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMyMemePosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Authentication authentication
+    ) {
+        Long userId = Long.parseLong(authentication.getName());
+        return ResponseUtil.success(
+                new MySlice<>(memePostService.getMyMemePosts(page, size, userId)),
+                SuccessCode.MEME_POST_LIST
+        );
+    }
+
+    @GetMapping("/users/{authorId}")
+    public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMemePostsByAuthorId(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @PathVariable("authorId") Long authorId,
+            Authentication authentication
+    ) {
+        Long userId = Long.parseLong(authentication.getName());
+        return ResponseUtil.success(
+                new MySlice<>(memePostService.getMemePostsByAuthorId(page, size, authorId, userId)),
+                SuccessCode.MEME_POST_LIST
         );
     }
 }
