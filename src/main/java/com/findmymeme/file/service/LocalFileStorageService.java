@@ -35,16 +35,12 @@ public class LocalFileStorageService implements FileStorageService {
 
     @Override
     public String storeTempFile(MultipartFile file) {
-        String savedFilename = generateStoredFilename(file.getOriginalFilename());
-        Path filePath = getTempFilePath(savedFilename);
-        try {
-            Files.copy(file.getInputStream(), filePath);
-        } catch (FileAlreadyExistsException e) {
-            throw new FileStorageException(ErrorCode.ALREADY_EXIST_FILE);
-        } catch (IOException e) {
-            throw new FileStorageException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
-        return getTempFileUrl(savedFilename);
+        return storeFile(file, this::getTempFilePath, this::getTempFileUrl);
+    }
+
+    @Override
+    public String storePermanentFile(MultipartFile file) {
+        return storeFile(file, this::getPermanentFilePath, this::getPermanentFileUrl);
     }
 
     @Override
@@ -80,6 +76,21 @@ public class LocalFileStorageService implements FileStorageService {
     @Override
     public String convertToTempUrl(String permanentUrl) {
         return getTempFileUrl(getFilename(permanentUrl));
+    }
+
+    private String storeFile(MultipartFile file,
+                             Function<String, Path> pathFunction,
+                             Function<String, String> urlFunction) {
+        String savedFilename = generateStoredFilename(file.getOriginalFilename());
+        Path filePath = pathFunction.apply(savedFilename);
+        try {
+            Files.copy(file.getInputStream(), filePath);
+        } catch (FileAlreadyExistsException e) {
+            throw new FileStorageException(ErrorCode.ALREADY_EXIST_FILE);
+        } catch (IOException e) {
+            throw new FileStorageException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
+        return urlFunction.apply(savedFilename);
     }
 
     private void deleteFile(String fileUrl, Function<String, Path> pathFunction) {
