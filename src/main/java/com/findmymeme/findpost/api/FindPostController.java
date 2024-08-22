@@ -1,5 +1,6 @@
 package com.findmymeme.findpost.api;
 
+import com.findmymeme.findpost.domain.FindStatus;
 import com.findmymeme.findpost.dto.*;
 import com.findmymeme.findpost.service.FindPostReadService;
 import com.findmymeme.findpost.service.FindPostWriteService;
@@ -42,11 +43,16 @@ public class FindPostController {
     @GetMapping
     public ResponseEntity<ApiResponse<MyPage<FindPostSummaryResponse>>> getFindPosts(
             @RequestParam(name = "page", defaultValue = "1") int page,
-            @RequestParam(name = "size", defaultValue = "5") int size
+            @RequestParam(name = "size", defaultValue = "5") int size,
+            @RequestParam(name = "status", required = false) FindStatus findStatus
     ) {
-        return ResponseUtil.success(
-                new MyPage<>(findPostReadService.getFindPosts(page, size))
-                , SuccessCode.FIND_POST_GET);
+        MyPage<FindPostSummaryResponse> posts;
+        if (findStatus != null) {
+            posts = new MyPage<>(findPostReadService.getFindPostsByFindStatus(page, size, findStatus));
+        } else {
+            posts = new MyPage<>(findPostReadService.getFindPosts(page, size));
+        }
+        return ResponseUtil.success(posts, SuccessCode.FIND_POST_LIST);
     }
 
     @GetMapping("/me")
