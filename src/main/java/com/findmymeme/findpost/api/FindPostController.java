@@ -49,6 +49,19 @@ public class FindPostController {
                 , SuccessCode.FIND_POST_GET);
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<MyPage<MyFindPostSummaryResponse>>> getMyFindPosts(
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "5") int size,
+            Authentication authentication
+    ) {
+        Long userId = Long.parseLong(authentication.getName());
+        return ResponseUtil.success(
+                new MyPage<>(findPostReadService.getMyFindPosts(page, size, userId))
+                , SuccessCode.FIND_POST_GET
+        );
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<FindPostUpdateResponse>> updateFindPost(
             @PathVariable("id") Long findPostId,
