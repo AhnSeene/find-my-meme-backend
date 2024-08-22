@@ -47,7 +47,7 @@ public class FindPostCommentWriteService {
         comment.changeHtmlContent(doc.body().html());
         FindPostComment savedComment = commentRepository.save(comment);
         commentImageRepository.saveAll(commentImages);
-
+        findPost.incrementCommentCount();
         return new FindPostCommentAddResponse(savedComment);
     }
 
