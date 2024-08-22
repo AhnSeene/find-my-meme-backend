@@ -38,6 +38,9 @@ public class FindPost extends BaseEntity {
     @Column(nullable = false)
     private Long viewCount = 0L;
 
+    @Column(nullable = false)
+    private int commentCount = 0;
+
     private LocalDateTime deletedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -49,12 +52,14 @@ public class FindPost extends BaseEntity {
     private FindPostComment selectedComment;
 
     @Builder
-    public FindPost(String title, String htmlContent, String content, User user) {
+    public FindPost(String title, String htmlContent, String content, LocalDateTime deletedAt, User user, FindPostComment selectedComment) {
         this.title = title;
         this.htmlContent = htmlContent;
         this.content = content;
         this.findStatus = FindStatus.FIND;
+        this.deletedAt = deletedAt;
         this.user = user;
+        this.selectedComment = selectedComment;
     }
 
     public boolean isOwner(User user) {
@@ -77,10 +82,6 @@ public class FindPost extends BaseEntity {
         this.viewCount++;
     }
 
-    public void decrementViewCount() {
-        this.viewCount--;
-    }
-
     public void foundByComment(FindPostComment comment) {
         this.findStatus = FindStatus.FOUND;
         this.selectedComment = comment;
@@ -93,5 +94,9 @@ public class FindPost extends BaseEntity {
 
     public void softDelete() {
         this.deletedAt = LocalDateTime.now();
+    }
+
+    public void incrementCommentCount() {
+        this.commentCount++;
     }
 }
