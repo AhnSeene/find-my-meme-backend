@@ -6,12 +6,9 @@ import com.findmymeme.file.domain.FileMeta;
 import com.findmymeme.file.repository.FileMetaRepository;
 import com.findmymeme.file.service.FileStorageService;
 import com.findmymeme.memepost.domain.MemePost;
-import com.findmymeme.memepost.dto.MemePostGetResponse;
-import com.findmymeme.memepost.dto.MemePostSummaryResponse;
+import com.findmymeme.memepost.dto.*;
 import com.findmymeme.memepost.repository.MemePostLikeRepository;
 import com.findmymeme.memepost.repository.MemePostRepository;
-import com.findmymeme.memepost.dto.MemePostUploadRequest;
-import com.findmymeme.memepost.dto.MemePostUploadResponse;
 import com.findmymeme.tag.service.PostTagService;
 import com.findmymeme.user.domain.User;
 import com.findmymeme.user.repository.UserRepository;
@@ -92,8 +89,7 @@ public class MemePostService {
     }
 
     public List<MemePostSummaryResponse> getRecommendedPosts(Long memePostId) {
-        MemePost memePost = memePostRepository.findById(memePostId)
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
+        MemePost memePost = getMemePostById(memePostId);
 
         List<String> tagNames = getTagNames(memePostId);
         List<MemePost> recommendedPosts = memePostRepository.findByTagNames(tagNames, PageRequest.of(0, LIMIT_RECOMMENDED_POST));
@@ -103,8 +99,7 @@ public class MemePostService {
     }
 
     public List<MemePostSummaryResponse> getRecommendedPosts(Long memePostId, Long userId) {
-        MemePost memePost = memePostRepository.findById(memePostId)
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
+        MemePost memePost = getMemePostById(memePostId);
 
         List<MemePostSummaryResponse> recommendedPosts = memePostRepository.findByTagNamesWithLikeByUserId(getTagNames(memePost.getId()), PageRequest.of(0, LIMIT_RECOMMENDED_POST), userId);
         recommendedPosts.forEach(response -> response.setTags(getTagNames(response.getId())));
@@ -138,6 +133,11 @@ public class MemePostService {
     private User getUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
+    }
+
+    private MemePost getMemePostById(Long memePostId) {
+        return memePostRepository.findById(memePostId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
     }
 
     private FileMeta findFileMetaByFileUrl(String fileUrl) {
