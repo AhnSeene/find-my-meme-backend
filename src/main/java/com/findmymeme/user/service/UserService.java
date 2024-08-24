@@ -39,7 +39,8 @@ public class UserService {
     public LoginResponse login(LoginRequest loginRequest) {
         User user = getUserByUsername(loginRequest.getUsername());
         validatePassword(loginRequest.getPassword(), user.getPassword());
-        return new LoginResponse(jwtTokenProvider.generateToken(new CustomUserDetails(user), user.getId()));
+        return new LoginResponse(jwtTokenProvider.generateToken(new CustomUserDetails(user), user.getId()),
+                user.getUsername());
     }
 
     public UserInfoResponse getMyInfo(Long userId) {
