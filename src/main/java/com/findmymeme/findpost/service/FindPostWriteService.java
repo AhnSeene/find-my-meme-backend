@@ -78,7 +78,8 @@ public class FindPostWriteService {
         updateFindPostImages(findPost, addedImageMetas, deletedImageUrls);
 
         updateFindPost(findPost, request.getTitle(), request.getContent(), doc.body().html());
-        return new FindPostUpdateResponse(findPost);
+        List<String> tags = postTagService.updateTagsToPost(request.getTags(), findPost.getId(), FIND_POST);
+        return new FindPostUpdateResponse(findPost, tags);
     }
 
     public FindPostFoundResponse selectComment(Long findPostId, Long commentId, Long userId) {
