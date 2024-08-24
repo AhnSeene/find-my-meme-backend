@@ -66,9 +66,9 @@ public class FindPostReadService {
                 );
     }
 
-    public Page<MyFindPostSummaryResponse> getFindPostsByAuthorId(int page, int size, Long authorId) {
+    public Page<MyFindPostSummaryResponse> getFindPostsByAuthor(int page, int size, String authorName) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return findPostRepository.findAllByUserId(pageable, authorId)
+        return findPostRepository.findAllByUsername(pageable, authorName)
                 .map(findPost ->
                         new MyFindPostSummaryResponse(findPost,
                                 postTagService.getTagNames(findPost.getId(), FIND_POST)
@@ -76,9 +76,9 @@ public class FindPostReadService {
                 );
     }
 
-    public Page<MyFindPostSummaryResponse> getFindPostsByAuthorIdFindStatus(int page, int size, Long authorId, FindStatus findStatus) {
+    public Page<MyFindPostSummaryResponse> getFindPostsByAuthorAndFindStatus(int page, int size, String authorName, FindStatus findStatus) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return findPostRepository.findAllByUserIdAndFindStatus(pageable, authorId, findStatus)
+        return findPostRepository.findAllByUsernameAndFindStatus(pageable, authorName, findStatus)
                 .map(findPost ->
                         new MyFindPostSummaryResponse(findPost,
                                 postTagService.getTagNames(findPost.getId(), FIND_POST)
