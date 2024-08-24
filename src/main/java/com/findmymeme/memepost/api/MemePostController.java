@@ -95,19 +95,6 @@ public class MemePostController {
         );
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMyMemePosts(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            Authentication authentication
-    ) {
-        Long userId = Long.parseLong(authentication.getName());
-        return ResponseUtil.success(
-                new MySlice<>(memePostService.getMyMemePosts(page, size, userId)),
-                SuccessCode.MEME_POST_ME_LIST
-        );
-    }
-
     @GetMapping("/users/{authorId}")
     public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMemePostsByAuthorId(
             @RequestParam(defaultValue = "0") int page,
