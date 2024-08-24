@@ -28,7 +28,7 @@ public class AuthController {
         return ResponseUtil.success(userService.signup(signupRequest), SuccessCode.SIGNUP);
     }
 
-    @PostMapping("login")
+    @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(
             @Valid @RequestBody LoginRequest request
     ) {
