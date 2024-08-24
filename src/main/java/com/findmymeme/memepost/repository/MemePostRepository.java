@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface MemePostRepository extends JpaRepository<MemePost, Long> {
@@ -32,7 +33,13 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long> {
             @Param("targetUserId") Long targetUserId,
             @Param("currentUserId") Long currentUserId);
 
+    @Query("select distinct m from MemePost m join PostTag pt on m.id = pt.postId where pt.tag.name in :tags and m.deletedAt is null")
+    List<MemePost> findByTagNames(@Param("tags") List<String> tags, Pageable pageable);
 
+    @Query("select distinct new com.findmymeme.memepost.dto.MemePostSummaryResponse(m, " +
+            "exists (select 1 from MemePostLike mpl where mpl.memePost = m and mpl.user.id = :currentUserId)) " +
+            "from MemePost m join PostTag pt on m.id = pt.postId where pt.tag.name in :tags and m.deletedAt is null")
+    List<MemePostSummaryResponse> findByTagNamesWithLikeByUserId(@Param("tags") List<String> tags, Pageable pageable, @Param("currentUserId") Long currentUserId);
 //    @Query("select new com.findmymeme.memepost.dto.MemePostSummaryResponse(" +
 //            "mp.id, mp.imageUrl, mp.likeCount, mp.viewCount, " +
 //            "pt.tag.name) " +
