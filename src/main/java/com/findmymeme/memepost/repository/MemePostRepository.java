@@ -27,10 +27,10 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long> {
 
     @Query("SELECT new com.findmymeme.memepost.dto.MemePostSummaryResponse(mp, " +
             "EXISTS (SELECT 1 FROM MemePostLike mpl WHERE mpl.memePost = mp AND mpl.user.id = :currentUserId)) " +
-            "FROM MemePost mp WHERE mp.deletedAt IS NULL AND mp.user.id = :targetUserId")
+            "FROM MemePost mp WHERE mp.deletedAt IS NULL AND mp.user.username = :authorName")
     Slice<MemePostSummaryResponse> findMemePostSummariesWithLikeByUserId(
             Pageable pageable,
-            @Param("targetUserId") Long targetUserId,
+            @Param("authorName") String authorName,
             @Param("currentUserId") Long currentUserId);
 
     @Query("select distinct m from MemePost m join PostTag pt on m.id = pt.postId where pt.tag.name in :tags and m.deletedAt is null")

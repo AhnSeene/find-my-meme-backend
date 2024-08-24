@@ -55,18 +55,18 @@ public class FindPostController {
         return ResponseUtil.success(posts, SuccessCode.FIND_POST_LIST);
     }
 
-    @GetMapping("/users/{authorId}")
+    @GetMapping("/users/{authorName}")
     public ResponseEntity<ApiResponse<MyPage<MyFindPostSummaryResponse>>> getMyFindPosts(
             @RequestParam(name = "page", defaultValue = "1") int page,
             @RequestParam(name = "size", defaultValue = "5") int size,
             @RequestParam(name = "status", required = false) FindStatus findStatus,
-            @PathVariable("authorId") Long authorId
+            @PathVariable("authorName") String authorName
     ) {
         MyPage<MyFindPostSummaryResponse> posts;
         if (findStatus != null) {
-            posts = new MyPage<>(findPostReadService.getFindPostsByAuthorIdFindStatus(page, size, authorId, findStatus));
+            posts = new MyPage<>(findPostReadService.getFindPostsByAuthorAndFindStatus(page, size, authorName, findStatus));
         } else {
-            posts = new MyPage<>(findPostReadService.getFindPostsByAuthorId(page, size, authorId));
+            posts = new MyPage<>(findPostReadService.getFindPostsByAuthor(page, size, authorName));
         }
         return ResponseUtil.success(posts, SuccessCode.FIND_POST_AUTHOR_LIST);
     }
