@@ -32,6 +32,8 @@ import static com.findmymeme.tag.domain.PostType.*;
 @RequiredArgsConstructor
 public class MemePostService {
 
+    private static final int LIMIT_RECOMMENDED_POST = 20;
+
     private final UserRepository userRepository;
     private final MemePostRepository memePostRepository;
     private final PostTagService postTagService;
@@ -87,6 +89,26 @@ public class MemePostService {
                 .map(memePost -> new MemePostSummaryResponse(memePost, false, getTagNames(memePost.getId())))
                 .toList();
         return new SliceImpl<>(responses, pageable, memePosts.hasNext());
+    }
+
+    public List<MemePostSummaryResponse> getRecommendedPosts(Long memePostId) {
+        MemePost memePost = memePostRepository.findById(memePostId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
+
+        List<String> tagNames = getTagNames(memePostId);
+        List<MemePost> recommendedPosts = memePostRepository.findByTagNames(tagNames, PageRequest.of(0, LIMIT_RECOMMENDED_POST));
+        return recommendedPosts.stream()
+                .map(post -> new MemePostSummaryResponse(memePost, false, getTagNames(memePost.getId())))
+                .toList();
+    }
+
+    public List<MemePostSummaryResponse> getRecommendedPosts(Long memePostId, Long userId) {
+        MemePost memePost = memePostRepository.findById(memePostId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
+
+        List<MemePostSummaryResponse> recommendedPosts = memePostRepository.findByTagNamesWithLikeByUserId(getTagNames(memePost.getId()), PageRequest.of(0, LIMIT_RECOMMENDED_POST), userId);
+        recommendedPosts.forEach(response -> response.setTags(getTagNames(response.getId())));
+        return recommendedPosts;
     }
 
     @Transactional

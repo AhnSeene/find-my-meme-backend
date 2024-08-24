@@ -32,6 +32,7 @@ public enum SuccessCode {
     MEME_POST_UPLOAD(HttpStatus.CREATED),
     MEME_POST_GET(HttpStatus.OK),
     MEME_POST_LIST(HttpStatus.OK),
+    MEME_POST_RECOMMENDED_LIST(HttpStatus.OK),
     MEME_POST_AUTHOR_LIST(HttpStatus.OK),
     MEME_POST_LIKE(HttpStatus.OK),
     MEME_POST_DELETE(HttpStatus.OK);

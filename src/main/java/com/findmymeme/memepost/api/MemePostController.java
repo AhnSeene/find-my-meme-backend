@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/meme-posts")
@@ -70,6 +72,23 @@ public class MemePostController {
         );
     }
 
+    @GetMapping("/{memePostId}/recommendations")
+    public ResponseEntity<ApiResponse<List<MemePostSummaryResponse>>> getMemePosts(
+            @PathVariable("memePostId") Long memePostId,
+            Authentication authentication
+    ) {
+        List<MemePostSummaryResponse> responses = null;
+        if (authentication == null) {
+            responses = memePostService.getRecommendedPosts(memePostId);
+        } else {
+            Long userId = Long.parseLong(authentication.getName());
+            responses = memePostService.getRecommendedPosts(memePostId, userId);
+        }
+        return ResponseUtil.success(
+                responses, SuccessCode.MEME_POST_LIST
+        );
+    }
+
     @PostMapping("/{memePostId}/toggleLike")
     public ResponseEntity<ApiResponse<MemePostLikeResponse>> toggleLikeMemePost(
             @PathVariable("memePostId") Long memePostId,
@@ -108,4 +127,6 @@ public class MemePostController {
                 SuccessCode.MEME_POST_AUTHOR_LIST
         );
     }
+
+
 }
