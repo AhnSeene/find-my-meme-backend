@@ -1,5 +1,6 @@
 package com.findmymeme.memepost.service;
 
+import com.findmymeme.common.dto.UserProfileResponse;
 import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.exception.FindMyMemeException;
 import com.findmymeme.file.domain.FileMeta;
@@ -9,6 +10,7 @@ import com.findmymeme.memepost.domain.MemePost;
 import com.findmymeme.memepost.dto.*;
 import com.findmymeme.memepost.repository.MemePostLikeRepository;
 import com.findmymeme.memepost.repository.MemePostRepository;
+import com.findmymeme.response.MySlice;
 import com.findmymeme.tag.service.PostTagService;
 import com.findmymeme.user.domain.User;
 import com.findmymeme.user.repository.UserRepository;
@@ -114,9 +116,34 @@ public class MemePostService {
         memePost.softDelete();
     }
 
-    public Slice<MemePostSummaryResponse> getMemePostsByAuthorId(int page, int size, String authorName, Long userId) {
+    public MemePostUserSummaryResponse getMemePostsByAuthorId(int page, int size, String authorName) {
+        User author = userRepository.findByUsername(authorName)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
+
+        UserProfileResponse userProfileResponse = new UserProfileResponse(author);
         Pageable pageable = PageRequest.of(page, size);
-        return memePostRepository.findMemePostSummariesWithLikeByUserId(pageable, authorName, userId);
+        Slice<MemePost> memePostSummaries = memePostRepository.findMemePostByUserId(pageable, authorName);
+        List<MemePostSummaryResponse> responses = memePostSummaries.stream()
+                .map(memePost -> new MemePostSummaryResponse(memePost, false, getTagNames(memePost.getId())))
+                .toList();
+        return MemePostUserSummaryResponse.builder()
+                .user(userProfileResponse)
+                .memePosts(new MySlice<>(new SliceImpl<>(responses, pageable, memePostSummaries.hasNext())))
+                .build();
+    }
+
+    public MemePostUserSummaryResponse getMemePostsByAuthorId(int page, int size, String authorName, Long userId) {
+        User author = userRepository.findByUsername(authorName)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
+
+        UserProfileResponse userProfileResponse = new UserProfileResponse(author);
+        Pageable pageable = PageRequest.of(page, size);
+        Slice<MemePostSummaryResponse> memePostSummaries = memePostRepository.findMemePostSummariesWithLikeByUserId(pageable, authorName, userId);
+        memePostSummaries.forEach(response -> response.setTags(getTagNames(response.getId())));
+        return MemePostUserSummaryResponse.builder()
+                .user(userProfileResponse)
+                .memePosts(new MySlice<>(memePostSummaries))
+                .build();
     }
 
     private MemePost createMemePost(String permanentImageUrl, User user, FileMeta fileMeta) {

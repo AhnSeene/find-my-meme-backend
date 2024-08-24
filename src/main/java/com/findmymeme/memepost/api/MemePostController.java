@@ -115,15 +115,21 @@ public class MemePostController {
     }
 
     @GetMapping("/users/{authorName}")
-    public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMemePostsByAuthorId(
+    public ResponseEntity<ApiResponse<MemePostUserSummaryResponse>> getMemePostsByAuthorId(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @PathVariable("authorName") String authorName,
             Authentication authentication
     ) {
-        Long userId = Long.parseLong(authentication.getName());
+        MemePostUserSummaryResponse responses = null;
+        if (authentication == null) {
+            responses = memePostService.getMemePostsByAuthorId(page, size, authorName);
+        } else {
+            Long userId = Long.parseLong(authentication.getName());
+            responses =  memePostService.getMemePostsByAuthorId(page, size, authorName, userId);
+        }
         return ResponseUtil.success(
-                new MySlice<>(memePostService.getMemePostsByAuthorId(page, size, authorName, userId)),
+                responses,
                 SuccessCode.MEME_POST_AUTHOR_LIST
         );
     }
