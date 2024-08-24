@@ -27,6 +27,28 @@ public class PostTagService {
         postTagRepository.saveAll(postTags);
         return extractTagNames(postTags);
     }
+
+    public List<String> updateTagsToPost(List<Long> updatedTagIds, Long postId, PostType postType) {
+        List<PostTag> existingPostTags = getPostTags(postId, postType);
+
+        deleteRemovedTags(updatedTagIds, existingPostTags);
+        addNewTags(updatedTagIds, existingPostTags, postId, postType);
+
+        return extractTagNames(getPostTags(postId, postType));
+    }
+
+    public List<String> getTagNames(Long postId, PostType postType) {
+        return extractTagNames(postTagRepository.findAllByPostIdAndPostType(postId, postType));
+    }
+
+    public List<PostTag> getPostTags(Long postId, PostType postType) {
+        return postTagRepository.findAllByPostIdAndPostType(postId, postType);
+    }
+
+    public List<Long> getTagIds(Long postId, PostType postType) {
+        return extractTagIds(postTagRepository.findAllByPostIdAndPostType(postId, postType));
+    }
+
     private List<PostTag> createPostTags(List<Long> tagIds, Long postId, PostType postType) {
         return tagIds.stream()
                 .map(this::getTagById)
@@ -38,10 +60,22 @@ public class PostTagService {
                 .toList();
     }
 
+    private void addNewTags(List<Long> updatedTagIds, List<PostTag> existingPostTags, Long postId, PostType postType) {
+        List<Long> existingTagIds = extractTagIds(existingPostTags);
+
+        List<Long> newTagIds = updatedTagIds.stream()
+                .filter(newTagId -> !existingTagIds.contains(newTagId))
                 .toList();
+
+        List<PostTag> newPostTags = createPostTags(newTagIds, postId, postType);
+        postTagRepository.saveAll(newPostTags);
     }
 
+    private void deleteRemovedTags(List<Long> updatedTagIds, List<PostTag> existingPostTags) {
+        List<PostTag> tagsToDelete = existingPostTags.stream()
+                .filter(postTag -> !updatedTagIds.contains(postTag.getTag().getId()))
                 .toList();
+        postTagRepository.deleteAll(tagsToDelete);
     }
 
     private Tag getTagById(Long tagId) {
@@ -55,4 +89,9 @@ public class PostTagService {
                 .toList();
     }
 
+    private List<Long> extractTagIds(List<PostTag> existingPostTags) {
+        return existingPostTags.stream()
+                .map(postTag -> postTag.getTag().getId())
+                .toList();
+    }
 }
