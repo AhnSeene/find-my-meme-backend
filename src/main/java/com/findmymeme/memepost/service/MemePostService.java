@@ -97,11 +97,6 @@ public class MemePostService {
         memePost.softDelete();
     }
 
-    public Slice<MemePostSummaryResponse> getMyMemePosts(int page, int size, Long userId) {
-        Pageable pageable = PageRequest.of(page, size);
-        return memePostRepository.findMemePostSummariesWithLikeByUserId(pageable, userId, userId);
-    }
-
     public Slice<MemePostSummaryResponse> getMemePostsByAuthorId(int page, int size, Long authorId, Long userId) {
         Pageable pageable = PageRequest.of(page, size);
         return memePostRepository.findMemePostSummariesWithLikeByUserId(pageable, authorId, userId);
@@ -135,6 +130,10 @@ public class MemePostService {
 
     private List<String> getTagNames(Long memePostId) {
         return postTagService.getTagNames(memePostId, MEME_POST);
+    }
+
+    private List<Long> getTagIds(Long memePostId) {
+        return postTagService.getTagIds(memePostId, MEME_POST);
     }
 
     private void verifyOwnership(MemePost memePost, User user) {

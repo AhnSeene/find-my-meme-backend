@@ -25,10 +25,10 @@ public interface FindPostRepository extends JpaRepository<FindPost, Long> {
     @Query("SELECT fp FROM FindPost fp WHERE fp.deletedAt IS NULL AND fp.findStatus = :findStatus")
     Page<FindPost> findAllByFindStatus(Pageable pageable, @Param("findStatus") FindStatus findStatus);
 
-    @Query("SELECT fp FROM FindPost fp WHERE fp.deletedAt IS NULL AND fp.user.id = :userId")
-    Page<FindPost> findAllByUserId(Pageable pageable, @Param("userId") Long userId);
+    @Query("SELECT fp FROM FindPost fp WHERE fp.deletedAt IS NULL AND fp.user.id = :authorId")
+    Page<FindPost> findAllByUserId(Pageable pageable, @Param("authorId") Long authorId);
 
     @Query("SELECT fp FROM FindPost fp WHERE fp.deletedAt IS NULL AND " +
-            "fp.user.id = :userId AND fp.findStatus = :findStatus")
-    Page<FindPost> findAllByUserIdAndFindStatus(Pageable pageable, @Param("userId") Long userId, @Param("findStatus") FindStatus findStatus);
+            "fp.user.id = :authorId AND fp.findStatus = :findStatus")
+    Page<FindPost> findAllByUserIdAndFindStatus(Pageable pageable, @Param("authorId") Long authorId, @Param("findStatus") FindStatus findStatus);
 }
