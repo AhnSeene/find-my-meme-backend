@@ -23,25 +23,24 @@ public class PostTagService {
     private final PostTagRepository postTagRepository;
 
     public List<String> applyTagsToPost(List<Long> tagIds, Long postId, PostType postType) {
-        List<PostTag> postTags = tagIds.stream()
+        List<PostTag> postTags = createPostTags(tagIds, postId, postType);
+        postTagRepository.saveAll(postTags);
+        return extractTagNames(postTags);
+    }
+    private List<PostTag> createPostTags(List<Long> tagIds, Long postId, PostType postType) {
+        return tagIds.stream()
                 .map(this::getTagById)
                 .map(tag -> PostTag.builder()
-                            .postId(postId)
-                            .postType(postType)
-                            .tag(tag)
-                            .build())
-                .toList();
-
-        postTagRepository.saveAll(postTags);
-        return postTags.stream()
-                .map(postTag -> postTag.getTag().getName())
+                        .postId(postId)
+                        .postType(postType)
+                        .tag(tag)
+                        .build())
                 .toList();
     }
 
-    public List<String> getTagNames(Long postId, PostType postType) {
-        return postTagRepository.findAllByPostIdAndPostType(postId, postType)
-                .stream()
-                .map(postTag -> postTag.getTag().getName())
+                .toList();
+    }
+
                 .toList();
     }
 
@@ -49,4 +48,11 @@ public class PostTagService {
         return tagRepository.findById(tagId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_TAG));
     }
+
+    private List<String> extractTagNames(List<PostTag> postTags) {
+        return postTags.stream()
+                .map(postTag -> postTag.getTag().getName())
+                .toList();
+    }
+
 }
