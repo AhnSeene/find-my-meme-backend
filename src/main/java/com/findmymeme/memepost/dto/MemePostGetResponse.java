@@ -22,6 +22,7 @@ public class MemePostGetResponse {
     private Long likeCount;
     private Long viewCount;
     private String username;
+    private String userProfileImageUrl;
     private boolean owner;
     private Boolean isLiked;
     private LocalDateTime createdAt;
@@ -31,7 +32,7 @@ public class MemePostGetResponse {
     @Builder
     public MemePostGetResponse(Long id, String imageUrl, String extension,
                                int height, int weight, Long size, String originalFilename,
-                               Long likeCount, Long viewCount, String username, boolean isLiked,
+                               Long likeCount, Long viewCount, String username, String userProfileImageUrl, boolean isLiked,
                                LocalDateTime createdAt, LocalDateTime updatedAt, List<String> tags) {
         this.id = id;
         this.imageUrl = imageUrl;
@@ -43,6 +44,7 @@ public class MemePostGetResponse {
         this.likeCount = likeCount;
         this.viewCount = viewCount;
         this.username = username;
+        this.userProfileImageUrl = userProfileImageUrl;
         this.isLiked = isLiked;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -61,6 +63,7 @@ public class MemePostGetResponse {
         this.likeCount = memePost.getLikeCount();
         this.viewCount = memePost.getViewCount();
         this.username = memePost.getUser().getUsername();
+        this.userProfileImageUrl = memePost.getUser().getProfileImageUrl();
         this.owner = isOwner;
         this.isLiked = isLiked;
         this.createdAt = memePost.getCreatedAt();
