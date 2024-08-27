@@ -144,5 +144,14 @@ public class MemePostController {
         return ResponseUtil.success(responses, SuccessCode.MEME_POST_LIST);
     }
 
+    @GetMapping("/ranks/period")
+    public ResponseEntity<ApiResponse<List<MemePostSummaryResponse>>> getRankedPostsWithPeriod(
+            @RequestParam(name = "period") Period period,
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size
+    ) {
+        List<MemePostSummaryResponse> responses = memePostService.getRankedPostsWithPeriod(page, size, period);
+        return ResponseUtil.success(responses, SuccessCode.MEME_POST_LIST);
+    }
 
 }
