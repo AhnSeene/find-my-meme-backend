@@ -161,6 +161,16 @@ public class MemePostService {
                 .toList();
     }
 
+    public List<MemePostSummaryResponse> getRankedPostsWithPeriod(int page, int size, Period period) {
+        LocalDateTime startDateTime = period.getStartDateTime();
+        LocalDateTime endDateTime = period.getEndDateTime();
+        Pageable pageable = PageRequest.of(page, size);
+        List<MemePost> memePosts = memePostRepository.findTopByLikeCountWithinPeriod(startDateTime, endDateTime, pageable);;
+        return memePosts.stream()
+                .map(post -> new MemePostSummaryResponse(post, false, getTagNames(post.getId())))
+                .toList();
+    }
+
     private MemePost createMemePost(String permanentImageUrl, User user, FileMeta fileMeta) {
         return MemePost.builder()
                 .imageUrl(permanentImageUrl)
