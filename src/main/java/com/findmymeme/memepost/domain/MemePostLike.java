@@ -1,5 +1,6 @@
 package com.findmymeme.memepost.domain;
 
+import com.findmymeme.BaseEntity;
 import com.findmymeme.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -13,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Table(
         uniqueConstraints = @UniqueConstraint(columnNames = {"meme_post_id", "user_id"})
 )
-public class MemePostLike {
+public class MemePostLike extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

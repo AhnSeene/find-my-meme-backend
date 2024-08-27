@@ -22,6 +22,7 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.findmymeme.tag.domain.PostType.*;
@@ -146,6 +147,30 @@ public class MemePostService {
                 .build();
     }
 
+    public List<MemePostSummaryResponse> getRankedPostsAllPeriod(int page, int size, Sort sort) {
+        Pageable pageable = PageRequest.of(page, size);
+        List<MemePost> memePosts = null;
+        if (sort.equals(Sort.LIKE)) {
+            memePosts = memePostRepository.findTopByLikeCount(pageable);
+        }
+        if (sort.equals(Sort.VIEW)) {
+            memePosts = memePostRepository.findTopByViewCount(pageable);
+        }
+        return memePosts.stream()
+                .map(post -> new MemePostSummaryResponse(post, false, getTagNames(post.getId())))
+                .toList();
+    }
+
+    public List<MemePostSummaryResponse> getRankedPostsWithPeriod(int page, int size, Period period) {
+        LocalDateTime startDateTime = period.getStartDateTime();
+        LocalDateTime endDateTime = period.getEndDateTime();
+        Pageable pageable = PageRequest.of(page, size);
+        List<MemePost> memePosts = memePostRepository.findTopByLikeCountWithinPeriod(startDateTime, endDateTime, pageable);;
+        return memePosts.stream()
+                .map(post -> new MemePostSummaryResponse(post, false, getTagNames(post.getId())))
+                .toList();
+    }
+
     private MemePost createMemePost(String permanentImageUrl, User user, FileMeta fileMeta) {
         return MemePost.builder()
                 .imageUrl(permanentImageUrl)
@@ -190,5 +215,6 @@ public class MemePostService {
             throw new FindMyMemeException(ErrorCode.FORBIDDEN);
         }
     }
+
 
 }
