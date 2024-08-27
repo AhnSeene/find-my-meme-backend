@@ -53,6 +53,9 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long> {
     @Query("SELECT m FROM MemePost m WHERE m.deletedAt IS NULL ORDER BY m.likeCount DESC")
     List<MemePost> findTopByLikeCount(Pageable pageable);
 
+    @Query("SELECT mpl.memePost FROM MemePostLike mpl WHERE mpl.createdAt BETWEEN :startOfWeek AND :endOfWeek GROUP BY mpl.memePost ORDER BY COUNT(mpl.id) DESC")
+    List<MemePost> findTopByLikeCountWithinPeriod(@Param("startOfWeek") LocalDateTime startOfWeek, @Param("endOfWeek") LocalDateTime endOfWeek, Pageable pageable);
+
 //    @Query("select new com.findmymeme.memepost.dto.MemePostSummaryResponse(" +
 //            "mp.id, mp.imageUrl, mp.likeCount, mp.viewCount, " +
 //            "pt.tag.name) " +
