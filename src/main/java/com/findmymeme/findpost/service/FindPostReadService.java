@@ -8,6 +8,7 @@ import com.findmymeme.findpost.dto.FindPostGetResponse;
 import com.findmymeme.findpost.dto.FindPostSummaryResponse;
 import com.findmymeme.findpost.dto.MyFindPostSummaryResponse;
 import com.findmymeme.findpost.repository.FindPostRepository;
+import com.findmymeme.tag.domain.Tag;
 import com.findmymeme.tag.service.PostTagService;
 import com.findmymeme.user.domain.User;
 import com.findmymeme.user.repository.UserRepository;
@@ -40,10 +41,10 @@ public class FindPostReadService {
         FindPost findPost = findPostRepository.findWithUserById(findPostId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST));
 
-        List<String> tagNames = postTagService.getTagNames(findPost.getId(), FIND_POST);
+        List<Tag> tags = postTagService.getTags(findPost.getId(), FIND_POST);
 
         findPost.incrementViewCount();
-        return new FindPostGetResponse(findPost, findPost.isOwner(user), tagNames);
+        return new FindPostGetResponse(findPost, findPost.isOwner(user), tags);
     }
 
     public Page<FindPostSummaryResponse> getFindPosts(int page, int size) {
