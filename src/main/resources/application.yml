@@ -39,3 +39,15 @@ server:
 
 default:
   profile-image-url: /images/6372d43a-81e8-4464-9998-4a1c1cd1267e.jpg
+cloud:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+    region:
+      static: ${AWS_REGION}
+      auto: false
+    stack:
+      auto: false
+    s3:
+      bucket: ${AWS_BUCKET}
