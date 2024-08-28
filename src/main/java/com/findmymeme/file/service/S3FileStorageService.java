@@ -44,6 +44,16 @@ public class S3FileStorageService implements FileStorageService {
         return storeFile(file, permanentDir);
     }
 
+    @Override
+    public void deleteTempFile(String tempUrl) {
+        deleteFile(tempUrl);
+    }
+
+    @Override
+    public void deletePermanentFile(String permanentUrl) {
+        deleteFile(permanentUrl);
+    }
+
     private String storeFile(MultipartFile file, String dir) {
         String key = generateKey(dir, generateStoredFilename(file.getOriginalFilename()));
         try {
@@ -58,6 +68,11 @@ public class S3FileStorageService implements FileStorageService {
         } catch (AmazonS3Exception | IOException e) {
             throw new FileStorageException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private void deleteFile(String tempUrl) {
+        DeleteObjectRequest deleteObjectRequest = new DeleteObjectRequest(this.bucket, tempUrl);
+        amazonS3.deleteObject(deleteObjectRequest);
     }
 
     private String generateKey(String dir, String filename) {
