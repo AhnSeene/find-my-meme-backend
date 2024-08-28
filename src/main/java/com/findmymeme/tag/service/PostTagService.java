@@ -41,6 +41,10 @@ public class PostTagService {
         return extractTagNames(postTagRepository.findAllByPostIdAndPostType(postId, postType));
     }
 
+    public List<Tag> getTags(Long postId, PostType postType) {
+        return extractTags(postTagRepository.findAllByPostIdAndPostType(postId, postType));
+    }
+
     public List<PostTag> getPostTags(Long postId, PostType postType) {
         return postTagRepository.findAllByPostIdAndPostType(postId, postType);
     }
@@ -86,6 +90,12 @@ public class PostTagService {
     private List<String> extractTagNames(List<PostTag> postTags) {
         return postTags.stream()
                 .map(postTag -> postTag.getTag().getName())
+                .toList();
+    }
+
+    private List<Tag> extractTags(List<PostTag> postTags) {
+        return postTags.stream()
+                .map(postTag -> postTag.getTag())
                 .toList();
     }
 
