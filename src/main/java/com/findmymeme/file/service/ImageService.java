@@ -7,9 +7,7 @@ import com.findmymeme.file.repository.FileMetaRepository;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +17,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 @Transactional
 public class ImageService {
@@ -29,19 +26,19 @@ public class ImageService {
 
     private final FileMetaRepository fileMetaRepository;
     private final FileStorageService fileStorageService;
-    private final String serverBaseUrl;
+    private final String fileBaseUrl;
 
     public ImageService(FileStorageService fileStorageService,
                         FileMetaRepository fileMetaRepository,
-                        @Value("${server.base-url}") String serverBaseUrl) {
+                        @Value("${file.base-url}") String fileBaseUrl) {
         this.fileStorageService = fileStorageService;
         this.fileMetaRepository = fileMetaRepository;
-        this.serverBaseUrl = serverBaseUrl;
+        this.fileBaseUrl = fileBaseUrl;
     }
 
     public List<ImageMeta> convertAndMoveImageUrls(Document doc) {
         List<ImageMeta> imageMetas = new ArrayList<>();
-        doc.select("img").forEach(img -> {
+        doc.select(IMG_TAG).forEach(img -> {
             String tempUrl = convertToRelativeUrl(img.attr(IMG_SRC));
             String permanentUrl = fileStorageService.moveFileToPermanent(tempUrl);
             img.attr(IMG_SRC, convertToAbsoluteUrl(permanentUrl));
@@ -63,19 +60,16 @@ public class ImageService {
     public List<ImageMeta> handleAddedImages(Document doc, Set<String> newImageUrls, Set<String> existingImageUrls) {
         Set<String> addedImageUrls = getAddedImageUrls(newImageUrls, existingImageUrls);
         replaceImageUrls(doc, addedImageUrls);
-        log.info("add ={}", addedImageUrls);
         return getImageMetasFromUrls(addedImageUrls);
     }
 
     public Set<String> handleDeletedImages(Set<String> newImageUrls, Set<String> existingImageUrls) {
         Set<String> deletedImageUrls = getDeletedImageUrls(newImageUrls, existingImageUrls);
         deleteImages(deletedImageUrls);
-        log.info("delete ={}", deletedImageUrls);
         return deletedImageUrls;
     }
 
     private List<ImageMeta> getImageMetasFromUrls(Set<String> imageUrls) {
-        log.info("getMete ={}", imageUrls);
         return imageUrls.stream()
                 .map(this::findFileMetaByFileUrl)
                 .map(fileMeta -> new ImageMeta(fileMeta, fileMeta.getFileUrl()))
@@ -115,11 +109,11 @@ public class ImageService {
     }
 
     private String convertToAbsoluteUrl(String permanentUrl) {
-        return serverBaseUrl + permanentUrl;
+        return fileBaseUrl + permanentUrl;
     }
 
     private String convertToRelativeUrl(String absoluteTempUrl) {
-        return absoluteTempUrl.replace(serverBaseUrl, "");
+        return absoluteTempUrl.replace(fileBaseUrl, "");
     }
 
     @Getter
