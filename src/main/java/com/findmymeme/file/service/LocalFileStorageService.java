@@ -5,7 +5,6 @@ import com.findmymeme.file.exception.FileStorageException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -13,8 +12,7 @@ import java.nio.file.*;
 import java.util.function.Function;
 
 @Slf4j
-@Service
-@Transactional
+//@Service
 public class LocalFileStorageService implements FileStorageService {
 
     private static final String URL_FORMAT = "%s/%s";
@@ -49,6 +47,9 @@ public class LocalFileStorageService implements FileStorageService {
         Path tempFilePath = getTempFilePath(savedFilename);
         Path permanentFilePath = getPermanentFilePath(savedFilename);
         try {
+            log.info(savedFilename);
+            log.info(tempFilePath.toString());
+            log.info(permanentFilePath.toString());
             Files.copy(tempFilePath, permanentFilePath, StandardCopyOption.REPLACE_EXISTING);
         } catch (NoSuchFileException e) {
             throw new FileStorageException(ErrorCode.NOT_FOUND_FILE);

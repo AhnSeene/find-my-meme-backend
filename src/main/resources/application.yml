@@ -1,15 +1,17 @@
 spring:
   sql:
     init:
-      mode: always
+      mode: never
       encoding: UTF-8
+  config:
+    import: optional:file:.env[.properties]
   datasource:
-    url: jdbc:mysql://localhost:3306/findmymeme_db
-    username: meme
-    password: 1234
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         format_sql: true
@@ -26,16 +28,28 @@ logging:
 
 jwt:
   expire-time: 36000
-  secret-key: lwjglkwjgkjwkejljwoaiwoitghaorhgndsfinhfoiensfhpkepkhkhkgkgkg
+  secret-key: ${JWT_SECRET_KEY}
   issuer: find-my-meme
 
 file:
   upload:
-    temp-dir: /temps
-    image-dir: /images
-  base-dir: C:/Users/ACY/filestore
-server:
-  base-url: http://localhost:8080
+    temp-dir: temps
+    image-dir: images
+  base-dir: ${FILE_BASEDIR}
+  base-url: ${FILE_BASEURL}
 
 default:
-  profile-image-url: /images/6372d43a-81e8-4464-9998-4a1c1cd1267e.jpg
+  profile-image-url: ${DEFAULT_PROFILE_URL}
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+    region:
+      static: ${AWS_REGION}
+      auto: false
+    stack:
+      auto: false
+    s3:
+      bucket: ${AWS_BUCKET}
