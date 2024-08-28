@@ -72,7 +72,7 @@ public class ImageService {
     private List<ImageMeta> getImageMetasFromUrls(Set<String> imageUrls) {
         return imageUrls.stream()
                 .map(this::findFileMetaByFileUrl)
-                .map(fileMeta -> new ImageMeta(fileMeta, fileMeta.getFileUrl()))
+                .map(fileMeta -> new ImageMeta(fileMeta, fileStorageService.convertToPermanentUrl(fileMeta.getFileUrl())))
                 .collect(Collectors.toList());
     }
 
