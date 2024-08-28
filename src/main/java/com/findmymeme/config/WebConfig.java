@@ -23,10 +23,10 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/temps/**")
-                .addResourceLocations("file:" + baseDir + tempDir + "/");
+                .addResourceLocations("file:" + baseDir + "/" + tempDir + "/");
 
         registry.addResourceHandler("/images/**")
-                .addResourceLocations("file:" + baseDir + imageDir + "/");
+                .addResourceLocations("file:" + baseDir + "/" + imageDir + "/");
     }
 
     @Bean
