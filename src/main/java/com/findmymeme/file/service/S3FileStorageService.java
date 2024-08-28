@@ -54,6 +54,18 @@ public class S3FileStorageService implements FileStorageService {
         deleteFile(permanentUrl);
     }
 
+    @Override
+    public String moveFileToPermanent(String tempFileUrl) {
+        String orgKey = tempDir + URL_SLASH + getFilename(tempFileUrl);
+        String copyKey = permanentDir + URL_SLASH + getFilename(tempFileUrl);
+
+        CopyObjectRequest copyObjectRequest = new CopyObjectRequest(this.bucket, orgKey, this.bucket, copyKey);
+        copyObjectRequest.setCannedAccessControlList(CannedAccessControlList.PublicRead);
+        amazonS3.copyObject(copyObjectRequest);
+
+        return copyKey;
+    }
+
     private String storeFile(MultipartFile file, String dir) {
         String key = generateKey(dir, generateStoredFilename(file.getOriginalFilename()));
         try {
