@@ -66,6 +66,16 @@ public class S3FileStorageService implements FileStorageService {
         return copyKey;
     }
 
+    @Override
+    public String convertToPermanentUrl(String permanentUrl) {
+        return generateKey(permanentDir, getFilename(permanentUrl));
+    }
+
+    @Override
+    public String convertToTempUrl(String tempUrl) {
+        return generateKey(tempDir, getFilename(tempUrl));
+    }
+
     private String storeFile(MultipartFile file, String dir) {
         String key = generateKey(dir, generateStoredFilename(file.getOriginalFilename()));
         try {
