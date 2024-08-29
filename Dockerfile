@@ -1,7 +1,6 @@
 FROM gradle:7.6-jdk17 AS build
 WORKDIR /app
 COPY gradle /app/gradle
-COPY gradle.properties /app/
 COPY settings.gradle /app/
 COPY build.gradle /app/
 COPY src /app/src
