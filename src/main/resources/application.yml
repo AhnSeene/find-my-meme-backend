@@ -3,8 +3,6 @@ spring:
     init:
       mode: never
       encoding: UTF-8
-  config:
-    import: optional:file:.env[.properties]
   datasource:
     url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
     username: ${DB_USERNAME}
