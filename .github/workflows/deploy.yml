@@ -2,7 +2,7 @@ name: Deploy to EC2
 
 on:
   workflow_run:
-    workflows: ["Build and Push Docker Image"]
+    workflows: [ "Build and Push Docker Image" ]
     types:
       - completed
 
@@ -33,15 +33,23 @@ jobs:
           echo "DEFAULT_PROFILE_URL=${{ secrets.DEFAULT_PROFILE_URL }}" >> .env
           echo "REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }}" >> .env
           echo "REACT_APP_FILE_BASEURL=${{ secrets.REACT_APP_FILE_BASEURL }}" >> .env
-      
+
 
       - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+          echo "${{ secrets.EC2_SSH_KEY }}" > /tmp/ec2_key.pem
+          chmod 600 /tmp/ec2_key.pem
+          ssh -o StrictHostKeyChecking=no -i /tmp/ec2_key.pem ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
             cd /home/ubuntu/
             docker pull ${{ secrets.DOCKER_USERNAME }}/find-my-meme-frontend:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/find-my-meme-backend:latest
             docker-compose down
             docker-compose up -d --env-file .env
-            rm .env
           EOF
+
+      - name: Clean up
+        run: |
+            rm .env
+            rm /tmp/ec2_key.pem
+
+      
