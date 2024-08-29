@@ -1,14 +1,15 @@
 spring:
   sql:
     init:
-      mode: always
+      mode: never
+      encoding: UTF-8
   datasource:
     url: jdbc:h2:mem:testdb
     username: meme
     password: 1234
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: create
     properties:
       hibernate:
         format_sql: true
@@ -18,15 +19,37 @@ spring:
   messages:
     basename: messages
     encoding: UTF-8
+  config:
+    import: optional:file:.env[.properties]
 
 logging:
   level:
     org.hibernate.SQL: debug
+
+jwt:
+  expire-time: 36000
+  secret-key: ${JWT_SECRET_KEY}
+  issuer: find-my-meme
+
 file:
   upload:
-    temp-dir: /temps
-    image-dir: /images
-  base-dir: C:/Users/ACY/testfilestore
-server:
-  base-url: http://localhost:8080
+    temp-dir: temps
+    image-dir: images
+  base-dir: ${FILE_BASEDIR}
+  base-url: ${FILE_BASEURL}
 
+default:
+  profile-image-url: ${DEFAULT_PROFILE_URL}
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+    region:
+      static: ${AWS_REGION}
+      auto: false
+    stack:
+      auto: false
+    s3:
+      bucket: ${AWS_BUCKET}
