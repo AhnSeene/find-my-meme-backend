@@ -4,7 +4,6 @@ COPY gradle /app/gradle
 COPY settings.gradle /app/
 COPY build.gradle /app/
 COPY src /app/src
-RUN gradle build --no-daemon
 
 ARG DB_HOST
 ARG DB_PORT
@@ -33,6 +32,8 @@ ENV AWS_BUCKET=${AWS_BUCKET}
 ENV FILE_BASEURL=${FILE_BASEURL}
 ENV FILE_BASEDIR=${FILE_BASEDIR}
 ENV DEFAULT_PROFILE_URL=${DEFAULT_PROFILE_URL}
+
+RUN gradle build --no-daemon
 
 FROM openjdk:17-jdk
 COPY --from=build --chown=gradle:gradle /app/build/libs/find-my-meme-0.0.1-SNAPSHOT.jar /usr/app/find-my-meme-0.0.1-SNAPSHOT.jar
