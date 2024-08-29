@@ -1,0 +1,47 @@
+name: Deploy to EC2
+
+on:
+  workflow_run:
+    workflows: ["Build and Push Docker Image"]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Create .env file
+        run: |
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> .env
+          echo "AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}" >> .env
+          echo "AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}" >> .env
+          echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env
+          echo "AWS_BUCKET=${{ secrets.AWS_BUCKET }}" >> .env
+          echo "FILE_BASEURL=${{ secrets.FILE_BASEURL }}" >> .env
+          echo "FILE_BASEDIR=${{ secrets.FILE_BASEDIR }}" >> .env
+          echo "DEFAULT_PROFILE_URL=${{ secrets.DEFAULT_PROFILE_URL }}" >> .env
+          echo "REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }}" >> .env
+          echo "REACT_APP_FILE_BASEURL=${{ secrets.REACT_APP_FILE_BASEURL }}" >> .env
+      
+
+      - name: Deploy to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+            cd /home/ubuntu/
+            docker pull ${{ secrets.DOCKER_USERNAME }}/find-my-meme-frontend:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/find-my-meme-backend:latest
+            docker-compose down
+            docker-compose up -d --env-file .env
+            rm .env
+          EOF
