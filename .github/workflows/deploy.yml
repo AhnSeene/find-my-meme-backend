@@ -50,5 +50,3 @@ jobs:
             
             docker-compose down
             docker-compose up -d
-            
-            rm .env
