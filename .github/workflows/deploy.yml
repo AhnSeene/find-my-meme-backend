@@ -30,22 +30,25 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/find-my-meme-backend:latest
             
             echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" > .env
-            docker-compose down
             
-            DB_HOST=${{ secrets.DB_HOST }} \
-            DB_PORT=${{ secrets.DB_PORT }} \
-            DB_NAME=${{ secrets.DB_NAME }} \
-            DB_USERNAME=${{ secrets.DB_USERNAME }} \
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
-            AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }} \
-            AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }} \
-            AWS_REGION=${{ secrets.AWS_REGION }} \
-            AWS_BUCKET=${{ secrets.AWS_BUCKET }} \
-            FILE_BASEURL=${{ secrets.FILE_BASEURL }} \
-            FILE_BASEDIR=${{ secrets.FILE_BASEDIR }} \
-            DEFAULT_PROFILE_URL=${{ secrets.DEFAULT_PROFILE_URL }} \
-            REACT_APP_FILE_BASEURL=${{ secrets.REACT_APP_FILE_BASEURL }} \
-            REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }} \
-          
+            echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" > .env
+            echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+            echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+            echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+            echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
+            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+            echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> .env
+            echo "AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}" >> .env
+            echo "AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}" >> .env
+            echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env
+            echo "AWS_BUCKET=${{ secrets.AWS_BUCKET }}" >> .env
+            echo "FILE_BASEURL=${{ secrets.FILE_BASEURL }}" >> .env
+            echo "FILE_BASEDIR=${{ secrets.FILE_BASEDIR }}" >> .env
+            echo "DEFAULT_PROFILE_URL=${{ secrets.DEFAULT_PROFILE_URL }}" >> .env
+            echo "REACT_APP_FILE_BASEURL=${{ secrets.REACT_APP_FILE_BASEURL }}" >> .env
+            echo "REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }}" >> .env
+            
+            docker-compose down
             docker-compose up -d
+            
+            rm .env
