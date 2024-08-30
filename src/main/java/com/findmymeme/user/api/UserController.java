@@ -47,8 +47,8 @@ public class UserController {
     @PostMapping("/check-username")
     public ResponseEntity<ApiResponse<Void>> checkUsername(@Valid @RequestBody UsernameCheckRequest request) {
         if (userService.existsUsername(request)) {
-            return ResponseUtil.success(null, SuccessCode.USER_DUPLICATE_VALIDATION);
+            return ResponseUtil.error(null, ErrorCode.ALREADY_EXIST_USERNAME);
         }
-        return ResponseUtil.error(null, ErrorCode.ALREADY_EXIST_USERNAME);
+        return ResponseUtil.success(null, SuccessCode.USER_DUPLICATE_VALIDATION);
     }
 }
