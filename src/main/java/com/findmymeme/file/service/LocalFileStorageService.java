@@ -4,6 +4,7 @@ import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.file.exception.FileStorageException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -12,7 +13,8 @@ import java.nio.file.*;
 import java.util.function.Function;
 
 @Slf4j
-//@Service
+@Service
+@Profile("local")
 public class LocalFileStorageService implements FileStorageService {
 
     private static final String URL_FORMAT = "%s/%s";
