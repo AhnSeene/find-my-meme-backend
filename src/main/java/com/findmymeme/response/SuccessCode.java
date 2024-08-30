@@ -1,5 +1,6 @@
 package com.findmymeme.response;
 
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 import java.util.ResourceBundle;
@@ -9,6 +10,7 @@ public enum SuccessCode {
     LOGIN(HttpStatus.OK),
     USER_INFO(HttpStatus.OK),
     USER_PROFILE_IMAGE_UPDATE(HttpStatus.OK),
+    USER_DUPLICATE_VALIDATION(HttpStatus.OK),
 
     FILE_UPLOAD(HttpStatus.OK),
 
