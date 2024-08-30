@@ -22,12 +22,12 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
+            
+            cd /home/ubuntu/
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
             
             docker pull ${{ secrets.DOCKER_USERNAME }}/find-my-meme-frontend:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/find-my-meme-backend:latest
-            
-            cd /home/ubuntu/
             
             docker-compose down
             
@@ -44,4 +44,8 @@ jobs:
             FILE_BASEURL=${{ secrets.FILE_BASEURL }} \
             FILE_BASEDIR=${{ secrets.FILE_BASEDIR }} \
             DEFAULT_PROFILE_URL=${{ secrets.DEFAULT_PROFILE_URL }} \
+            REACT_APP_FILE_BASEURL=${{ secrets.REACT_APP_FILE_BASEURL }} \
+            REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }} \
+            DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }} \
+          
             docker-compose up -d
