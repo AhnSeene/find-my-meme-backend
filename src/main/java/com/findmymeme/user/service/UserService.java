@@ -58,6 +58,10 @@ public class UserService {
         return new UserProfileImageResponse(profileImageUrl);
     }
 
+    public boolean existsUsername(UsernameCheckRequest request) {
+        return userRepository.existsByUsername(request.getUsername());
+    }
+
     private User getUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
