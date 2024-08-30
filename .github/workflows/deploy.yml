@@ -11,45 +11,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.5.3
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: SSH into EC2 and pull images
+        uses: appleboy/ssh-action@latest
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Create .env file
-        run: |
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
-          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
-          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
-          echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-          echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> .env
-          echo "AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}" >> .env
-          echo "AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}" >> .env
-          echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env
-          echo "AWS_BUCKET=${{ secrets.AWS_BUCKET }}" >> .env
-          echo "FILE_BASEURL=${{ secrets.FILE_BASEURL }}" >> .env
-          echo "FILE_BASEDIR=${{ secrets.FILE_BASEDIR }}" >> .env
-          echo "DEFAULT_PROFILE_URL=${{ secrets.DEFAULT_PROFILE_URL }}" >> .env
-          echo "REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }}" >> .env
-          echo "REACT_APP_FILE_BASEURL=${{ secrets.REACT_APP_FILE_BASEURL }}" >> .env
-
-
-      - name: Deploy to EC2
-        run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > /tmp/ec2_key.pem
-          chmod 600 /tmp/ec2_key.pem
-          ssh -o StrictHostKeyChecking=no -i /tmp/ec2_key.pem ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
-            cd /home/ubuntu/
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            # Pull the latest images on EC2
             docker pull ${{ secrets.DOCKER_USERNAME }}/find-my-meme-frontend:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/find-my-meme-backend:latest
+            
+            # Navigate to the directory containing docker-compose.yml
+            cd /home/ubuntu/
+            
+            # Stop and remove existing containers
             docker-compose down
-            docker-compose up -d --env-file .env
-          EOF
-
-      - name: Clean up
-        run: |
-            rm .env
-            rm /tmp/ec2_key.pem
-
-      
+            
+            # Start new containers with the updated images
+            DB_HOST=${{ secrets.DB_HOST }} \
+            DB_PORT=${{ secrets.DB_PORT }} \
+            DB_NAME=${{ secrets.DB_NAME }} \
+            DB_USERNAME=${{ secrets.DB_USERNAME }} \
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
+            AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }} \
+            AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }} \
+            AWS_REGION=${{ secrets.AWS_REGION }} \
+            AWS_BUCKET=${{ secrets.AWS_BUCKET }} \
+            FILE_BASEURL=${{ secrets.FILE_BASEURL }} \
+            FILE_BASEDIR=${{ secrets.FILE_BASEDIR }} \
+            DEFAULT_PROFILE_URL=${{ secrets.DEFAULT_PROFILE_URL }} \
+            docker-compose up -d
