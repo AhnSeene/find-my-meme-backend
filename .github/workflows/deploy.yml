@@ -29,6 +29,7 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/find-my-meme-frontend:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/find-my-meme-backend:latest
             
+            echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" > .env
             docker-compose down
             
             DB_HOST=${{ secrets.DB_HOST }} \
@@ -46,6 +47,5 @@ jobs:
             DEFAULT_PROFILE_URL=${{ secrets.DEFAULT_PROFILE_URL }} \
             REACT_APP_FILE_BASEURL=${{ secrets.REACT_APP_FILE_BASEURL }} \
             REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }} \
-            DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }} \
           
             docker-compose up -d
