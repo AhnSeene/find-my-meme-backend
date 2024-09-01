@@ -1,7 +1,7 @@
 spring:
   sql:
     init:
-      mode: never
+      mode: always
       encoding: UTF-8
   datasource:
     url: jdbc:mysql://localhost:3306/findmymeme_db
@@ -39,3 +39,6 @@ file:
 
 default:
   profile-image-url: images/6372d43a-81e8-4464-9998-4a1c1cd1267e.jpg
+
+allowed:
+  origins: http://localhost:3000
