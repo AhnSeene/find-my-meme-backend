@@ -54,5 +54,5 @@ cloud:
     s3:
       bucket: ${AWS_BUCKET}
 
-allowd:
+allowed:
   origins: "https://findmymeme.site,https://www.findmymeme.site"
