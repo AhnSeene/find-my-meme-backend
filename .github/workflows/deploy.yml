@@ -28,9 +28,7 @@ jobs:
             
             docker pull ${{ secrets.DOCKER_USERNAME }}/find-my-meme-frontend:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/find-my-meme-backend:latest
-            
-            echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" > .env
-            
+          
             echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" > .env
             echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
             echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env

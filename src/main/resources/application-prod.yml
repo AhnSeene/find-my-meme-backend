@@ -1,7 +1,7 @@
 spring:
   sql:
     init:
-      mode: never
+      mode: always
       encoding: UTF-8
   datasource:
     url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
@@ -53,3 +53,6 @@ cloud:
       auto: false
     s3:
       bucket: ${AWS_BUCKET}
+
+allowd:
+  origins: "https://findmymeme.site,https://www.findmymeme.site"
