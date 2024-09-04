@@ -42,6 +42,7 @@ public class UserService {
         return LoginResponse.builder()
                 .accessToken(jwtTokenProvider.generateToken(new CustomUserDetails(user), user.getId()))
                 .username(user.getUsername())
+                .role(user.getRole().name())
                 .build();
     }
 
