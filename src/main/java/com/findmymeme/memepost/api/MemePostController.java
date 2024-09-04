@@ -9,7 +9,10 @@ import com.findmymeme.response.ResponseUtil;
 import com.findmymeme.response.SuccessCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Slice;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +24,7 @@ import java.util.List;
 @RequestMapping("/api/v1/meme-posts")
 public class MemePostController {
 
+    private static final String ATTACHMENT_FILENAME_TEMPLATE = "attachment; filename=\"%s\"";
     private final MemePostService memePostService;
     private final MemePostLikeService memePostLikeService;
 
@@ -51,6 +55,17 @@ public class MemePostController {
                 responses,
                 SuccessCode.MEME_POST_GET
         );
+    }
+
+    @GetMapping("/{memePostId}/download")
+    public ResponseEntity<Resource> downloadMemePost(
+            @PathVariable("memePostId") Long memePostId
+    ) {
+        MemePostDownloadDto downloadDto = memePostService.download(memePostId);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, String.format(ATTACHMENT_FILENAME_TEMPLATE, downloadDto.getFilename()))
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(downloadDto.getResource());
     }
 
     @GetMapping
@@ -133,6 +148,7 @@ public class MemePostController {
                 SuccessCode.MEME_POST_AUTHOR_LIST
         );
     }
+
 
     @GetMapping("/ranks/all")
     public ResponseEntity<ApiResponse<List<MemePostSummaryResponse>>> getRankedPostsAllPeriod(

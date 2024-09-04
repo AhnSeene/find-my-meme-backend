@@ -117,6 +117,16 @@ public class MemePostService {
         memePost.softDelete();
     }
 
+    @Transactional
+    public MemePostDownloadDto download(Long memePostId) {
+        MemePost memePost = getMemePostById(memePostId);
+        memePost.incrementDownloadCount();
+        return MemePostDownloadDto.builder()
+                .filename(fileStorageService.getFilename(memePost.getImageUrl()))
+                .resource(fileStorageService.downloadFile(memePost.getImageUrl()))
+                .build();
+    }
+
     public MemePostUserSummaryResponse getMemePostsByAuthorId(int page, int size, String authorName) {
         User author = userRepository.findByUsername(authorName)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
