@@ -5,11 +5,14 @@ import com.findmymeme.config.jwt.JwtAuthFilter;
 import com.findmymeme.config.jwt.JwtAuthenticationEntryPoint;
 import com.findmymeme.config.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
@@ -24,7 +27,7 @@ public class SecurityConfig {
     private final JwtAccessDeniedHandler accessDeniedHandler;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
@@ -43,13 +46,27 @@ public class SecurityConfig {
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers("/api/v1/signup", "/api/v1/login")
                         .permitAll()
-                        .anyRequest()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/find-posts/**",
+                                 "/api/v1/tags",
+                                "/api/v1/meme-posts/**")
                         .permitAll()
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .anyRequest()
+                        .authenticated()
                 );
-
 
         return http.build();
     }
 
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) ->
+                web
+                        .ignoring()
+                        .requestMatchers(
+                                PathRequest.toStaticResources().atCommonLocations()
+                        );
+    }
 
 }
