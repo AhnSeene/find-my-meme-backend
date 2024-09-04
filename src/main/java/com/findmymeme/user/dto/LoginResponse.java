@@ -10,10 +10,12 @@ public class LoginResponse {
 
     private String username;
     private String accessToken;
+    private String role;
 
     @Builder
-    public LoginResponse(String username, String accessToken) {
+    public LoginResponse(String username, String accessToken, String role) {
         this.username = username;
         this.accessToken = accessToken;
+        this.role = role;
     }
 }
