@@ -40,6 +40,9 @@ public class MemePost extends BaseEntity {
     @Column(nullable = false)
     private Long viewCount = 0L;
 
+    @Column(nullable = false)
+    private Long downloadCount = 0L;
+
     private LocalDateTime deletedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -72,6 +75,10 @@ public class MemePost extends BaseEntity {
 
     public void incrementViewCount() {
         this.viewCount++;
+    }
+
+    public void incrementDownloadCount() {
+        this.downloadCount++;
     }
 
     public void softDelete() {
