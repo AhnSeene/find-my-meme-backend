@@ -44,7 +44,9 @@ jobs:
             echo "FILE_BASEDIR=${{ secrets.FILE_BASEDIR }}" >> .env
             echo "DEFAULT_PROFILE_URL=${{ secrets.DEFAULT_PROFILE_URL }}" >> .env
             echo "REACT_APP_FILE_BASEURL=${{ secrets.REACT_APP_FILE_BASEURL }}" >> .env
-            echo "REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }}" >> .env
+            echo "ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}" >> .env
+            echo "ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}" >> .env
+            echo "ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}" >> .env
             
             docker-compose down
             docker-compose up -d
