@@ -7,6 +7,8 @@ import com.findmymeme.file.exception.FileStorageException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -69,6 +71,12 @@ public class S3FileStorageService implements FileStorageService {
     }
 
     @Override
+    public Resource downloadFile(String fileUrl) {
+        GetObjectRequest getObjectRequest = new GetObjectRequest(bucket, fileUrl);
+        return new InputStreamResource(amazonS3.getObject(getObjectRequest).getObjectContent());
+    }
+
+    @Override
     public String convertToPermanentUrl(String permanentUrl) {
         return generateKey(permanentDir, getFilename(permanentUrl));
     }
@@ -101,10 +109,6 @@ public class S3FileStorageService implements FileStorageService {
 
     private String generateKey(String dir, String filename) {
         return String.format(URL_FORMAT, dir, filename);
-    }
-
-    private String getFilename(String url) {
-        return url.substring(url.lastIndexOf(URL_SLASH) + 1);
     }
 
 }
