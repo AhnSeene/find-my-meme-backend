@@ -35,6 +35,7 @@ public enum SuccessCode {
     MEME_POST_GET(HttpStatus.OK),
     MEME_POST_DOWNLOAD(HttpStatus.OK),
     MEME_POST_LIST(HttpStatus.OK),
+    MEME_POST_SEARCH(HttpStatus.OK),
     MEME_POST_RECOMMENDED_LIST(HttpStatus.OK),
     MEME_POST_AUTHOR_LIST(HttpStatus.OK),
     MEME_POST_LIKE(HttpStatus.OK),
