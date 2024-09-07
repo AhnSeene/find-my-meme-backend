@@ -1,6 +1,7 @@
 package com.findmymeme.common;
 
 import com.findmymeme.user.dto.SignupRequest;
+import com.findmymeme.user.dto.UsernameCheckRequest;
 import com.findmymeme.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +24,9 @@ public class AdminUserInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        signupAdminUser();
+        if (!adminUserExists(username)) {
+            signupAdminUser();
+        }
     }
 
     private void signupAdminUser() {
@@ -32,5 +35,9 @@ public class AdminUserInitializer implements CommandLineRunner {
                 .password(password)
                 .email(email)
                 .build());
+    }
+
+    private boolean adminUserExists(String username) {
+        return userService.existsUsername(new UsernameCheckRequest(username));
     }
 }
