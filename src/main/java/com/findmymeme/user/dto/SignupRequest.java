@@ -46,4 +46,14 @@ public class SignupRequest {
                 .profileImageUrl(defaultProfileImageUrl)
                 .build();
     }
+
+    public static User toEntity(final SignupRequest signupRequest, final Role role, final String encodedPassword, String defaultProfileImageUrl) {
+        return User.builder()
+                .username(signupRequest.getUsername())
+                .password(encodedPassword)
+                .email(signupRequest.getEmail())
+                .role(role)
+                .profileImageUrl(defaultProfileImageUrl)
+                .build();
+    }
 }

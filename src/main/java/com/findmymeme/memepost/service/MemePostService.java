@@ -91,6 +91,20 @@ public class MemePostService {
         return new SliceImpl<>(responses, pageable, memePosts.hasNext());
     }
 
+    public Slice<MemePostSummaryResponse> searchMemePosts(int page, int size, MemePostSearchCond searchCond) {
+        Pageable pageable = PageRequest.of(page, size);
+        Slice<MemePostSummaryResponse> responses = memePostRepository.searchByCond(pageable, searchCond);
+        responses.forEach(response -> response.setTags(getTagNames(response.getId())));
+        return responses;
+    }
+
+    public Slice<MemePostSummaryResponse> searchMemePosts(int page, int size, Long userId, MemePostSearchCond searchCond) {
+        Pageable pageable = PageRequest.of(page, size);
+        Slice<MemePostSummaryResponse> responses = memePostRepository.searchByCondWithMemePostLike(pageable, searchCond, userId);
+        responses.forEach(response -> response.setTags(getTagNames(response.getId())));
+        return responses;
+    }
+
     public List<MemePostSummaryResponse> getRecommendedPosts(Long memePostId) {
         MemePost memePost = getMemePostById(memePostId);
 
@@ -225,6 +239,5 @@ public class MemePostService {
             throw new FindMyMemeException(ErrorCode.FORBIDDEN);
         }
     }
-
 
 }

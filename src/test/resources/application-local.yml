@@ -41,3 +41,8 @@ default:
 
 allowed:
   origins: http://localhost:3000
+
+admin:
+  username: adminuser8
+  password: adminuser8!
+  email: adminuser@example.com

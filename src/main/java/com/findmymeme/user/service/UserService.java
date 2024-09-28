@@ -5,6 +5,7 @@ import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.exception.FindMyMemeException;
 import com.findmymeme.file.service.FileStorageService;
 import com.findmymeme.user.domain.CustomUserDetails;
+import com.findmymeme.user.domain.Role;
 import com.findmymeme.user.dto.*;
 import com.findmymeme.user.repository.UserRepository;
 import com.findmymeme.user.domain.User;
@@ -36,12 +37,22 @@ public class UserService {
         return new SignupResponse(userRepository.save(user));
     }
 
+    @Transactional
+    public SignupResponse adminSignup(SignupRequest signupRequest) {
+        checkDuplicateUsername(signupRequest.getUsername());
+
+        String encodedPassword = passwordEncoder.encode(signupRequest.getPassword());
+        User user = SignupRequest.toEntity(signupRequest, Role.ROLE_ADMIN, encodedPassword, defaultProfileImageUrl);
+        return new SignupResponse(userRepository.save(user));
+    }
+
     public LoginResponse login(LoginRequest loginRequest) {
         User user = getUserByUsername(loginRequest.getUsername());
         validatePassword(loginRequest.getPassword(), user.getPassword());
         return LoginResponse.builder()
                 .accessToken(jwtTokenProvider.generateToken(new CustomUserDetails(user), user.getId()))
                 .username(user.getUsername())
+                .role(user.getRole().name())
                 .build();
     }
 

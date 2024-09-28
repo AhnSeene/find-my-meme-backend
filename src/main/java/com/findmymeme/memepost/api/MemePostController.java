@@ -87,6 +87,26 @@ public class MemePostController {
         );
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> searchMemePosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @ModelAttribute MemePostSearchCond searchCond,
+            Authentication authentication
+    ) {
+        Slice<MemePostSummaryResponse> responses = null;
+        if (authentication == null) {
+            responses = memePostService.searchMemePosts(page, size, searchCond);
+        } else {
+            Long userId = Long.parseLong(authentication.getName());
+            responses = memePostService.searchMemePosts(page, size, userId, searchCond);
+        }
+        return ResponseUtil.success(
+                new MySlice<>(responses),
+                SuccessCode.MEME_POST_LIST
+        );
+    }
+
     @GetMapping("/{memePostId}/recommendations")
     public ResponseEntity<ApiResponse<List<MemePostSummaryResponse>>> getMemePosts(
             @PathVariable("memePostId") Long memePostId,

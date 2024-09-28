@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-public interface MemePostRepository extends JpaRepository<MemePost, Long> {
+public interface MemePostRepository extends JpaRepository<MemePost, Long>, MemePostRepositoryCustom {
     @Query("SELECT mp FROM MemePost mp where mp.deletedAt IS NULL")
     Slice<MemePost> findSliceAll(Pageable pageable);
 

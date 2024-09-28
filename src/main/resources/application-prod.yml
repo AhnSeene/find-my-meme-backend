@@ -15,7 +15,8 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
-        default_batch_fetch_size: 1000
+#        default_batch_fetch_size: 1000
+        use_sql_comments: true
     open-in-view: false
     defer-datasource-initialization: true
   messages:
@@ -56,3 +57,8 @@ cloud:
 
 allowed:
   origins: "https://findmymeme.site,https://www.findmymeme.site"
+
+admin:
+  username: ${ADMIN_USERNAME}
+  password: ${ADMIN_PASSWORD}
+  email: ${ADMIN_EMAIL}
