@@ -230,16 +230,17 @@ public class MemePostController {
     }
 
     @GetMapping("/{memePostId}/recommendations")
-    public ResponseEntity<ApiResponse<List<MemePostSummaryResponse>>> getMemePosts(
+    public ResponseEntity<ApiResponse<List<MemePostSummaryResponse>>> getRecommendations(
             @PathVariable("memePostId") Long memePostId,
+            @RequestParam(defaultValue = "20") int size,
             Authentication authentication
     ) {
         List<MemePostSummaryResponse> responses = null;
         if (authentication == null) {
-            responses = memePostService.getRecommendedPosts(memePostId);
+            responses = memePostService.getRecommendedPosts(memePostId, size);
         } else {
             Long userId = Long.parseLong(authentication.getName());
-            responses = memePostService.getRecommendedPosts(memePostId, userId);
+            responses = memePostService.getRecommendedPosts(memePostId, size, userId);
         }
         return ResponseUtil.success(
                 responses, SuccessCode.MEME_POST_LIST
