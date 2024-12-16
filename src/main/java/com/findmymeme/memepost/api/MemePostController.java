@@ -169,6 +169,26 @@ public class MemePostController {
         );
     }
 
+    @GetMapping("/5")
+    public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMemePosts5(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "LIKES") MemePostSort sort,
+            Authentication authentication
+    ) {
+        Slice<MemePostSummaryResponse> responses = null;
+        if (authentication == null) {
+            responses = memePostService.getMemePosts(page, size, sort);
+        } else {
+            Long userId = Long.parseLong(authentication.getName());
+            responses = memePostService.getMemePosts5(page, size, sort, userId);
+        }
+        return ResponseUtil.success(
+                new MySlice<>(responses),
+                SuccessCode.MEME_POST_LIST
+        );
+    }
+
         }
         return ResponseUtil.success(
                 new MySlice<>(responses),

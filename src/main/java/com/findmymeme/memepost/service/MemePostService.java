@@ -12,6 +12,7 @@ import com.findmymeme.memepost.dto.*;
 import com.findmymeme.memepost.dto.Sort;
 import com.findmymeme.memepost.repository.MemePostLikeRepository;
 import com.findmymeme.memepost.repository.MemePostRepository;
+import com.findmymeme.memepost.repository.MemePostTagDto;
 import com.findmymeme.response.MySlice;
 import com.findmymeme.tag.repository.MemePostTagRepository;
 import com.findmymeme.tag.service.MemePostTagService;
@@ -159,6 +160,30 @@ public class MemePostService {
 
         return new SliceImpl<>(responses, pageable, memePostSlice.hasNext());
     }
+    public Slice<MemePostSummaryResponse> getMemePosts5(int page, int size, MemePostSort postSort, Long userId) {
+        User user = getUserById(userId);
+        Pageable pageable = PageRequest.of(page, size, postSort.toSort());
+        Slice<MemePost> memePostSlice = memePostRepository.findSliceAll(pageable);
+        List<Long> postIds = getPostIds(memePostSlice.getContent());
+
+        // MemePostTag와 Tag를 한번에 fetch join 하나의 쿼리로 하되, 위와는 차이점이 MemePostTagRepository에서 entitygraph를 통해 fetch join
+        Map<Long, List<String>> postTagNames = memePostTagRepository.findTagsByMemePostIdIn(postIds)
+                .stream()
+                .collect(groupingBy(tag -> tag.getMemePost().getId(),
+                        mapping(tag -> tag.getTag().getName(), toList())));
+//좋아요도 하나의 쿼리로
+        Set<Long> likedPostIds = new HashSet<>(memePostRepository.findLikedPostIds(postIds, user));
+        List<MemePostSummaryResponse> responses = memePostSlice.getContent().stream()
+                .map(mp -> new MemePostSummaryResponse(
+                        mp,
+                        likedPostIds.contains(mp.getId()),
+                        postTagNames.getOrDefault(mp.getId(), Collections.emptyList())
+                ))
+                .toList();
+
+        return new SliceImpl<>(responses, pageable, memePostSlice.hasNext());
+    }
+
     public Slice<MemePostSummaryResponse> searchMemePosts(int page, int size, MemePostSearchCond searchCond) {
         Pageable pageable = PageRequest.of(page, size);
         Slice<MemePostSummaryResponse> responses = memePostRepository.searchByCond(pageable, searchCond);
