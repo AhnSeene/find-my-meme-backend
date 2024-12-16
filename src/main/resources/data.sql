@@ -1,6 +1,5 @@
 -- 외래 키 제약 조건을 먼저 삭제합니다.
 SET FOREIGN_KEY_CHECKS=0;
-ALTER TABLE post_tag DROP FOREIGN KEY FK_post_tag_tag; -- tag_id 외래 키 제거
 ALTER TABLE meme_post_like DROP FOREIGN KEY FK_meme_post_like_post; -- meme_post_id 외래 키 제거
 ALTER TABLE meme_post_like DROP FOREIGN KEY FK_meme_post_like_user; -- user_id 외래 키 제거
 ALTER TABLE find_post_comment DROP FOREIGN KEY FK_find_post_comment_post; -- find_post_id 외래 키 제거
@@ -13,8 +12,8 @@ DROP TABLE IF EXISTS find_post_comment_image;
 DROP TABLE IF EXISTS find_post_comment;
 DROP TABLE IF EXISTS find_post;
 DROP TABLE IF EXISTS meme_post_like;
+DROP TABLE IF EXISTS meme_post_tag;
 DROP TABLE IF EXISTS meme_post;
-DROP TABLE IF EXISTS post_tag;
 DROP TABLE IF EXISTS tag;
 DROP TABLE IF EXISTS file_meta;
 DROP TABLE IF EXISTS users;
@@ -59,17 +58,6 @@ CREATE TABLE `file_meta` (
                              CONSTRAINT `FK_file_meta_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- 4. 밈 포스트 태그 연결 테이블 생성
-CREATE TABLE `post_tag` (
-                            `id` BIGINT NOT NULL AUTO_INCREMENT,
-                            `post_id` BIGINT NOT NULL,
-                            `tag_id` BIGINT NOT NULL,
-                            `post_type` ENUM('FIND_POST', 'MEME_POST') NOT NULL,
-                            PRIMARY KEY (`id`),
-                            KEY `FK_post_tag_tag` (`tag_id`),
-                            CONSTRAINT `FK_post_tag_tag` FOREIGN KEY (`tag_id`) REFERENCES `tag` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
 -- 5. 밈 포스트 테이블 생성
 CREATE TABLE `meme_post` (
                              `id` BIGINT NOT NULL AUTO_INCREMENT,
@@ -90,6 +78,22 @@ CREATE TABLE `meme_post` (
                              KEY `FK_meme_post_user` (`user_id`),
                              CONSTRAINT `FK_meme_post_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+-- 4. 밈 포스트 태그 연결 테이블 생성
+CREATE TABLE `meme_post_tag` (
+                                 `id` BIGINT NOT NULL AUTO_INCREMENT,
+                                 `created_at` DATETIME(6) NOT NULL,
+                                 `updated_at` DATETIME(6) NOT NULL,
+                                 `meme_post_id` BIGINT NOT NULL,
+                                 `tag_id` BIGINT NOT NULL,
+                                 PRIMARY KEY (`id`),
+                                 KEY `FK_meme_post_tag_tag` (`tag_id`),
+                                 CONSTRAINT `FK_meme_post_tag_tag` FOREIGN KEY (`tag_id`) REFERENCES `tag` (`id`) ON DELETE CASCADE,
+                                 KEY `FK_meme_post_tag_post_id` (`meme_post_id`),
+                                 CONSTRAINT `FK_meme_post_tag_post_id` FOREIGN KEY (`meme_post_id`) REFERENCES `meme_post` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 
 -- 6. 밈 포스트 좋아요 테이블 생성
 CREATE TABLE `meme_post_like` (
@@ -262,41 +266,7 @@ SELECT
     'ROLE_USER' AS role -- 역할
 FROM cte;
 
-INSERT INTO file_meta (height, width, size, user_id, extension, file_url, original_filename)
-WITH RECURSIVE cte (n) AS (
-    SELECT 1
-    UNION ALL
-    SELECT n + 1
-    FROM cte WHERE n < 100000  -- 생성하고 싶은 더미 데이터 수
-)
-SELECT
-    FLOOR(100 + RAND() * 1000) AS height,  -- 100~1100 사이의 랜덤한 높이
-    FLOOR(100 + RAND() * 1000) AS width,   -- 100~1100 사이의 랜덤한 너비
-    FLOOR(1000 + RAND() * 100000) AS size, -- 1000~101000 사이의 랜덤한 파일 크기 (bytes)
-    FLOOR(1 + RAND() * 100000) AS user_id,  -- 1부터 100000 사이의 랜덤한 user_id
-    CASE
-        WHEN FLOOR(RAND() * 2) = 0 THEN 'jpg'
-        WHEN FLOOR(RAND() * 2) = 1 THEN 'png'
-        ELSE 'gif'
-        END AS extension,                          -- 랜덤한 파일 확장자
-    CONCAT('http://example.com/file/', n, '.',
-           CASE
-               WHEN FLOOR(RAND() * 2) = 0 THEN 'jpg'
-               WHEN FLOOR(RAND() * 2) = 1 THEN 'png'
-               ELSE 'gif'
-               END) AS file_url,                     -- 랜덤한 파일 URL
-    CONCAT('original_file_', n, '.',
-           CASE
-               WHEN FLOOR(RAND() * 2) = 0 THEN 'jpg'
-               WHEN FLOOR(RAND() * 2) = 1 THEN 'png'
-               ELSE 'gif'
-               END) AS original_filename               -- 원본 파일 이름
-FROM cte;
--- 1. meme_post 및 post_tag를 위한 임시 테이블 생성
-CREATE TEMPORARY TABLE temp_meme_posts (
-                                           post_id BIGINT NOT NULL,
-                                           user_id BIGINT NOT NULL
-);
+
 
 -- 2. meme_post 삽입 및 임시 테이블에 ID 저장
 INSERT INTO meme_post (height, width, created_at, deleted_at, download_count, like_count, size, updated_at, user_id, view_count, extension, image_url, original_filename)
@@ -322,23 +292,52 @@ SELECT
     CONCAT('original_filename', n, '.jpg') AS original_filename
 FROM cte;
 
--- 3. 생성된 meme_post의 ID를 임시 테이블에 저장
-INSERT INTO temp_meme_posts (post_id, user_id)
-SELECT id, user_id FROM meme_post ORDER BY id DESC LIMIT 100000;
+CREATE TEMPORARY TABLE temp_meme_posts (
+                                           post_id BIGINT NOT NULL,  -- meme_post의 id를 저장
+                                           user_id BIGINT NOT NULL ,-- meme_post의 user_id를 저장
+                                           created_at DATETIME(6) NOT NULL,
+                                           updated_at DATETIME(6) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- 4. post_tag 생성
-INSERT INTO post_tag (post_id, tag_id, post_type)
+
+-- 3. 생성된 meme_post의 ID를 임시 테이블에 저장
+INSERT INTO temp_meme_posts (post_id, user_id, created_at, updated_at)
+SELECT id, user_id, created_at, updated_at FROM meme_post ORDER BY id DESC LIMIT 100000;
+
+-- 4. meme_post_tag 생성
+# INSERT INTO meme_post_tag (meme_post_id, tag_id, created_at, updated_at)
+# SELECT
+#     tmp.post_id,
+#     FLOOR(9 + RAND() * (46 - 9 + 1)) AS tag_id,  -- 9에서 46 사이의 랜덤한 tag_id,
+#     tmp.created_at, tmp.updated_at
+#  FROM temp_meme_posts tmp
+#          CROSS JOIN (
+#     SELECT 1 AS seq UNION ALL SELECT 2 UNION ALL SELECT 3  -- 최대 3개의 태그를 추가하기 위해 사용
+# ) AS t
+# WHERE t.seq <= (FLOOR(RAND() * 3) + 1)  -- 1부터 3개의 태그를 무작위로 선택
+# ORDER BY RAND()  -- 무작위로 정렬하여 태그를 추가
+# LIMIT 300000;  -- 원하는 태그 수만큼 추가
+
+-- 특정 태그에 더 많은 게시물 할당
+INSERT INTO meme_post_tag (meme_post_id, tag_id, created_at, updated_at)
 SELECT
     tmp.post_id,
-    FLOOR(9 + RAND() * (46 - 9 + 1)) AS tag_id,  -- 9에서 46 사이의 랜덤한 tag_id
-    'MEME_POST' AS post_type
+    CASE
+        WHEN RAND() < 0.7 THEN 10  -- '귀여운' 태그
+        WHEN RAND() < 0.6 THEN 11  -- '웃긴' 태그
+        WHEN RAND() < 0.5 THEN 12  -- '화난' 태그
+        WHEN RAND() < 0.4 THEN 26  -- '고양이' 태그
+        WHEN RAND() < 0.3 THEN 27  -- '강아지' 태그
+        ELSE FLOOR(9 + RAND() * (46 - 9 + 1))
+        END AS tag_id,
+    tmp.created_at, tmp.updated_at
 FROM temp_meme_posts tmp
          CROSS JOIN (
-    SELECT 1 AS seq UNION ALL SELECT 2 UNION ALL SELECT 3  -- 최대 3개의 태그를 추가하기 위해 사용
+    SELECT 1 AS seq UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4
 ) AS t
-WHERE t.seq <= (FLOOR(RAND() * 3) + 1)  -- 1부터 3개의 태그를 무작위로 선택
-ORDER BY RAND()  -- 무작위로 정렬하여 태그를 추가
-LIMIT 300000;  -- 원하는 태그 수만큼 추가
+WHERE t.seq <= (FLOOR(RAND() * 4) + 1)  -- 1-4개의 태그
+ORDER BY RAND()
+LIMIT 300000;  -- 태그 매핑 수 증가
 
 -- 5. 임시 테이블 삭제
 DROP TEMPORARY TABLE IF EXISTS temp_meme_posts;
@@ -381,9 +380,70 @@ WHERE NOT EXISTS (
     WHERE meme_post_like.user_id = temp_meme_post_like.user_id
       AND meme_post_like.meme_post_id = temp_meme_post_like.meme_post_id
 );
+-- 임시 테이블 생성: 인기 게시물 (조회수 + 현재 좋아요 수 기준)
+CREATE TEMPORARY TABLE popular_posts (
+                                         post_id BIGINT PRIMARY KEY,
+                                         popularity_score INT
+);
+
+-- 인기 게시물 선정 (상위 1000개)
+INSERT INTO popular_posts (post_id, popularity_score)
+SELECT id, (view_count + like_count) as popularity_score
+FROM meme_post
+ORDER BY (view_count + like_count) DESC
+LIMIT 1000;
 
 
 
+-- 헤비 유저 생성 (전체 게시물의 약 10%를 특정 사용자들이 게시)
+CREATE TEMPORARY TABLE heavy_users (
+                                       user_id BIGINT PRIMARY KEY
+);
+
+-- 상위 100명의 헤비 유저 선택
+INSERT INTO heavy_users (user_id)
+SELECT id FROM users ORDER BY RAND() LIMIT 100;
+
+-- 기존 meme_post 데이터의 user_id 업데이트
+UPDATE meme_post
+SET user_id = (
+    SELECT user_id
+    FROM heavy_users
+    ORDER BY RAND()
+    LIMIT 1
+)
+WHERE id IN (
+    SELECT id
+    FROM (
+             SELECT id
+             FROM meme_post
+             ORDER BY RAND()
+             LIMIT 20000  -- 전체 게시물의 10%
+         ) as selected_posts
+);
+
+
+-- 헤비 유저의 게시물에 더 많은 태그 부여
+INSERT INTO meme_post_tag (meme_post_id, tag_id, created_at, updated_at)
+SELECT
+    mp.id as post_id,
+    CASE
+        WHEN RAND() < 0.7 THEN 10  -- '귀여운' 태그
+        WHEN RAND() < 0.6 THEN 11  -- '웃긴' 태그
+        WHEN RAND() < 0.5 THEN 12  -- '화난' 태그
+        WHEN RAND() < 0.4 THEN 26  -- '고양이' 태그
+        WHEN RAND() < 0.3 THEN 27  -- '강아지' 태그
+        ELSE FLOOR(9 + RAND() * (46 - 9 + 1))
+        END AS tag_id,
+    mp.created_at,
+    mp.updated_at
+FROM meme_post mp
+         JOIN heavy_users hu ON mp.user_id = hu.user_id
+         CROSS JOIN (
+    SELECT 1 AS seq UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5
+) AS t  -- 헤비 유저의 게시물은 최대 5개 태그
+WHERE t.seq <= (FLOOR(RAND() * 3) + 3)  -- 3-5개의 태그
+ORDER BY RAND();
 
 INSERT INTO `find_post` (`comment_count`, `created_at`, `deleted_at`, `selected_comment_id`, `updated_at`, `user_id`, `view_count`, `title`, `content`, `find_status`, `html_content`)
 WITH RECURSIVE cte (n, created_at) AS (
@@ -439,12 +499,68 @@ WHERE EXISTS (
   AND FLOOR(RAND() * 2) = 0;  -- 50% 확률로 업데이트 (즉, 채택되지 않을 수 있음)
 
 
-SELECT COUNT(*) AS user_count FROM users;
-SELECT COUNT(*) AS file_meta_count FROM file_meta;
-SELECT COUNT(*) AS tag_count FROM tag;
-SELECT COUNT(*) AS post_tag_count FROM post_tag;
-SELECT COUNT(*) AS meme_post_count FROM meme_post;
-SELECT COUNT(*) AS find_post_count FROM find_post;
-SELECT COUNT(*) AS find_post_comment_count FROM find_post_comment;
-SELECT count(distinct post_id) FROM post_tag;
-SELECT COUNT(*) FROM meme_post_like;
+SELECT
+    (SELECT COUNT(*) FROM users) as user_count,
+    (SELECT COUNT(*)FROM file_meta) as file_meta_count,
+    (SELECT COUNT(*) FROM tag) as tag_count,
+    (SELECT COUNT(*) FROM post_tag) AS post_tag_count,
+    (SELECT COUNT(*) FROM meme_post) AS meme_post_count,
+    (SELECT COUNT(*) FROM find_post) AS find_post_count,
+    (SELECT COUNT(*) FROM find_post_comment) AS find_post_comment_count,
+    (SELECT count(distinct meme_post_id) FROM meme_post_tag) as distict_post_id,
+    (SELECT COUNT(*) FROM meme_post_like) as meme_post_like_count;
+
+-- 태그별 게시물 수
+SELECT
+    t.name as tag_name,
+    COUNT(pt.meme_post_id) as post_count
+FROM tag t
+         LEFT JOIN meme_post_tag pt ON t.id = pt.tag_id
+WHERE t.parent_tag_id IS NOT NULL
+GROUP BY t.name
+ORDER BY post_count DESC;
+
+select *
+from tag;
+-- 사용자별 게시물 수
+SELECT
+    COUNT(mp.id) as post_count,
+    u.id
+FROM users u
+         LEFT JOIN meme_post mp ON u.id = mp.user_id
+GROUP BY u.id
+ORDER BY post_count DESC
+LIMIT 10;
+
+select u.id, u.username
+from users u
+where u.id = 59258;
+
+select *
+from meme_post_tag mpt
+where mpt.meme_post_id = 139;
+
+SELECT *
+FROM meme_post_tag
+order by id desc
+LIMIT 10;
+
+select *
+from tag;
+-- 통계 데이터 생성을 위한 뷰
+CREATE OR REPLACE VIEW user_statistics AS
+SELECT
+    u.id as user_id,
+    u.username,
+    COUNT(mp.id) as post_count,
+    SUM(mp.like_count) as total_likes,
+    SUM(mp.view_count) as total_views,
+    COUNT(DISTINCT mpt.tag_id) as unique_tags_used
+FROM users u
+         LEFT JOIN meme_post mp ON u.id = mp.user_id
+         LEFT JOIN meme_post_tag mpt ON mp.id = mpt.meme_post_id
+GROUP BY u.id, u.username
+ORDER BY post_count DESC;
+
+select *
+from user_statistics

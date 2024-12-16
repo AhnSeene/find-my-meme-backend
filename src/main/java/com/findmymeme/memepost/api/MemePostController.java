@@ -82,11 +82,126 @@ public class MemePostController {
         } else {
             Long userId = Long.parseLong(authentication.getName());
             responses = memePostService.getMemePosts(page, size, sort, userId);
+        }
+        return ResponseUtil.success(
                 new MySlice<>(responses),
                 SuccessCode.MEME_POST_LIST
         );
     }
 
+    @GetMapping("/1")
+    public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMemePosts1(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "LIKES") MemePostSort sort,
+            Authentication authentication
+    ) {
+        Slice<MemePostSummaryResponse> responses = null;
+        if (authentication == null) {
+            responses = memePostService.getMemePosts1(page, size, sort);
+        } else {
+            Long userId = Long.parseLong(authentication.getName());
+            responses = memePostService.getMemePosts(page, size, sort, userId);
+        }
+        return ResponseUtil.success(
+                new MySlice<>(responses),
+                SuccessCode.MEME_POST_LIST
+        );
+    }
+
+    @GetMapping("/2")
+    public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMemePosts2(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "LIKES") MemePostSort sort,
+            Authentication authentication
+    ) {
+        Slice<MemePostSummaryResponse> responses = null;
+        if (authentication == null) {
+            responses = memePostService.getMemePosts(page, size, sort);
+        } else {
+            Long userId = Long.parseLong(authentication.getName());
+            responses = memePostService.getMemePosts2(page, size, sort, userId);
+        }
+        return ResponseUtil.success(
+                new MySlice<>(responses),
+                SuccessCode.MEME_POST_LIST
+        );
+    }
+
+    @GetMapping("/3")
+    public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMemePosts3(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "LIKES") MemePostSort sort,
+            Authentication authentication
+    ) {
+        Slice<MemePostSummaryResponse> responses = null;
+        if (authentication == null) {
+            responses = memePostService.getMemePosts(page, size, sort);
+        } else {
+            Long userId = Long.parseLong(authentication.getName());
+            responses = memePostService.getMemePosts3(page, size, sort, userId);
+        }
+        return ResponseUtil.success(
+                new MySlice<>(responses),
+                SuccessCode.MEME_POST_LIST
+        );
+    }
+
+    @GetMapping("/4")
+    public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMemePosts4(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "LIKES") MemePostSort sort,
+            Authentication authentication
+    ) {
+        Slice<MemePostSummaryResponse> responses = null;
+        if (authentication == null) {
+            responses = memePostService.getMemePosts(page, size, sort);
+        } else {
+            Long userId = Long.parseLong(authentication.getName());
+            responses = memePostService.getMemePosts4(page, size, sort, userId);
+        }
+        return ResponseUtil.success(
+                new MySlice<>(responses),
+                SuccessCode.MEME_POST_LIST
+        );
+    }
+
+    @GetMapping("/5")
+    public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMemePosts5(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "LIKES") MemePostSort sort,
+            Authentication authentication
+    ) {
+        Slice<MemePostSummaryResponse> responses = null;
+        if (authentication == null) {
+            responses = memePostService.getMemePosts(page, size, sort);
+        } else {
+            Long userId = Long.parseLong(authentication.getName());
+            responses = memePostService.getMemePosts5(page, size, sort, userId);
+        }
+        return ResponseUtil.success(
+                new MySlice<>(responses),
+                SuccessCode.MEME_POST_LIST
+        );
+    }
+
+    @GetMapping("/6")
+    public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMemePosts6(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "LIKES") MemePostSort sort,
+            Authentication authentication
+    ) {
+        Slice<MemePostSummaryResponse> responses = null;
+        if (authentication == null) {
+            responses = memePostService.getMemePosts(page, size, sort);
+        } else {
+            Long userId = Long.parseLong(authentication.getName());
+            responses = memePostService.getMemePosts6(page, size, sort, userId);
         }
         return ResponseUtil.success(
                 new MySlice<>(responses),
@@ -115,21 +230,77 @@ public class MemePostController {
     }
 
     @GetMapping("/{memePostId}/recommendations")
-    public ResponseEntity<ApiResponse<List<MemePostSummaryResponse>>> getMemePosts(
+    public ResponseEntity<ApiResponse<List<MemePostSummaryResponse>>> getRecommendations(
             @PathVariable("memePostId") Long memePostId,
+            @RequestParam(defaultValue = "20") int size,
             Authentication authentication
     ) {
         List<MemePostSummaryResponse> responses = null;
         if (authentication == null) {
-            responses = memePostService.getRecommendedPosts(memePostId);
+            responses = memePostService.getRecommendedPosts(memePostId, size);
         } else {
             Long userId = Long.parseLong(authentication.getName());
-            responses = memePostService.getRecommendedPosts(memePostId, userId);
+            responses = memePostService.getRecommendedPosts(memePostId, size, userId);
         }
         return ResponseUtil.success(
                 responses, SuccessCode.MEME_POST_LIST
         );
     }
+
+    @GetMapping("/{memePostId}/recommendations/2")
+    public ResponseEntity<ApiResponse<List<MemePostSummaryResponse>>> getRecommendations2(
+            @PathVariable("memePostId") Long memePostId,
+            @RequestParam(defaultValue = "20") int size,
+            Authentication authentication
+    ) {
+        List<MemePostSummaryResponse> responses = null;
+        if (authentication == null) {
+            responses = memePostService.getRecommendedPosts2(memePostId, size);
+        } else {
+            Long userId = Long.parseLong(authentication.getName());
+            responses = memePostService.getRecommendedPosts2(memePostId, size, userId);
+        }
+        return ResponseUtil.success(
+                responses, SuccessCode.MEME_POST_LIST
+        );
+    }
+
+    @GetMapping("/{memePostId}/recommendations/3")
+    public ResponseEntity<ApiResponse<List<MemePostSummaryResponse>>> getRecommendations3(
+            @PathVariable("memePostId") Long memePostId,
+            @RequestParam(defaultValue = "20") int size,
+            Authentication authentication
+    ) {
+        List<MemePostSummaryResponse> responses = null;
+        if (authentication == null) {
+            responses = memePostService.getRecommendedPosts3(memePostId, size);
+        } else {
+            Long userId = Long.parseLong(authentication.getName());
+            responses = memePostService.getRecommendedPosts3(memePostId, size, userId);
+        }
+        return ResponseUtil.success(
+                responses, SuccessCode.MEME_POST_LIST
+        );
+    }
+
+    @GetMapping("/{memePostId}/recommendations/4")
+    public ResponseEntity<ApiResponse<List<MemePostSummaryResponse>>> getRecommendations4(
+            @PathVariable("memePostId") Long memePostId,
+            @RequestParam(defaultValue = "20") int size,
+            Authentication authentication
+    ) {
+        List<MemePostSummaryResponse> responses = null;
+        if (authentication == null) {
+            responses = memePostService.getRecommendedPosts4(memePostId, size);
+        } else {
+            Long userId = Long.parseLong(authentication.getName());
+            responses = memePostService.getRecommendedPosts3(memePostId, size, userId);
+        }
+        return ResponseUtil.success(
+                responses, SuccessCode.MEME_POST_LIST
+        );
+    }
+
 
     @PostMapping("/{memePostId}/toggleLike")
     public ResponseEntity<ApiResponse<MemePostLikeResponse>> toggleLikeMemePost(
@@ -157,7 +328,7 @@ public class MemePostController {
     }
 
     @GetMapping("/users/{authorName}")
-    public ResponseEntity<ApiResponse<MemePostUserSummaryResponse>> getMemePostsByAuthorId(
+    public ResponseEntity<ApiResponse<MemePostUserSummaryResponse>> getMemePostsByAuthorName(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @PathVariable("authorName") String authorName,
@@ -165,10 +336,10 @@ public class MemePostController {
     ) {
         MemePostUserSummaryResponse responses = null;
         if (authentication == null) {
-            responses = memePostService.getMemePostsByAuthorId(page, size, authorName);
+            responses = memePostService.getMemePostsByAuthorName(page, size, authorName);
         } else {
             Long userId = Long.parseLong(authentication.getName());
-            responses =  memePostService.getMemePostsByAuthorId(page, size, authorName, userId);
+            responses =  memePostService.getMemePostsByAuthorName(page, size, authorName, userId);
         }
         return ResponseUtil.success(
                 responses,
@@ -176,6 +347,25 @@ public class MemePostController {
         );
     }
 
+    @GetMapping("/users/{authorName}/2")
+    public ResponseEntity<ApiResponse<MemePostUserSummaryResponse>> getMemePostsByAuthorName2(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @PathVariable("authorName") String authorName,
+            Authentication authentication
+    ) {
+        MemePostUserSummaryResponse responses = null;
+        if (authentication == null) {
+            responses = memePostService.getMemePostsByAuthorName2(page, size, authorName);
+        } else {
+            Long userId = Long.parseLong(authentication.getName());
+            responses =  memePostService.getMemePostsByAuthorName2(page, size, authorName, userId);
+        }
+        return ResponseUtil.success(
+                responses,
+                SuccessCode.MEME_POST_AUTHOR_LIST
+        );
+    }
 
     @GetMapping("/ranks/all")
     public ResponseEntity<ApiResponse<List<MemePostSummaryResponse>>> getRankedPostsAllPeriod(
