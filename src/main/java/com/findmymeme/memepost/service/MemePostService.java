@@ -323,15 +323,15 @@ public class MemePostService {
                 .build();
     }
 
-    public MemePostUserSummaryResponse getMemePostsByAuthorId(int page, int size, String authorName) {
+    public MemePostUserSummaryResponse getMemePostsByAuthorName(int page, int size, String authorName) {
         User author = userRepository.findByUsername(authorName)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
 
         UserProfileResponse userProfileResponse = new UserProfileResponse(author);
         Pageable pageable = PageRequest.of(page, size);
-        Slice<MemePost> memePostSummaries = memePostRepository.findMemePostByUserId(pageable, authorName);
+        Slice<MemePost> memePostSummaries = memePostRepository.findMemePostByUsername(pageable, authorName);
         List<MemePostSummaryResponse> responses = memePostSummaries.stream()
-                .map(memePost -> new MemePostSummaryResponse(memePost, false, getTagNames(memePost.getId())))
+                .map(mp -> new MemePostSummaryResponse(mp, false, mp.getTagNames()))
                 .toList();
         return MemePostUserSummaryResponse.builder()
                 .user(userProfileResponse)
@@ -339,13 +339,14 @@ public class MemePostService {
                 .build();
     }
 
-    public MemePostUserSummaryResponse getMemePostsByAuthorId(int page, int size, String authorName, Long userId) {
+    public MemePostUserSummaryResponse getMemePostsByAuthorName(int page, int size, String authorName, Long userId) {
         User author = userRepository.findByUsername(authorName)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
 
         UserProfileResponse userProfileResponse = new UserProfileResponse(author);
         Pageable pageable = PageRequest.of(page, size);
         Slice<MemePostSummaryResponse> memePostSummaries = memePostRepository.findMemePostSummariesWithLikeByUserId(pageable, authorName, userId);
+        Slice<MemePostSummaryResponse> memePostSummaries = memePostRepository.findMemePostSummariesWithLikeByAuthorNameAndUserId(pageable, authorName, userId);
         memePostSummaries.forEach(response -> response.setTags(getTagNames(response.getId())));
         return MemePostUserSummaryResponse.builder()
                 .user(userProfileResponse)

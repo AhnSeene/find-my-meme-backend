@@ -328,7 +328,7 @@ public class MemePostController {
     }
 
     @GetMapping("/users/{authorName}")
-    public ResponseEntity<ApiResponse<MemePostUserSummaryResponse>> getMemePostsByAuthorId(
+    public ResponseEntity<ApiResponse<MemePostUserSummaryResponse>> getMemePostsByAuthorName(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @PathVariable("authorName") String authorName,
@@ -336,10 +336,10 @@ public class MemePostController {
     ) {
         MemePostUserSummaryResponse responses = null;
         if (authentication == null) {
-            responses = memePostService.getMemePostsByAuthorId(page, size, authorName);
+            responses = memePostService.getMemePostsByAuthorName(page, size, authorName);
         } else {
             Long userId = Long.parseLong(authentication.getName());
-            responses =  memePostService.getMemePostsByAuthorId(page, size, authorName, userId);
+            responses =  memePostService.getMemePostsByAuthorName(page, size, authorName, userId);
         }
         return ResponseUtil.success(
                 responses,

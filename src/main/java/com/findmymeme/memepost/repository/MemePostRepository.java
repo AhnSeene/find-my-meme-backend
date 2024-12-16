@@ -2,6 +2,7 @@ package com.findmymeme.memepost.repository;
 
 import com.findmymeme.memepost.domain.MemePost;
 import com.findmymeme.memepost.dto.MemePostSummaryResponse;
+import com.findmymeme.user.domain.User;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MemePostRepository extends JpaRepository<MemePost, Long>, MemePostRepositoryCustom {
+
     @Query("SELECT mp FROM MemePost mp where mp.deletedAt IS NULL")
     Slice<MemePost> findSliceAll(Pageable pageable);
 
@@ -47,15 +49,17 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long>, MemeP
             "FROM MemePost mp WHERE mp.deletedAt IS NULL")
     Slice<MemePostSummaryResponse> findMemePostSummariesWithLike(Pageable pageable, @Param("userId") Long userId);
 
-    @Query("SELECT mp FROM MemePost mp WHERE mp.deletedAt IS NULL AND mp.user.username = :authorName")
-    Slice<MemePost> findMemePostByUserId(
-            Pageable pageable,
-            @Param("authorName") String authorName);
+    @Query("SELECT mp FROM MemePost mp " +
+            "LEFT JOIN FETCH mp.memePostTags mpt " +
+            "LEFT JOIN FETCH mpt.tag " +
+            "WHERE mp.deletedAt IS NULL AND mp.user.username = :authorName")
+    Slice<MemePost> findMemePostByUsername(Pageable pageable, @Param("authorName") String authorName);
+
 
     @Query("SELECT new com.findmymeme.memepost.dto.MemePostSummaryResponse(mp, " +
             "EXISTS (SELECT 1 FROM MemePostLike mpl WHERE mpl.memePost = mp AND mpl.user.id = :currentUserId)) " +
             "FROM MemePost mp WHERE mp.deletedAt IS NULL AND mp.user.username = :authorName")
-    Slice<MemePostSummaryResponse> findMemePostSummariesWithLikeByUserId(
+    Slice<MemePostSummaryResponse> findMemePostSummariesWithLikeByAuthorNameAndUserId(
             Pageable pageable,
             @Param("authorName") String authorName,
             @Param("currentUserId") Long currentUserId);
