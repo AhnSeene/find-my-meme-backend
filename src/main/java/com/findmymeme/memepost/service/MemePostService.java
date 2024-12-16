@@ -253,6 +253,17 @@ public class MemePostService {
                 .toList();
     }
 
+        MemePost memePost = memePostRepository.findByIdWithTags(memePostId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
+        //fetch join으로 memePost의 태그 정보 미리 가져오기
+        //tag 이름으로 관련있는 포스트 찾기
+        List<MemePost> recommendedPosts = memePostRepository.findRelatedPostsByTagNames(memePost.getTagNames(), memePostId, PageRequest.of(0, size));
+        memePostRepository.findAllWithTagsInPostIds(getPostIds(recommendedPosts));
+        return recommendedPosts.stream()
+                .map(mp -> new MemePostSummaryResponse(mp, false, mp.getTagNames()))
+                .toList();
+    }
+
     public List<MemePostSummaryResponse> getRecommendedPosts4(Long memePostId, int size) {
         MemePost memePost = memePostRepository.findByIdWithTags(memePostId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));

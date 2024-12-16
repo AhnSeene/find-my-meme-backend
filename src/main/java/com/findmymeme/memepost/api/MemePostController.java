@@ -265,6 +265,24 @@ public class MemePostController {
         );
     }
 
+    @GetMapping("/{memePostId}/recommendations/3")
+    public ResponseEntity<ApiResponse<List<MemePostSummaryResponse>>> getRecommendations3(
+            @PathVariable("memePostId") Long memePostId,
+            @RequestParam(defaultValue = "20") int size,
+            Authentication authentication
+    ) {
+        List<MemePostSummaryResponse> responses = null;
+        if (authentication == null) {
+            responses = memePostService.getRecommendedPosts3(memePostId, size);
+        } else {
+            Long userId = Long.parseLong(authentication.getName());
+            responses = memePostService.getRecommendedPosts3(memePostId, size, userId);
+        }
+        return ResponseUtil.success(
+                responses, SuccessCode.MEME_POST_LIST
+        );
+    }
+
     @PostMapping("/{memePostId}/toggleLike")
     public ResponseEntity<ApiResponse<MemePostLikeResponse>> toggleLikeMemePost(
             @PathVariable("memePostId") Long memePostId,
