@@ -121,6 +121,21 @@ public class MemePostService {
         return new SliceImpl<>(responses, pageable, memePostSlice.hasNext());
     }
 
+    public Slice<MemePostSummaryResponse> getMemePosts3(int page, int size, MemePostSort postSort, Long userId) {
+        User user = getUserById(userId);
+        Pageable pageable = PageRequest.of(page, size, postSort.toSort());
+        Slice<MemePost> memePostSlice = memePostRepository.findSliceAll(pageable);
+        List<Long> postIds = getPostIds(memePostSlice.getContent());
+        Set<Long> likedPostIds = new HashSet<>(memePostRepository.findLikedPostIds(postIds, user));
+        //MemePostTag 정보를 batch size를 통해 가져옴 -> 하지만 Tag도 또한 batch size로 하나의 쿼리로 또 나감
+        //batch size 설정 안할시 MemePostTag N + 1 이랑 tag까지 또 N+ 1
+        List<MemePostSummaryResponse> responses = memePostSlice.getContent().stream()
+                .map(mp -> new MemePostSummaryResponse(mp, likedPostIds.contains(mp.getId()), mp.getTagNames()))
+                .toList();
+
+        return new SliceImpl<>(responses, pageable, memePostSlice.hasNext());
+    }
+
     public Slice<MemePostSummaryResponse> searchMemePosts(int page, int size, MemePostSearchCond searchCond) {
         Pageable pageable = PageRequest.of(page, size);
         Slice<MemePostSummaryResponse> responses = memePostRepository.searchByCond(pageable, searchCond);
