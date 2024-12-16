@@ -17,6 +17,8 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long>, MemeP
     @Query("SELECT mp FROM MemePost mp where mp.deletedAt IS NULL")
     Slice<MemePost> findSliceAll(Pageable pageable);
 
+    @Query("SELECT mp.id FROM MemePost mp where mp.deletedAt IS NULL")
+    Slice<Long> findSliceAllIds(Pageable pageable);
 
     @Query("SELECT mp FROM MemePost mp " +
             "LEFT JOIN FETCH mp.memePostTags mpt " +
@@ -60,6 +62,11 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long>, MemeP
 
     @Query("select distinct m from MemePost m join PostTag pt on m.id = pt.postId where pt.tag.name in :tags and m.deletedAt is null")
     List<MemePost> findByTagNames(@Param("tags") List<String> tags, Pageable pageable);
+    @Query("SELECT mp FROM MemePost mp " +
+            "LEFT JOIN FETCH mp.memePostTags mpt " +
+            "LEFT JOIN FETCH mpt.tag " +
+            "WHERE mp.id In :postIds")
+    List<MemePost> findAllWithTagsInPostIds(@Param("postIds") List<Long> postIds);
 
     @Query("select distinct new com.findmymeme.memepost.dto.MemePostSummaryResponse(m, " +
             "exists (select 1 from MemePostLike mpl where mpl.memePost = m and mpl.user.id = :currentUserId)) " +

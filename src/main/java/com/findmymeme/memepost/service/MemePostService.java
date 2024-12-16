@@ -184,6 +184,31 @@ public class MemePostService {
         return new SliceImpl<>(responses, pageable, memePostSlice.hasNext());
     }
 
+    public Slice<MemePostSummaryResponse> getMemePosts6(int page, int size, MemePostSort postSort, Long userId) {
+        User user = getUserById(userId);
+        Pageable pageable = PageRequest.of(page, size, postSort.toSort());
+        //id만 먼저 페이징 조회
+        Slice<Long> postIdSlice = memePostRepository.findSliceAllIds(pageable);
+        List<Long> postIds = postIdSlice.getContent();
+
+        //ID로 MemePost, Tag함께 조회
+        List<MemePost> memePostsWithTags = memePostRepository.findAllWithTagsInPostIds(postIds)
+                .stream()
+                .sorted(Comparator.comparing(mp -> postIds.indexOf(mp.getId())))
+                .toList();
+        // MemePost를 MemePostTag와 Tag를 한번에 fetch join 하나의 쿼리로 찾기
+        Set<Long> likedPostIds = new HashSet<>(memePostRepository.findLikedPostIds(postIds, user));
+        List<MemePostSummaryResponse> responses = memePostsWithTags.stream()
+                .map(mp -> new MemePostSummaryResponse(
+                        mp,
+                        likedPostIds.contains(mp.getId()),
+                        mp.getTagNames()
+                ))
+                .toList();
+
+        return new SliceImpl<>(responses, pageable, postIdSlice.hasNext());
+    }
+
     public Slice<MemePostSummaryResponse> searchMemePosts(int page, int size, MemePostSearchCond searchCond) {
         Pageable pageable = PageRequest.of(page, size);
         Slice<MemePostSummaryResponse> responses = memePostRepository.searchByCond(pageable, searchCond);
