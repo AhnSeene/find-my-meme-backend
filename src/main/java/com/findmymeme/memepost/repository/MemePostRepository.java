@@ -24,6 +24,13 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long>, MemeP
             "WHERE mp.deletedAt IS NULL order by mp.createdAt desc")
     Slice<MemePost> findAllWithTags(Pageable pageable);
 
+    @Query("SELECT new com.findmymeme.memepost.repository.MemePostTagDto(mp.id, t.name) " +
+            "FROM MemePost mp " +
+            "JOIN mp.memePostTags mpt " +
+            "JOIN mpt.tag t " +
+            "WHERE mp IN :memePosts")
+    List<MemePostTagDto> findTagNamesByMemePosts(@Param("memePosts") List<MemePost> memePosts);
+
     @EntityGraph(attributePaths = {"user"})
     @Query("SELECT mp FROM MemePost mp WHERE mp.id = :id AND mp.deletedAt IS NULL")
     Optional<MemePost> findWithUserById(@Param("id") Long id);
