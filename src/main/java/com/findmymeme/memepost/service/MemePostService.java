@@ -253,6 +253,7 @@ public class MemePostService {
                 .toList();
     }
 
+    public List<MemePostSummaryResponse> getRecommendedPosts3(Long memePostId, int size) {
         MemePost memePost = memePostRepository.findByIdWithTags(memePostId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
         //fetch join으로 memePost의 태그 정보 미리 가져오기
@@ -269,6 +270,13 @@ public class MemePostService {
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
         //fetch join으로 memePost의 태그 정보 미리 가져오기
         //tag 이름으로 관련있는 포스트 찾기
+        List<Long> recommendedPostIds = memePostRepository.findRelatedPostIdsByTagNames(memePost.getTagNames(), memePostId, PageRequest.of(0, size));
+        List<MemePost> recommendedPostsWithTags = memePostRepository.findAllWithTagsInPostIds(recommendedPostIds);
+        return recommendedPostsWithTags.stream()
+                .map(mp -> new MemePostSummaryResponse(mp, false, mp.getTagNames()))
+                .toList();
+    }
+
     @Transactional
     public void softDelete(Long memePostId, Long userId) {
         User user = getUserById(userId);

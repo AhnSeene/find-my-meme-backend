@@ -68,6 +68,13 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long>, MemeP
             "and m.deletedAt is null")
     List<MemePost> findRelatedPostsByTagNames(@Param("tags") List<String> tags, @Param("currentPostId") Long currentPostId, Pageable pageable);
 
+    @Query("select distinct m.id from MemePost m " +
+            "join m.memePostTags mpt " +
+            "join mpt.tag t " +
+            "where t.name in :tags " +
+            "and m.id != :currentPostId " +
+            "and m.deletedAt is null")
+    List<Long> findRelatedPostIdsByTagNames(@Param("tags") List<String> tags, @Param("currentPostId") Long currentPostId, Pageable pageable);
 
     @Query("select distinct m from MemePost m " +
             "left join fetch m.memePostTags mpt " +
