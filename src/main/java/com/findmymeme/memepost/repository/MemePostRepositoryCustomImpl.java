@@ -1,11 +1,13 @@
 package com.findmymeme.memepost.repository;
 
+import com.findmymeme.memepost.domain.MemePost;
 import com.findmymeme.memepost.dto.MemePostSearchCond;
 import com.findmymeme.memepost.dto.MemePostSummaryResponse;
-import com.findmymeme.tag.domain.PostType;
+import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -18,7 +20,8 @@ import java.util.List;
 
 import static com.findmymeme.memepost.domain.QMemePost.memePost;
 import static com.findmymeme.memepost.domain.QMemePostLike.memePostLike;
-import static com.findmymeme.tag.domain.QPostTag.postTag;
+import static com.findmymeme.tag.domain.QMemePostTag.memePostTag;
+import static com.findmymeme.tag.domain.QTag.tag;
 
 @Repository
 @RequiredArgsConstructor
@@ -29,6 +32,7 @@ public class MemePostRepositoryCustomImpl implements MemePostRepositoryCustom {
 
     @Override
     public Slice<MemePostSummaryResponse> searchByCond(Pageable pageable, MemePostSearchCond cond) {
+
         List<MemePostSummaryResponse> responses = queryFactory
                 .select(Projections.constructor(
                         MemePostSummaryResponse.class,
@@ -39,8 +43,7 @@ public class MemePostRepositoryCustomImpl implements MemePostRepositoryCustom {
                         memePost.downloadCount
                 ))
                 .from(memePost)
-                .join(postTag)
-                .on(postTag.postId.eq(memePost.id), postTag.postType.eq(PostType.MEME_POST))
+                .join(memePost.memePostTags, memePostTag)
                 .where(usernameLike(cond.getUsername()), tagIn(cond.getTagIds()))
                 .groupBy(memePost.id)
                 .having(tagCountEq(cond.getTagIds()))
@@ -69,8 +72,7 @@ public class MemePostRepositoryCustomImpl implements MemePostRepositoryCustom {
                         memePostLike.isNotNull()
                 ))
                 .from(memePost)
-                .join(postTag)
-                .on(postTag.postId.eq(memePost.id), postTag.postType.eq(PostType.MEME_POST))
+                .join(memePostTag)
                 .leftJoin(memePostLike)
                 .on(memePostLike.memePost.id.eq(memePost.id), memePostLike.user.id.eq(userId))
                 .where(usernameLike(cond.getUsername()), tagIn(cond.getTagIds()))
@@ -100,13 +102,12 @@ public class MemePostRepositoryCustomImpl implements MemePostRepositoryCustom {
         if (tagIds == null || tagIds.isEmpty()) {
             return Expressions.TRUE;
         }
-        return postTag.tag.id.in(tagIds);
+        return memePostTag.tag.id.in(tagIds);
     }
-
     private BooleanExpression tagCountEq(List<Long> tagIds) {
         if (tagIds == null || tagIds.isEmpty()) {
             return Expressions.TRUE;
         }
-        return postTag.tag.id.countDistinct().eq((long) tagIds.size());
+        return memePostTag.tag.id.countDistinct().eq((long) tagIds.size());
     }
 }
