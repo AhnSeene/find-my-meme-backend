@@ -1,15 +1,17 @@
 package com.findmymeme.memepost.domain;
 
 import com.findmymeme.BaseEntity;
+import com.findmymeme.tag.domain.MemePostTag;
 import com.findmymeme.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.SQLDelete;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -49,6 +51,9 @@ public class MemePost extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @OneToMany(mappedBy = "memePost")
+    private List<MemePostTag> memePostTags = new ArrayList<>();
+
     @Builder
     public MemePost(String imageUrl, String extension, Resolution resolution, Long size, String originalFilename, User user) {
         this.imageUrl = imageUrl;
@@ -57,6 +62,22 @@ public class MemePost extends BaseEntity {
         this.size = size;
         this.originalFilename = originalFilename;
         this.user = user;
+    }
+
+    public void addMemePostTag(MemePostTag memePostTag) {
+        this.memePostTags.add(memePostTag);
+        memePostTag.changeMemePost(this);
+    }
+
+    public void removeMemePostTag(MemePostTag memePostTag) {
+        this.memePostTags.remove(memePostTag);
+        memePostTag.changeMemePost(null);
+    }
+
+    public List<String> getTagNames() {
+        return memePostTags.stream()
+                .map(mpt -> mpt.getTag().getName())
+                .toList();
     }
 
     public boolean isOwner(User user) {
