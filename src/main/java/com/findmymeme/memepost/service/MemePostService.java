@@ -106,6 +106,21 @@ public class MemePostService {
         return new SliceImpl<>(responses, pageable, memePostSlice.hasNext());
     }
 
+    public Slice<MemePostSummaryResponse> getMemePosts2(int page, int size, MemePostSort postSort, Long userId) {
+        User user = getUserById(userId);
+        Pageable pageable = PageRequest.of(page, size, postSort.toSort());
+        //컬렉션 조회 fetch join시 메모리에서 개수를 해결
+        Slice<MemePost> memePostSlice = memePostRepository.findAllWithTags(pageable);
+        List<Long> postIds = getPostIds(memePostSlice.getContent());
+        //좋아요는 최적화 됨
+        Set<Long> likedPostIds = new HashSet<>(memePostRepository.findLikedPostIds(postIds, user));
+        List<MemePostSummaryResponse> responses = memePostSlice.getContent().stream()
+                .map(mp -> new MemePostSummaryResponse(mp, likedPostIds.contains(mp.getId()), mp.getTagNames()))
+                .toList();
+
+        return new SliceImpl<>(responses, pageable, memePostSlice.hasNext());
+    }
+
     public Slice<MemePostSummaryResponse> searchMemePosts(int page, int size, MemePostSearchCond searchCond) {
         Pageable pageable = PageRequest.of(page, size);
         Slice<MemePostSummaryResponse> responses = memePostRepository.searchByCond(pageable, searchCond);
@@ -225,6 +240,12 @@ public class MemePostService {
     private User getUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
+    }
+
+    private List<Long> getPostIds(List<MemePost> memePosts) {
+        return memePosts.stream()
+                .map(MemePost::getId)
+                .toList();
     }
 
     private MemePost getMemePostById(Long memePostId) {
