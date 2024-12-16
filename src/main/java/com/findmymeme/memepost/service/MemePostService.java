@@ -354,6 +354,49 @@ public class MemePostService {
                 .build();
     }
 
+    public MemePostUserSummaryResponse getMemePostsByAuthorName2(int page, int size, String authorName) {
+        User author = userRepository.findByUsername(authorName)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
+
+        UserProfileResponse userProfileResponse = new UserProfileResponse(author);
+        Pageable pageable = PageRequest.of(page, size);
+        Slice<Long> postIdSlice = memePostRepository.findSliceByUsername(pageable, authorName);
+        List<Long> postIds = postIdSlice.getContent();
+        List<MemePost> memePostsWithTags = memePostRepository.findAllWithTagsInPostIds(postIds);
+        List<MemePostSummaryResponse> responses = memePostsWithTags.stream()
+                .sorted(Comparator.comparing(mp -> postIds.indexOf(mp.getId())))
+                .map(mp -> new MemePostSummaryResponse(mp, false, mp.getTagNames()))
+                .toList();
+        return MemePostUserSummaryResponse.builder()
+                .user(userProfileResponse)
+                .memePosts(new MySlice<>(new SliceImpl<>(responses, pageable, postIdSlice.hasNext())))
+                .build();
+    }
+
+
+    public MemePostUserSummaryResponse getMemePostsByAuthorName2(int page, int size, String authorName, Long userId) {
+        User author = userRepository.findByUsername(authorName)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
+        User user = getUserById(userId);
+        UserProfileResponse userProfileResponse = new UserProfileResponse(author);
+
+        Pageable pageable = PageRequest.of(page, size);
+        Slice<Long> postIdSlice = memePostRepository.findSliceByUsername(pageable, authorName);
+        List<Long> postIds = postIdSlice.getContent();
+
+        List<MemePost> memePostsWithTags = memePostRepository.findAllWithTagsInPostIds(postIds);
+        Set<Long> likedPostIds = new HashSet<>(memePostRepository.findLikedPostIds(postIds, user));
+
+        List<MemePostSummaryResponse> memePostSummaryResponses = memePostsWithTags.stream()
+                .sorted(Comparator.comparing(mp -> postIds.indexOf(mp.getId())))
+                .map(mp -> new MemePostSummaryResponse(mp, likedPostIds.contains(mp.getId()), mp.getTagNames()))
+                .toList();
+        return MemePostUserSummaryResponse.builder()
+                .user(userProfileResponse)
+                .memePosts(new MySlice<>(new SliceImpl<>(memePostSummaryResponses, pageable, postIdSlice.hasNext())))
+                .build();
+    }
+
     public List<MemePostSummaryResponse> getRankedPostsAllPeriod(int page, int size, Sort sort) {
         Pageable pageable = PageRequest.of(page, size);
         List<MemePost> memePosts = null;
@@ -373,7 +416,7 @@ public class MemePostService {
         LocalDateTime endDateTime = period.getEndDateTime();
         Pageable pageable = PageRequest.of(page, size);
         List<MemePost> memePosts = memePostRepository.findTopByLikeCountWithinPeriod(startDateTime, endDateTime, pageable);
-        
+
         return memePosts.stream()
                 .map(post -> new MemePostSummaryResponse(post, false, getTagNames(post.getId())))
                 .toList();

@@ -347,6 +347,25 @@ public class MemePostController {
         );
     }
 
+    @GetMapping("/users/{authorName}/2")
+    public ResponseEntity<ApiResponse<MemePostUserSummaryResponse>> getMemePostsByAuthorName2(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @PathVariable("authorName") String authorName,
+            Authentication authentication
+    ) {
+        MemePostUserSummaryResponse responses = null;
+        if (authentication == null) {
+            responses = memePostService.getMemePostsByAuthorName2(page, size, authorName);
+        } else {
+            Long userId = Long.parseLong(authentication.getName());
+            responses =  memePostService.getMemePostsByAuthorName2(page, size, authorName, userId);
+        }
+        return ResponseUtil.success(
+                responses,
+                SuccessCode.MEME_POST_AUTHOR_LIST
+        );
+    }
 
     @GetMapping("/ranks/all")
     public ResponseEntity<ApiResponse<List<MemePostSummaryResponse>>> getRankedPostsAllPeriod(
