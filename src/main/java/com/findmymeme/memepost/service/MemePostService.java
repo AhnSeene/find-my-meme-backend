@@ -7,7 +7,9 @@ import com.findmymeme.file.domain.FileMeta;
 import com.findmymeme.file.repository.FileMetaRepository;
 import com.findmymeme.file.service.FileStorageService;
 import com.findmymeme.memepost.domain.MemePost;
+import com.findmymeme.memepost.domain.MemePostSort;
 import com.findmymeme.memepost.dto.*;
+import com.findmymeme.memepost.dto.Sort;
 import com.findmymeme.memepost.repository.MemePostLikeRepository;
 import com.findmymeme.memepost.repository.MemePostRepository;
 import com.findmymeme.response.MySlice;
@@ -23,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import static java.util.stream.Collectors.*;
 
 
 @Service
@@ -73,16 +76,16 @@ public class MemePostService {
         return new MemePostGetResponse(memePost, memePost.isOwner(user), isLiked, tagNames);
     }
 
-    public Slice<MemePostSummaryResponse> getMemePosts(int page, int size, Long userId) {
-        Pageable pageable = PageRequest.of(page, size);
+    public Slice<MemePostSummaryResponse> getMemePosts(int page, int size, MemePostSort postSort, Long userId) {
+        Pageable pageable = PageRequest.of(page, size, postSort.toSort());
         Slice<MemePostSummaryResponse> memePosts = memePostRepository.findMemePostSummariesWithLike(pageable, userId);
 
         memePosts.forEach(response -> response.setTags(getTagNames(response.getId())));
         return memePosts;
     }
 
-    public Slice<MemePostSummaryResponse> getMemePosts(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+    public Slice<MemePostSummaryResponse> getMemePosts(int page, int size, MemePostSort postSort) {
+        Pageable pageable = PageRequest.of(page, size, postSort.toSort());
         Slice<MemePost> memePosts = memePostRepository.findSliceAll(pageable);
         List<MemePostSummaryResponse> responses = memePosts.stream()
                 .map(memePost -> new MemePostSummaryResponse(memePost, false, getTagNames(memePost.getId())))
