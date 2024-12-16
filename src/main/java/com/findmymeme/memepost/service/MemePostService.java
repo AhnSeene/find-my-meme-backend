@@ -11,21 +11,19 @@ import com.findmymeme.memepost.dto.*;
 import com.findmymeme.memepost.repository.MemePostLikeRepository;
 import com.findmymeme.memepost.repository.MemePostRepository;
 import com.findmymeme.response.MySlice;
-import com.findmymeme.tag.service.PostTagService;
+import com.findmymeme.tag.repository.MemePostTagRepository;
+import com.findmymeme.tag.service.MemePostTagService;
 import com.findmymeme.user.domain.User;
 import com.findmymeme.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
 
-import static com.findmymeme.tag.domain.PostType.*;
+
 
 @Service
 @Transactional(readOnly = true)
@@ -36,7 +34,8 @@ public class MemePostService {
 
     private final UserRepository userRepository;
     private final MemePostRepository memePostRepository;
-    private final PostTagService postTagService;
+    private final MemePostTagService memePostTagService;
+    private final MemePostTagRepository memePostTagRepository;
     private final FileStorageService fileStorageService;
     private final FileMetaRepository fileMetaRepository;
     private final MemePostLikeRepository memePostLikeRepository;
@@ -50,7 +49,7 @@ public class MemePostService {
 
         MemePost memePost = createMemePost(permanentImageUrl, user, fileMeta);
         memePostRepository.save(memePost);
-        List<String> tagNames = postTagService.applyTagsToPost(request.getTags(), memePost.getId(), MEME_POST);
+        List<String> tagNames = memePostTagService.applyTagsToPost(request.getTags(), memePost);
         return new MemePostUploadResponse(memePost.getImageUrl(), tagNames);
     }
 
@@ -189,7 +188,8 @@ public class MemePostService {
         LocalDateTime startDateTime = period.getStartDateTime();
         LocalDateTime endDateTime = period.getEndDateTime();
         Pageable pageable = PageRequest.of(page, size);
-        List<MemePost> memePosts = memePostRepository.findTopByLikeCountWithinPeriod(startDateTime, endDateTime, pageable);;
+        List<MemePost> memePosts = memePostRepository.findTopByLikeCountWithinPeriod(startDateTime, endDateTime, pageable);
+        
         return memePosts.stream()
                 .map(post -> new MemePostSummaryResponse(post, false, getTagNames(post.getId())))
                 .toList();
@@ -227,11 +227,11 @@ public class MemePostService {
     }
 
     private List<String> getTagNames(Long memePostId) {
-        return postTagService.getTagNames(memePostId, MEME_POST);
+        return memePostTagService.getTagNames(memePostId);
     }
 
     private List<Long> getTagIds(Long memePostId) {
-        return postTagService.getTagIds(memePostId, MEME_POST);
+        return memePostTagService.getTagIds(memePostId);
     }
 
     private void verifyOwnership(MemePost memePost, User user) {
