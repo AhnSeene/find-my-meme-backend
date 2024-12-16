@@ -79,7 +79,7 @@ public class MemePostService {
     public Slice<MemePostSummaryResponse> getMemePosts(int page, int size, MemePostSort postSort, Long userId) {
         Pageable pageable = PageRequest.of(page, size, postSort.toSort());
         Slice<MemePostSummaryResponse> memePosts = memePostRepository.findMemePostSummariesWithLike(pageable, userId);
-
+        //태그 정보 N + 1, 좋아요 정보 서브 쿼리
         memePosts.forEach(response -> response.setTags(getTagNames(response.getId())));
         return memePosts;
     }
@@ -91,6 +91,19 @@ public class MemePostService {
                 .map(memePost -> new MemePostSummaryResponse(memePost, false, getTagNames(memePost.getId())))
                 .toList();
         return new SliceImpl<>(responses, pageable, memePosts.hasNext());
+    }
+
+    public Slice<MemePostSummaryResponse> getMemePosts1(int page, int size, MemePostSort postSort) {
+        Pageable pageable = PageRequest.of(page, size, postSort.toSort());
+        Slice<MemePost> memePostSlice = memePostRepository.findSliceAll(pageable);
+        Map<Long, List<String>> postTagNames = memePostTagRepository.findTagsByMemePostIdIn(getPostIds(memePostSlice.getContent()))
+                .stream()
+                .collect(groupingBy(tag -> tag.getMemePost().getId(),
+                        mapping(tag -> tag.getTag().getName(), toList())));
+        List<MemePostSummaryResponse> responses = memePostSlice.getContent().stream()
+                .map(mp -> new MemePostSummaryResponse(mp, false, postTagNames.get(mp.getId())))
+                .toList();
+        return new SliceImpl<>(responses, pageable, memePostSlice.hasNext());
     }
 
     public Slice<MemePostSummaryResponse> searchMemePosts(int page, int size, MemePostSearchCond searchCond) {
