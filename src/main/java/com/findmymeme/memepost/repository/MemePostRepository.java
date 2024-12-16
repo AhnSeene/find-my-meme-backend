@@ -44,7 +44,7 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long>, MemeP
 
     @Query("select distinct new com.findmymeme.memepost.dto.MemePostSummaryResponse(m, " +
             "exists (select 1 from MemePostLike mpl where mpl.memePost = m and mpl.user.id = :currentUserId)) " +
-            "from MemePost m join PostTag pt on m.id = pt.postId where pt.tag.name in :tags and m.deletedAt is null")
+            "from MemePost m join MemePostTag pt on m.id = pt.memePost.id where pt.tag.name in :tags and m.deletedAt is null")
     List<MemePostSummaryResponse> findByTagNamesWithLikeByUserId(@Param("tags") List<String> tags, Pageable pageable, @Param("currentUserId") Long currentUserId);
 
     @Query("SELECT m FROM MemePost m WHERE m.deletedAt IS NULL ORDER BY m.viewCount DESC")
