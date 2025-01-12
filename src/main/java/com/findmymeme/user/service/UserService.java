@@ -11,10 +11,16 @@ import com.findmymeme.user.repository.UserRepository;
 import com.findmymeme.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
@@ -25,6 +31,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final FileStorageService fileStorageService;
+    private final AuthenticationManager authenticationManager;
     @Value("${default.profile-image-url}")
     private String defaultProfileImageUrl;
 
@@ -33,7 +40,7 @@ public class UserService {
         checkDuplicateUsername(signupRequest.getUsername());
 
         String encodedPassword = passwordEncoder.encode(signupRequest.getPassword());
-        User user = SignupRequest.toEntity(signupRequest, encodedPassword, defaultProfileImageUrl);
+        User user = SignupRequest.toEntity(signupRequest, Role.ROLE_USER, encodedPassword, defaultProfileImageUrl);
         return new SignupResponse(userRepository.save(user));
     }
 
@@ -47,12 +54,14 @@ public class UserService {
     }
 
     public LoginResponse login(LoginRequest loginRequest) {
-        User user = getUserByUsername(loginRequest.getUsername());
-        validatePassword(loginRequest.getPassword(), user.getPassword());
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        String role = userDetails.getRoleAsString();
         return LoginResponse.builder()
-                .accessToken(jwtTokenProvider.generateToken(new CustomUserDetails(user), user.getId()))
-                .username(user.getUsername())
-                .role(user.getRole().name())
+                .accessToken(jwtTokenProvider.generateToken(userDetails.getUserId(), role))
+                .username(userDetails.getUsername())
+                .role(role)
                 .build();
     }
 
@@ -78,11 +87,6 @@ public class UserService {
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
     }
 
-    private void validatePassword(String rawPassword, String encodedPassword) {
-        if (!passwordEncoder.matches(rawPassword, encodedPassword)) {
-            throw new FindMyMemeException(ErrorCode.INVALID_CREDENTIALS);
-        }
-    }
 
     private User getUserByUsername(String username) {
         return userRepository.findByUsername(username)
