@@ -1,26 +1,24 @@
 package com.findmymeme.config.jwt;
 
-import com.findmymeme.user.domain.CustomUserDetails;
+import com.findmymeme.user.domain.Role;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SecurityException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.time.ZonedDateTime;
 import java.util.Date;
 
 @Slf4j
-@Service
+@Component
 public class JwtTokenProvider {
 
     private static final String USER_ID = "USER_ID";
+    private static final String USERNAME = "USERNAME";
     private static final String USER_ROLE = "ROLE";
     private final JwtProperties jwtProperties;
     private final UserDetailsService userDetailsService;
@@ -32,7 +30,7 @@ public class JwtTokenProvider {
         this.key = getSigningKey();
     }
 
-    public String generateToken(UserDetails userDetails, Long userId) {
+    public String generateToken(Long userId, String role) {
         ZonedDateTime now = ZonedDateTime.now();
         ZonedDateTime tokenExpireTime = now.plusSeconds(jwtProperties.getExpireTime());
 
@@ -41,19 +39,12 @@ public class JwtTokenProvider {
                 .setIssuer(jwtProperties.getIssuer())
                 .setIssuedAt(Date.from(now.toInstant()))
                 .setExpiration(Date.from(tokenExpireTime.toInstant()))
-                .setSubject(userDetails.getUsername())
-                .claim(USER_ID, userId)
-                .claim(USER_ROLE, userDetails.getAuthorities())
+                .setSubject(String.valueOf(userId))
+                .claim(USER_ROLE, role)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public Authentication getAuthentication(String token) {
-        Claims claims = parseClaims(token);
-        System.out.println("JwtTokenProvider.getAuthentication");
-        UserDetails userDetails = loadUserDetailsFromToken(token);
-        return new UsernamePasswordAuthenticationToken(claims.get(USER_ID), null, userDetails.getAuthorities());
-    }
 
     public boolean validateToken(String token) {
         try {
@@ -84,17 +75,16 @@ public class JwtTokenProvider {
         }
     }
 
-    public Long getUserIdFromToken(String token) {
-        Claims claims = parseClaims(token);
-        return claims.get(USER_ID, Long.class);
+
+    public Role getRole(String token) {
+        String role = parseClaims(token)
+                .get(USER_ROLE, String.class);
+        return Role.valueOf(role);
     }
 
-
-    private UserDetails loadUserDetailsFromToken(String token) {
-        System.out.println("JwtTokenProvider.loadUserDetailsFromToken");
-        Claims claims = parseClaims(token);
-        String username = claims.getSubject();
-        return userDetailsService.loadUserByUsername(username);
+    public Long getUserId(String token) {
+        String userId = parseClaims(token).getSubject();
+        return Long.parseLong(userId);
     }
 
     private Key getSigningKey() {
