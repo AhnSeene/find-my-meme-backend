@@ -17,6 +17,6 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
-        return new CustomUserDetails(user);
+        return new CustomUserDetails(user.getId(), user.getUsername(), user.getRole(), user.getPassword());
     }
 }
