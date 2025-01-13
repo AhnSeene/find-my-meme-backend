@@ -96,6 +96,15 @@ public class UserService {
         return new ReissueTokenResponse(newAccessToken, newRefreshToken);
     }
 
+    public void logout(String refreshToken) {
+        if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken) ||
+                !jwtTokenProvider.getTokenCategory(refreshToken).equals(TokenCategory.REFRESH)) {
+            throw new FindMyMemeException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        refreshTokenRepository.deleteById(refreshToken);
+    }
+
     private void saveRefreshToken(String refreshToken, Long userId, Role role) {
         refreshTokenRepository.save(RefreshToken.builder()
                 .refresh(refreshToken)

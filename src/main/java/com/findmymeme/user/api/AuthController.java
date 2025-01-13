@@ -51,6 +51,20 @@ public class AuthController {
         return ResponseUtil.success(reissueTokenResponse, SuccessCode.REISSUE);
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @CookieValue(value = "refresh") String refreshToken, HttpServletResponse response
+    ) {
+        userService.logout(refreshToken);
+        Cookie cookie = new Cookie(REFRESH, null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+        return ResponseUtil.success(null, SuccessCode.LOGOUT);
+    }
+
     private Cookie createRefreshCookie(String refreshToken) {
         Cookie refreshCookie = new Cookie(REFRESH, refreshToken);
         refreshCookie.setHttpOnly(true);
