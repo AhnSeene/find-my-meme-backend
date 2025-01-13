@@ -8,6 +8,7 @@ import java.util.ResourceBundle;
 public enum SuccessCode {
     SIGNUP(HttpStatus.CREATED),
     LOGIN(HttpStatus.OK),
+    REISSUE(HttpStatus.CREATED),
     USER_INFO(HttpStatus.OK),
     USER_PROFILE_IMAGE_UPDATE(HttpStatus.OK),
     USER_DUPLICATE_VALIDATION(HttpStatus.OK),

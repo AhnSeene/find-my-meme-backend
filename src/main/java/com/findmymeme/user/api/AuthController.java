@@ -39,6 +39,18 @@ public class AuthController {
         response.addHeader(ACCESS, loginResponse.getAccessToken());
         return ResponseUtil.success(userService.login(request), SuccessCode.LOGIN);
     }
+
+    @PostMapping("/reissue")
+    public ResponseEntity<ApiResponse<ReissueTokenResponse>> reissueToken(
+            @CookieValue(value = "refresh") String refreshToken, HttpServletResponse response
+    ) {
+        ReissueTokenResponse reissueTokenResponse = userService.reissueToken(refreshToken);
+        Cookie refreshCookie = createRefreshCookie(reissueTokenResponse.getRefreshToken());
+        response.addCookie(refreshCookie);
+        response.addHeader(ACCESS, reissueTokenResponse.getAccessToken());
+        return ResponseUtil.success(reissueTokenResponse, SuccessCode.REISSUE);
+    }
+
     private Cookie createRefreshCookie(String refreshToken) {
         Cookie refreshCookie = new Cookie(REFRESH, refreshToken);
         refreshCookie.setHttpOnly(true);

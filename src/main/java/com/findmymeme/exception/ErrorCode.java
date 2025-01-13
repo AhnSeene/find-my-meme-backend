@@ -28,7 +28,11 @@ public enum ErrorCode {
     FIND_POST_ALREADY_FOUND(HttpStatus.CONFLICT, "이미 채택된 댓글이 있습니다."),
 
     INVALID_COMMENT_POST_RELATION(HttpStatus.BAD_REQUEST, "댓글이 게시글과 일치하지 않습니다."),
-    INVALID_PERIOD(HttpStatus.BAD_REQUEST, "지원하지 않는 기간입니다.");
+    INVALID_PERIOD(HttpStatus.BAD_REQUEST, "지원하지 않는 기간입니다."),
+
+    MISSING_AUTHORIZATION_HEADER(HttpStatus.UNAUTHORIZED, "Authorization 헤더가 누락되었습니다."),
+    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 Refresh 토큰입니다.");
+
     private final HttpStatus httpStatus;
     private final String message;
 }

@@ -74,6 +74,28 @@ public class UserService {
                 .build();
     }
 
+    public ReissueTokenResponse reissueToken(String refreshToken) {
+        if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken) ||
+                !jwtTokenProvider.getTokenCategory(refreshToken).equals(TokenCategory.REFRESH)) {
+            throw new FindMyMemeException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        RefreshToken storedToken = refreshTokenRepository.findById(refreshToken)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.INVALID_REFRESH_TOKEN));
+
+
+        Long userId = storedToken.getUserId();
+        Role role = storedToken.getRole();
+
+        String newAccessToken = jwtTokenProvider.generateToken(userId, role.name(), jwtProperties.getAccessExpireTime(), TokenCategory.ACCESS);
+        String newRefreshToken = jwtTokenProvider.generateToken(userId, role.name(), jwtProperties.getAccessExpireTime(), TokenCategory.REFRESH);
+
+        refreshTokenRepository.deleteById(refreshToken);
+        saveRefreshToken(newRefreshToken, userId, role);
+
+        return new ReissueTokenResponse(newAccessToken, newRefreshToken);
+    }
+
     private void saveRefreshToken(String refreshToken, Long userId, Role role) {
         refreshTokenRepository.save(RefreshToken.builder()
                 .refresh(refreshToken)
