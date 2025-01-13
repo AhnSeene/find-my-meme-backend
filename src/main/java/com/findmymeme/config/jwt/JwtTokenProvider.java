@@ -31,16 +31,18 @@ public class JwtTokenProvider {
         this.key = getSigningKey();
     }
 
-        ZonedDateTime now = ZonedDateTime.now();
-        ZonedDateTime tokenExpireTime = now.plusSeconds(jwtProperties.getExpireTime());
     public String generateToken(Long userId, String role, Long expireTime, TokenCategory category) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime tokenExpireTime = now.plusSeconds(expireTime);
 
+        ZoneId zoneId = ZoneId.systemDefault();
+        Date issuedAt = Date.from(now.atZone(zoneId).toInstant());
+        Date expiration = Date.from(tokenExpireTime.atZone(zoneId).toInstant());
         return Jwts.builder()
                 .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
                 .setIssuer(jwtProperties.getIssuer())
-                .setIssuedAt(Date.from(now.toInstant()))
-                .setExpiration(Date.from(tokenExpireTime.toInstant()))
-                .setSubject(String.valueOf(userId))
+                .setIssuedAt(issuedAt)
+                .setExpiration(expiration)
                 .claim(CATEGORY, category).setSubject(String.valueOf(userId))
                 .claim(USER_ROLE, role)
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -48,20 +50,14 @@ public class JwtTokenProvider {
     }
 
 
+
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
             return true;
-        } catch (SecurityException | MalformedJwtException e) {
-            log.info("Invalid JWT Token", e);
-        } catch (ExpiredJwtException e) {
-            log.info("Expired JWT Token", e);
-        } catch (UnsupportedJwtException e) {
-            log.info("Unsupported JWT Token", e);
-        } catch (IllegalArgumentException e) {
-            log.info("JWT claims string is empty.", e);
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
         }
-        return false;
     }
 
     public Claims parseClaims(String accessToken) {
@@ -87,6 +83,13 @@ public class JwtTokenProvider {
     public Long getUserId(String token) {
         String userId = parseClaims(token).getSubject();
         return Long.parseLong(userId);
+    }
+
+    public LocalDateTime getExpireTime(String token) {
+        Date expiration = parseClaims(token).getExpiration();
+        return expiration.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
     }
 
     public TokenCategory getTokenCategory(String token) {
