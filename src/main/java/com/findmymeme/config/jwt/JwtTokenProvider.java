@@ -10,6 +10,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
 
@@ -17,8 +19,7 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
-    private static final String USER_ID = "USER_ID";
-    private static final String USERNAME = "USERNAME";
+    private static final String CATEGORY = "CATEGORY";
     private static final String USER_ROLE = "ROLE";
     private final JwtProperties jwtProperties;
     private final UserDetailsService userDetailsService;
@@ -30,9 +31,9 @@ public class JwtTokenProvider {
         this.key = getSigningKey();
     }
 
-    public String generateToken(Long userId, String role) {
         ZonedDateTime now = ZonedDateTime.now();
         ZonedDateTime tokenExpireTime = now.plusSeconds(jwtProperties.getExpireTime());
+    public String generateToken(Long userId, String role, Long expireTime, TokenCategory category) {
 
         return Jwts.builder()
                 .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
@@ -40,6 +41,7 @@ public class JwtTokenProvider {
                 .setIssuedAt(Date.from(now.toInstant()))
                 .setExpiration(Date.from(tokenExpireTime.toInstant()))
                 .setSubject(String.valueOf(userId))
+                .claim(CATEGORY, category).setSubject(String.valueOf(userId))
                 .claim(USER_ROLE, role)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
@@ -86,6 +88,12 @@ public class JwtTokenProvider {
         String userId = parseClaims(token).getSubject();
         return Long.parseLong(userId);
     }
+
+    public TokenCategory getTokenCategory(String token) {
+        String category = parseClaims(token).get(CATEGORY, String.class);
+        return TokenCategory.valueOf(category);
+    }
+
 
     private Key getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.getSecretKey());
