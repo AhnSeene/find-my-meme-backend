@@ -1,9 +1,13 @@
 package com.findmymeme.user.service;
 
+import com.findmymeme.config.jwt.JwtProperties;
 import com.findmymeme.config.jwt.JwtTokenProvider;
+import com.findmymeme.config.jwt.TokenCategory;
 import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.exception.FindMyMemeException;
 import com.findmymeme.file.service.FileStorageService;
+import com.findmymeme.token.domain.RefreshToken;
+import com.findmymeme.token.repository.RefreshTokenRepository;
 import com.findmymeme.user.domain.CustomUserDetails;
 import com.findmymeme.user.domain.Role;
 import com.findmymeme.user.dto.*;
@@ -14,28 +18,26 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-
 @Service
-@Transactional(readOnly = true)
+@Transactional
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final JwtProperties jwtProperties;
     private final FileStorageService fileStorageService;
     private final AuthenticationManager authenticationManager;
+    private final RefreshTokenRepository refreshTokenRepository;
     @Value("${default.profile-image-url}")
     private String defaultProfileImageUrl;
 
-    @Transactional
     public SignupResponse signup(SignupRequest signupRequest) {
         checkDuplicateUsername(signupRequest.getUsername());
 
@@ -44,7 +46,6 @@ public class UserService {
         return new SignupResponse(userRepository.save(user));
     }
 
-    @Transactional
     public SignupResponse adminSignup(SignupRequest signupRequest) {
         checkDuplicateUsername(signupRequest.getUsername());
 
@@ -57,12 +58,29 @@ public class UserService {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        String role = userDetails.getRoleAsString();
+
+        Long userId = userDetails.getUserId();
+        String role = userDetails.getRole().name();
+        String accessToken = jwtTokenProvider.generateToken(userId, role, jwtProperties.getAccessExpireTime(), TokenCategory.ACCESS);
+        String refreshToken = jwtTokenProvider.generateToken(userId, role, jwtProperties.getAccessExpireTime(), TokenCategory.REFRESH);
+
+        saveRefreshToken(refreshToken, userDetails.getUserId(), userDetails.getRole());
+
         return LoginResponse.builder()
-                .accessToken(jwtTokenProvider.generateToken(userDetails.getUserId(), role))
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .username(userDetails.getUsername())
-                .role(role)
+                .role(userDetails.getRole().name())
                 .build();
+    }
+
+    private void saveRefreshToken(String refreshToken, Long userId, Role role) {
+        refreshTokenRepository.save(RefreshToken.builder()
+                .refresh(refreshToken)
+                .expiredAt(jwtTokenProvider.getExpireTime(refreshToken))
+                .userId(userId)
+                .role(role)
+                .build());
     }
 
     public UserInfoResponse getMyInfo(Long userId) {
