@@ -47,7 +47,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler)
                 )
                 .authorizeHttpRequests(requests -> requests
-                        .requestMatchers("/api/v1/signup", "/api/v1/login")
+                        .requestMatchers("/api/v1/signup", "/api/v1/login", "/api/v1/reissue", "/api/v1/logout")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/find-posts/**",
