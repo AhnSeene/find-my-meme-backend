@@ -11,16 +11,26 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
+import java.lang.reflect.ParameterizedType;
 import java.util.Optional;
 
 @Component
 public class CurrentUserIdArgumentResolver implements HandlerMethodArgumentResolver {
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
-        return parameter.hasParameterAnnotation(CurrentUserId.class) &&
-                (parameter.getParameterType().equals(Long.class) ||
-                (parameter.getParameterType().equals(Optional.class) &&
-                                parameter.getParameterType().equals(Long.class)));
+        if (!parameter.hasParameterAnnotation(CurrentUserId.class)) {
+            return false;
+        }
+        Class<?> parameterType = parameter.getParameterType();
+        if (parameterType.equals(Long.class)) {
+            return true;
+        }
+
+        if (parameterType.equals(Optional.class)) {
+            return parameter.getGenericParameterType() instanceof ParameterizedType parameterizedType
+                    && parameterizedType.getActualTypeArguments()[0].equals(Long.class);
+        }
+        return false;
     }
 
     @Override
@@ -29,6 +39,7 @@ public class CurrentUserIdArgumentResolver implements HandlerMethodArgumentResol
                                   NativeWebRequest webRequest,
                                   WebDataBinderFactory binderFactory) {
         Authentication authentication = (Authentication) webRequest.getUserPrincipal();
+        boolean isRequired = parameter.getParameterAnnotation(CurrentUserId.class).required();
 
         if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
@@ -45,6 +56,9 @@ public class CurrentUserIdArgumentResolver implements HandlerMethodArgumentResol
             return Optional.empty();
         }
 
-        throw new FindMyMemeException(ErrorCode.INTERNAL_SERVER_ERROR);
+        if (isRequired) {
+            throw new FindMyMemeException(ErrorCode.UNAUTHORIZED_USER);
+        }
+        return null;
     }
 }
