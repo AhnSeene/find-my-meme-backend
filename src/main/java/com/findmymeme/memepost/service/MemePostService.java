@@ -56,8 +56,14 @@ public class MemePostService {
         return new MemePostUploadResponse(memePost.getImageUrl(), tagNames);
     }
 
+
+    public MemePostGetResponse getMemePost(Long memePostId, Optional<Long> userId) {
+        return userId.map(id -> getMemePostForUser(memePostId, id))
+                .orElseGet(() -> getMemePostForGuest(memePostId));
+    }
+
     @Transactional
-    public MemePostGetResponse getMemePost(Long memePostId) {
+    public MemePostGetResponse getMemePostForGuest(Long memePostId) {
         MemePost memePost = getMemePostWithUserById(memePostId);
         List<String> tagNames = getTagNames(memePostId);
 
@@ -66,7 +72,7 @@ public class MemePostService {
     }
 
     @Transactional
-    public MemePostGetResponse getMemePost(Long memePostId, Long userId) {
+    public MemePostGetResponse getMemePostForUser(Long memePostId, Long userId) {
         User user = getUserById(userId);
         MemePost memePost = getMemePostWithUserById(memePostId);
         boolean isLiked = memePostLikeRepository.existsByMemePostIdAndUserId(memePostId, userId);
@@ -76,7 +82,29 @@ public class MemePostService {
         return new MemePostGetResponse(memePost, memePost.isOwner(user), isLiked, tagNames);
     }
 
-    public Slice<MemePostSummaryResponse> getMemePosts(int page, int size, MemePostSort postSort, Long userId) {
+    public MemePostGetResponse getMemePost2(Long memePostId, Optional<Long> userId) {
+        return userId.map(id -> getMemePostForUser2(memePostId, id))
+                .orElseGet(() -> getMemePostForGuest(memePostId));
+    }
+
+    @Transactional
+    public MemePostGetResponse getMemePostForUser2(Long memePostId, Long userId) {
+        User user = getUserById(userId);
+        MemePost memePost = memePostRepository.findByIdWithTags(memePostId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
+        boolean isLiked = memePostLikeRepository.existsByMemePostIdAndUserId(memePostId, userId);
+
+        memePost.incrementViewCount();
+        return new MemePostGetResponse(memePost, memePost.isOwner(user), isLiked, memePost.getTagNames());
+    }
+
+
+    public Slice<MemePostSummaryResponse> getMemePosts(int page, int size, MemePostSort postSort, Optional<Long> userId) {
+        return userId.map(id -> getMemePostsForUser(page, size, postSort, id))
+                .orElseGet(() -> getMemePostsForGuest(page, size, postSort));
+    }
+
+    public Slice<MemePostSummaryResponse> getMemePostsForUser(int page, int size, MemePostSort postSort, Long userId) {
         Pageable pageable = PageRequest.of(page, size, postSort.toSort());
         Slice<MemePostSummaryResponse> memePosts = memePostRepository.findMemePostSummariesWithLike(pageable, userId);
         //태그 정보 N + 1, 좋아요 정보 서브 쿼리
@@ -84,7 +112,7 @@ public class MemePostService {
         return memePosts;
     }
 
-    public Slice<MemePostSummaryResponse> getMemePosts(int page, int size, MemePostSort postSort) {
+    public Slice<MemePostSummaryResponse> getMemePostsForGuest(int page, int size, MemePostSort postSort) {
         Pageable pageable = PageRequest.of(page, size, postSort.toSort());
         Slice<MemePost> memePosts = memePostRepository.findSliceAll(pageable);
         List<MemePostSummaryResponse> responses = memePosts.stream()
@@ -93,7 +121,13 @@ public class MemePostService {
         return new SliceImpl<>(responses, pageable, memePosts.hasNext());
     }
 
-    public Slice<MemePostSummaryResponse> getMemePosts1(int page, int size, MemePostSort postSort) {
+    public Slice<MemePostSummaryResponse> getMemePosts1(int page, int size, MemePostSort postSort, Optional<Long> userId) {
+        return userId.map(id -> getMemePostsForUser(page, size, postSort, id))
+                .orElseGet(() -> getMemePostsForGuest1(page, size, postSort));
+    }
+
+
+    public Slice<MemePostSummaryResponse> getMemePostsForGuest1(int page, int size, MemePostSort postSort) {
         Pageable pageable = PageRequest.of(page, size, postSort.toSort());
         Slice<MemePost> memePostSlice = memePostRepository.findSliceAll(pageable);
         Map<Long, List<String>> postTagNames = memePostTagRepository.findTagsByMemePostIdIn(getPostIds(memePostSlice.getContent()))
@@ -106,7 +140,12 @@ public class MemePostService {
         return new SliceImpl<>(responses, pageable, memePostSlice.hasNext());
     }
 
-    public Slice<MemePostSummaryResponse> getMemePosts2(int page, int size, MemePostSort postSort, Long userId) {
+    public Slice<MemePostSummaryResponse> getMemePosts2(int page, int size, MemePostSort postSort, Optional<Long> userId) {
+        return userId.map(id -> getMemePostsForUser2(page, size, postSort, id))
+                .orElseGet(() -> getMemePostsForGuest1(page, size, postSort));
+    }
+
+    public Slice<MemePostSummaryResponse> getMemePostsForUser2(int page, int size, MemePostSort postSort, Long userId) {
         User user = getUserById(userId);
         Pageable pageable = PageRequest.of(page, size, postSort.toSort());
         //컬렉션 조회 fetch join시 메모리에서 개수를 해결
@@ -121,7 +160,12 @@ public class MemePostService {
         return new SliceImpl<>(responses, pageable, memePostSlice.hasNext());
     }
 
-    public Slice<MemePostSummaryResponse> getMemePosts3(int page, int size, MemePostSort postSort, Long userId) {
+    public Slice<MemePostSummaryResponse> getMemePosts3(int page, int size, MemePostSort postSort, Optional<Long> userId) {
+        return userId.map(id -> getMemePostsForUser3(page, size, postSort, id))
+                .orElseGet(() -> getMemePostsForGuest1(page, size, postSort));
+    }
+
+    public Slice<MemePostSummaryResponse> getMemePostsForUser3(int page, int size, MemePostSort postSort, Long userId) {
         User user = getUserById(userId);
         Pageable pageable = PageRequest.of(page, size, postSort.toSort());
         Slice<MemePost> memePostSlice = memePostRepository.findSliceAll(pageable);
@@ -136,7 +180,12 @@ public class MemePostService {
         return new SliceImpl<>(responses, pageable, memePostSlice.hasNext());
     }
 
-    public Slice<MemePostSummaryResponse> getMemePosts4(int page, int size, MemePostSort postSort, Long userId) {
+    public Slice<MemePostSummaryResponse> getMemePosts4(int page, int size, MemePostSort postSort, Optional<Long> userId) {
+        return userId.map(id -> getMemePostsForUser4(page, size, postSort, id))
+                .orElseGet(() -> getMemePostsForGuest1(page, size, postSort));
+    }
+
+    public Slice<MemePostSummaryResponse> getMemePostsForUser4(int page, int size, MemePostSort postSort, Long userId) {
         User user = getUserById(userId);
         Pageable pageable = PageRequest.of(page, size, postSort.toSort());
         Slice<MemePost> memePostSlice = memePostRepository.findSliceAll(pageable);
@@ -159,7 +208,13 @@ public class MemePostService {
 
         return new SliceImpl<>(responses, pageable, memePostSlice.hasNext());
     }
-    public Slice<MemePostSummaryResponse> getMemePosts5(int page, int size, MemePostSort postSort, Long userId) {
+
+    public Slice<MemePostSummaryResponse> getMemePosts5(int page, int size, MemePostSort postSort, Optional<Long> userId) {
+        return userId.map(id -> getMemePostsForUser5(page, size, postSort, id))
+                .orElseGet(() -> getMemePostsForGuest1(page, size, postSort));
+    }
+
+    public Slice<MemePostSummaryResponse> getMemePostsForUser5(int page, int size, MemePostSort postSort, Long userId) {
         User user = getUserById(userId);
         Pageable pageable = PageRequest.of(page, size, postSort.toSort());
         Slice<MemePost> memePostSlice = memePostRepository.findSliceAll(pageable);
@@ -183,7 +238,12 @@ public class MemePostService {
         return new SliceImpl<>(responses, pageable, memePostSlice.hasNext());
     }
 
-    public Slice<MemePostSummaryResponse> getMemePosts6(int page, int size, MemePostSort postSort, Long userId) {
+    public Slice<MemePostSummaryResponse> getMemePosts6(int page, int size, MemePostSort postSort, Optional<Long> userId) {
+        return userId.map(id -> getMemePostsForUser6(page, size, postSort, id))
+                .orElseGet(() -> getMemePostsForGuest1(page, size, postSort));
+    }
+
+    public Slice<MemePostSummaryResponse> getMemePostsForUser6(int page, int size, MemePostSort postSort, Long userId) {
         User user = getUserById(userId);
         Pageable pageable = PageRequest.of(page, size, postSort.toSort());
         //id만 먼저 페이징 조회
@@ -208,21 +268,31 @@ public class MemePostService {
         return new SliceImpl<>(responses, pageable, postIdSlice.hasNext());
     }
 
-    public Slice<MemePostSummaryResponse> searchMemePosts(int page, int size, MemePostSearchCond searchCond) {
+    public Slice<MemePostSummaryResponse> searchMemePosts(int page, int size, MemePostSearchCond searchCond, Optional<Long> userId) {
+        return userId.map(id -> searchMemePostsForUser(page, size, searchCond, id))
+                .orElseGet(() -> searchMemePostsForGuest(page, size, searchCond));
+    }
+
+    public Slice<MemePostSummaryResponse> searchMemePostsForGuest(int page, int size, MemePostSearchCond searchCond) {
         Pageable pageable = PageRequest.of(page, size);
         Slice<MemePostSummaryResponse> responses = memePostRepository.searchByCond(pageable, searchCond);
         responses.forEach(response -> response.setTags(getTagNames(response.getId())));
         return responses;
     }
 
-    public Slice<MemePostSummaryResponse> searchMemePosts(int page, int size, Long userId, MemePostSearchCond searchCond) {
+    public Slice<MemePostSummaryResponse> searchMemePostsForUser(int page, int size, MemePostSearchCond searchCond, Long userId) {
         Pageable pageable = PageRequest.of(page, size);
         Slice<MemePostSummaryResponse> responses = memePostRepository.searchByCondWithMemePostLike(pageable, searchCond, userId);
         responses.forEach(response -> response.setTags(getTagNames(response.getId())));
         return responses;
     }
 
-    public List<MemePostSummaryResponse> getRecommendedPosts(Long memePostId, int size) {
+    public List<MemePostSummaryResponse> getRecommendedPosts(Long memePostId, int size, Optional<Long> userId) {
+        return userId.map(id -> getRecommendedPostsForUser(memePostId, size, id))
+                .orElseGet(() -> getRecommendedPostsForGuest(memePostId, size));
+    }
+
+    public List<MemePostSummaryResponse> getRecommendedPostsForGuest(Long memePostId, int size) {
         MemePost memePost = getMemePostById(memePostId);
         List<String> tagNames = getTagNames(memePostId); //N + 1문제 태그 불러오기
         List<MemePost> recommendedPosts = memePostRepository.findRelatedPostsByTagNames(tagNames, memePostId, PageRequest.of(0, size));
@@ -232,7 +302,7 @@ public class MemePostService {
     }
 
 
-    public List<MemePostSummaryResponse> getRecommendedPosts(Long memePostId, int size, Long userId) {
+    public List<MemePostSummaryResponse> getRecommendedPostsForUser(Long memePostId, int size, Long userId) {
         MemePost memePost = getMemePostById(memePostId);
         User user = getUserById(userId);
         List<MemePostSummaryResponse> recommendedPosts = memePostRepository.findByTagNamesWithLikeByUserId(getTagNames(memePost.getId()), PageRequest.of(0, size), userId);
@@ -240,8 +310,13 @@ public class MemePostService {
         return recommendedPosts;
     }
 
+    public List<MemePostSummaryResponse> getRecommendedPosts2(Long memePostId, int size, Optional<Long> userId) {
+        return userId.map(id -> getRecommendedPostsForUser2(memePostId, size, id))
+                .orElseGet(() -> getRecommendedPostsForGuest2(memePostId, size));
+    }
 
-    public List<MemePostSummaryResponse> getRecommendedPosts2(Long memePostId, int size) {
+
+    public List<MemePostSummaryResponse> getRecommendedPostsForGuest2(Long memePostId, int size) {
         MemePost memePost = getMemePostById(memePostId);
         //fetch join으로 memePost의 태그 정보 미리 가져오기
         memePostTagRepository.findAllByMemePostId(memePost.getId());
@@ -253,7 +328,12 @@ public class MemePostService {
                 .toList();
     }
 
-    public List<MemePostSummaryResponse> getRecommendedPosts3(Long memePostId, int size) {
+    public List<MemePostSummaryResponse> getRecommendedPosts3(Long memePostId, int size, Optional<Long> userId) {
+        return userId.map(id -> getRecommendedPostsForUser3(memePostId, size, id))
+                .orElseGet(() -> getRecommendedPostsForGuest3(memePostId, size));
+    }
+
+    public List<MemePostSummaryResponse> getRecommendedPostsForGuest3(Long memePostId, int size) {
         MemePost memePost = memePostRepository.findByIdWithTags(memePostId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
         //fetch join으로 memePost의 태그 정보 미리 가져오기
@@ -265,7 +345,12 @@ public class MemePostService {
                 .toList();
     }
 
-    public List<MemePostSummaryResponse> getRecommendedPosts4(Long memePostId, int size) {
+    public List<MemePostSummaryResponse> getRecommendedPosts4(Long memePostId, int size, Optional<Long> userId) {
+        return userId.map(id -> getRecommendedPostsForUser(memePostId, size, id))
+                .orElseGet(() -> getRecommendedPostsForGuest4(memePostId, size));
+    }
+
+    public List<MemePostSummaryResponse> getRecommendedPostsForGuest4(Long memePostId, int size) {
         MemePost memePost = memePostRepository.findByIdWithTags(memePostId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
         //fetch join으로 memePost의 태그 정보 미리 가져오기
@@ -277,7 +362,7 @@ public class MemePostService {
                 .toList();
     }
 
-    public List<MemePostSummaryResponse> getRecommendedPosts2(Long memePostId, int size, Long userId) {
+    public List<MemePostSummaryResponse> getRecommendedPostsForUser2(Long memePostId, int size, Long userId) {
         MemePost memePost = getMemePostById(memePostId);
         User user = getUserById(userId);
         memePostTagRepository.findAllByMemePostId(memePostId);
@@ -288,7 +373,7 @@ public class MemePostService {
                 .toList();
     }
 
-    public List<MemePostSummaryResponse> getRecommendedPosts3(Long memePostId, int size, Long userId) {
+    public List<MemePostSummaryResponse> getRecommendedPostsForUser3(Long memePostId, int size, Long userId) {
         MemePost memePost = memePostRepository.findByIdWithTags(memePostId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
         //fetch join으로 memePost의 태그 정보 미리 가져오기
@@ -301,8 +386,6 @@ public class MemePostService {
                 .map(mp -> new MemePostSummaryResponse(mp, likedPostIds.contains(mp.getId()), mp.getTagNames()))
                 .toList();
     }
-
-
 
 
     @Transactional
@@ -323,7 +406,12 @@ public class MemePostService {
                 .build();
     }
 
-    public MemePostUserSummaryResponse getMemePostsByAuthorName(int page, int size, String authorName) {
+    public MemePostUserSummaryResponse getMemePostsByAuthorName(int page, int size, String authorName, Optional<Long> userId) {
+        return userId.map(id -> getMemePostsByAuthorNameForUser(page, size, authorName, id))
+                .orElseGet(() -> getMemePostsByAuthorNameForGuest(page, size, authorName));
+    }
+
+    public MemePostUserSummaryResponse getMemePostsByAuthorNameForGuest(int page, int size, String authorName) {
         User author = userRepository.findByUsername(authorName)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
 
@@ -339,13 +427,12 @@ public class MemePostService {
                 .build();
     }
 
-    public MemePostUserSummaryResponse getMemePostsByAuthorName(int page, int size, String authorName, Long userId) {
+    public MemePostUserSummaryResponse getMemePostsByAuthorNameForUser(int page, int size, String authorName, Long userId) {
         User author = userRepository.findByUsername(authorName)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
 
         UserProfileResponse userProfileResponse = new UserProfileResponse(author);
         Pageable pageable = PageRequest.of(page, size);
-        Slice<MemePostSummaryResponse> memePostSummaries = memePostRepository.findMemePostSummariesWithLikeByUserId(pageable, authorName, userId);
         Slice<MemePostSummaryResponse> memePostSummaries = memePostRepository.findMemePostSummariesWithLikeByAuthorNameAndUserId(pageable, authorName, userId);
         memePostSummaries.forEach(response -> response.setTags(getTagNames(response.getId())));
         return MemePostUserSummaryResponse.builder()
@@ -354,7 +441,12 @@ public class MemePostService {
                 .build();
     }
 
-    public MemePostUserSummaryResponse getMemePostsByAuthorName2(int page, int size, String authorName) {
+    public MemePostUserSummaryResponse getMemePostsByAuthorName2(int page, int size, String authorName, Optional<Long> userId) {
+        return userId.map(id -> getMemePostsByAuthorNameForUser2(page, size, authorName, id))
+                .orElseGet(() -> getMemePostsByAuthorNameForGuest2(page, size, authorName));
+    }
+
+    public MemePostUserSummaryResponse getMemePostsByAuthorNameForGuest2(int page, int size, String authorName) {
         User author = userRepository.findByUsername(authorName)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
 
@@ -374,7 +466,7 @@ public class MemePostService {
     }
 
 
-    public MemePostUserSummaryResponse getMemePostsByAuthorName2(int page, int size, String authorName, Long userId) {
+    public MemePostUserSummaryResponse getMemePostsByAuthorNameForUser2(int page, int size, String authorName, Long userId) {
         User author = userRepository.findByUsername(authorName)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
         User user = getUserById(userId);
@@ -461,10 +553,6 @@ public class MemePostService {
 
     private List<String> getTagNames(Long memePostId) {
         return memePostTagService.getTagNames(memePostId);
-    }
-
-    private List<Long> getTagIds(Long memePostId) {
-        return memePostTagService.getTagIds(memePostId);
     }
 
     private void verifyOwnership(MemePost memePost, User user) {
