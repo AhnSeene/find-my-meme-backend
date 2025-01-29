@@ -1,5 +1,6 @@
 package com.findmymeme.file.api;
 
+import com.findmymeme.common.resolver.CurrentUserId;
 import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.file.dto.FileUploadResponse;
 import com.findmymeme.file.service.FileService;
@@ -22,9 +23,8 @@ public class FileUploadController {
     @PostMapping("/upload")
     public ResponseEntity<ApiResponse<FileUploadResponse>> upload(
             @RequestPart("file") MultipartFile file,
-            Authentication authentication
+            @CurrentUserId Long userId
     ) {
-        Long userId = Long.parseLong(authentication.getName());
         if (file.isEmpty()) {
             return ResponseUtil.error(null, ErrorCode.INVALID_INPUT_VALUE);
         }
