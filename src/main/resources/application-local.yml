@@ -32,8 +32,8 @@ logging:
     org.hibernate.SQL: debug
 
 jwt:
-  access-expire-time: 900
-  refresh-expire-time: 604800
+  access-expire-time: 1800 #30분
+  refresh-expire-time: 1209600 #14일
 #  RefreshToken의 ttl설정도 함께 해줘야됨
   secret-key: dgwgwgwdkljwljgjgjgjgjjgawoijawoijifjltjestksjigjdcndngkskgksnggiwigjwgggwg
   issuer: find-my-meme
