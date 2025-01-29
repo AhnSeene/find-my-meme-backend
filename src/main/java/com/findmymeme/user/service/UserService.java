@@ -2,7 +2,7 @@ package com.findmymeme.user.service;
 
 import com.findmymeme.config.jwt.JwtProperties;
 import com.findmymeme.config.jwt.JwtTokenProvider;
-import com.findmymeme.config.jwt.TokenCategory;
+import com.findmymeme.config.jwt.TokenStatus;
 import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.exception.FindMyMemeException;
 import com.findmymeme.file.service.FileStorageService;
@@ -22,6 +22,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import static com.findmymeme.config.jwt.TokenCategory.*;
 
 @Service
 @Transactional
@@ -54,52 +56,76 @@ public class UserService {
         return new SignupResponse(userRepository.save(user));
     }
 
-    public LoginResponse login(LoginRequest loginRequest) {
+    public LoginDto login(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
         Long userId = userDetails.getUserId();
-        String role = userDetails.getRole().name();
-        String accessToken = jwtTokenProvider.generateToken(userId, role, jwtProperties.getAccessExpireTime(), TokenCategory.ACCESS);
-        String refreshToken = jwtTokenProvider.generateToken(userId, role, jwtProperties.getAccessExpireTime(), TokenCategory.REFRESH);
+        Role role = userDetails.getRole();
+        TokenDto tokenDto = generateTokens(userId, role);
+        saveRefreshToken(tokenDto.getRefreshToken(), userId, role);
 
-        saveRefreshToken(refreshToken, userDetails.getUserId(), userDetails.getRole());
-
-        return LoginResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
+        return LoginDto.builder()
+                .accessToken(tokenDto.getAccessToken())
+                .refreshToken(tokenDto.getRefreshToken())
                 .username(userDetails.getUsername())
                 .role(userDetails.getRole().name())
                 .build();
     }
 
-    public ReissueTokenResponse reissueToken(String refreshToken) {
-        if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken) ||
-                !jwtTokenProvider.getTokenCategory(refreshToken).equals(TokenCategory.REFRESH)) {
-            throw new FindMyMemeException(ErrorCode.INVALID_REFRESH_TOKEN);
-        }
+    public TokenDto reissueToken(String refreshToken) {
+        validateRefreshToken(refreshToken);
 
         RefreshToken storedToken = refreshTokenRepository.findById(refreshToken)
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.INVALID_REFRESH_TOKEN));
-
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.INVALID_TOKEN));
 
         Long userId = storedToken.getUserId();
         Role role = storedToken.getRole();
 
-        String newAccessToken = jwtTokenProvider.generateToken(userId, role.name(), jwtProperties.getAccessExpireTime(), TokenCategory.ACCESS);
-        String newRefreshToken = jwtTokenProvider.generateToken(userId, role.name(), jwtProperties.getAccessExpireTime(), TokenCategory.REFRESH);
-
+        TokenDto tokenDto = generateTokens(userId, role);
         refreshTokenRepository.deleteById(refreshToken);
-        saveRefreshToken(newRefreshToken, userId, role);
+        saveRefreshToken(tokenDto.getRefreshToken(), userId, role);
+        return tokenDto;
+    }
 
-        return new ReissueTokenResponse(newAccessToken, newRefreshToken);
+    private void validateRefreshToken(String refreshToken) {
+        TokenStatus tokenStatus = jwtTokenProvider.validateToken(refreshToken);
+        if (tokenStatus.isInvalid() || !jwtTokenProvider.getTokenCategory(refreshToken).isRefreshToken()) {
+            throw new FindMyMemeException(ErrorCode.INVALID_TOKEN);
+        }
+
+        if (tokenStatus.isExpired()) {
+            throw new FindMyMemeException(ErrorCode.EXPIRED_TOKEN);
+        }
+    }
+
+    private TokenDto generateTokens(Long userId, Role role) {
+        String accessToken = jwtTokenProvider.generateToken(
+                userId,
+                role.name(),
+                jwtProperties.getAccessExpireTime(),
+                ACCESS
+        );
+
+        String refreshToken = jwtTokenProvider.generateToken(
+                userId,
+                role.name(),
+                jwtProperties.getRefreshExpireTime(),
+                REFRESH
+        );
+
+        return new TokenDto(accessToken, refreshToken);
     }
 
     public void logout(String refreshToken) {
-        if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken) ||
-                !jwtTokenProvider.getTokenCategory(refreshToken).equals(TokenCategory.REFRESH)) {
-            throw new FindMyMemeException(ErrorCode.INVALID_REFRESH_TOKEN);
+        TokenStatus tokenStatus = jwtTokenProvider.validateToken(refreshToken);
+        if (tokenStatus.isInvalid() || !jwtTokenProvider.getTokenCategory(refreshToken).isRefreshToken()) {
+            throw new FindMyMemeException(ErrorCode.INVALID_TOKEN);
+        }
+
+        if (tokenStatus.isExpired()) {
+            return;
         }
 
         refreshTokenRepository.deleteById(refreshToken);

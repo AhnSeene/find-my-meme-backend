@@ -4,5 +4,13 @@ import lombok.Getter;
 
 @Getter
 public enum TokenCategory {
-    ACCESS, REFRESH
+    ACCESS, REFRESH;
+
+    public boolean isAccessToken() {
+        return this == ACCESS;
+    }
+
+    public boolean isRefreshToken() {
+        return this == REFRESH;
+    }
 }
