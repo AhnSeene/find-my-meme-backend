@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private static final String REFRESH = "refresh";
-    private static final String ACCESS = "access";
+    
     private final UserService userService;
     private final JwtProperties jwtProperties;
 
@@ -36,21 +36,19 @@ public class AuthController {
         LoginDto loginDto = userService.login(request);
         Cookie refreshCookie = createRefreshCookie(loginDto.getRefreshToken());
         response.addCookie(refreshCookie);
-        response.addHeader(ACCESS, loginDto.getAccessToken());
         return ResponseUtil.success(
                 LoginResponse.fromLoginDto(userService.login(request)), SuccessCode.LOGIN
         );
     }
 
     @PostMapping("/reissue")
-    public ResponseEntity<ApiResponse<TokenDto>> reissueToken(
+    public ResponseEntity<ApiResponse<ReissueResponse>> reissueToken(
             @CookieValue(value = "refresh") String refreshToken, HttpServletResponse response
     ) {
         TokenDto tokenDto = userService.reissueToken(refreshToken);
         Cookie refreshCookie = createRefreshCookie(tokenDto.getRefreshToken());
         response.addCookie(refreshCookie);
-        response.addHeader(ACCESS, tokenDto.getAccessToken());
-        return ResponseUtil.success(null, SuccessCode.REISSUE);
+        return ResponseUtil.success(new ReissueResponse(tokenDto.getAccessToken()), SuccessCode.REISSUE);
     }
 
     @PostMapping("/logout")

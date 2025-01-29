@@ -39,5 +39,5 @@ out/
 ### env file ###
 .env
 
-# Gradle QueryDSL Q파일
-**/build/generated/
+# QueryDSL Q파일
+src/main/generated/*
