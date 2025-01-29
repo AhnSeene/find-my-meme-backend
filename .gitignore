@@ -38,3 +38,6 @@ out/
 
 ### env file ###
 .env
+
+# Gradle QueryDSL Q파일
+**/build/generated/

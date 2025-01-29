@@ -1,5 +1,6 @@
 package com.findmymeme.user.api;
 
+import com.findmymeme.common.resolver.CurrentUserId;
 import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.response.ApiResponse;
 import com.findmymeme.response.ResponseUtil;
@@ -25,9 +26,8 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserInfoResponse>> getMyInfo(
-            Authentication authentication
+            @CurrentUserId(required = false) Long userId
     ) {
-        Long userId = Long.parseLong(authentication.getName());
         return ResponseUtil.success(userService.getMyInfo(userId),
                 SuccessCode.USER_INFO
         );
@@ -36,9 +36,8 @@ public class UserController {
     @PostMapping("/profile-image")
     public ResponseEntity<ApiResponse<UserProfileImageResponse>> updateProfileImage(
             MultipartFile file,
-             Authentication authentication
+            @CurrentUserId(required = false) Long userId
     ) {
-        Long userId = Long.parseLong(authentication.getName());
         return ResponseUtil.success(userService.updateProfileImage(file, userId),
                 SuccessCode.USER_PROFILE_IMAGE_UPDATE
         );

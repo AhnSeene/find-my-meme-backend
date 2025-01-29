@@ -1,5 +1,6 @@
 package com.findmymeme.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.findmymeme.config.jwt.JwtAccessDeniedHandler;
 import com.findmymeme.config.jwt.JwtAuthFilter;
 import com.findmymeme.config.jwt.JwtAuthenticationEntryPoint;
@@ -9,14 +10,21 @@ import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.util.AntPathMatcher;
+
+import static com.findmymeme.config.SecurityWhitelist.*;
 
 @Configuration
 @EnableWebSecurity
@@ -37,21 +45,19 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
 
-                .addFilterBefore(new JwtAuthFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
-
+                .addFilterBefore(new JwtAuthFilter(jwtTokenProvider, new ObjectMapper(), new AntPathMatcher())
+                        , UsernamePasswordAuthenticationFilter.class
+                )
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler)
                 )
                 .authorizeHttpRequests(requests -> requests
-                        .requestMatchers("/api/v1/signup", "/api/v1/login")
+                        .requestMatchers(PUBLIC_AUTH_URLS)
                         .permitAll()
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/v1/find-posts/**",
-                                 "/api/v1/tags",
-                                "/api/v1/meme-posts/**")
+                        .requestMatchers(HttpMethod.GET, PUBLIC_GET_URLS)
                         .permitAll()
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers(ADMIN_URL).hasRole("ADMIN")
                         .anyRequest()
                         .authenticated()
                 );
@@ -67,6 +73,16 @@ public class SecurityConfig {
                         .requestMatchers(
                                 PathRequest.toStaticResources().atCommonLocations()
                         );
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
     }
 
 }

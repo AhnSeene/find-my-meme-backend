@@ -1,74 +1,65 @@
 package com.findmymeme.config.jwt;
 
-import com.findmymeme.user.domain.CustomUserDetails;
+import com.findmymeme.user.domain.Role;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.security.SecurityException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.security.Key;
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 
+import static com.findmymeme.config.jwt.TokenStatus.*;
+
 @Slf4j
-@Service
+@Component
 public class JwtTokenProvider {
 
-    private static final String USER_ID = "USER_ID";
+    private static final String CATEGORY = "CATEGORY";
     private static final String USER_ROLE = "ROLE";
     private final JwtProperties jwtProperties;
-    private final UserDetailsService userDetailsService;
     private final Key key;
 
-    public JwtTokenProvider(JwtProperties jwtProperties, UserDetailsService userDetailsService) {
+    public JwtTokenProvider(JwtProperties jwtProperties) {
         this.jwtProperties = jwtProperties;
-        this.userDetailsService = userDetailsService;
         this.key = getSigningKey();
     }
 
-    public String generateToken(UserDetails userDetails, Long userId) {
-        ZonedDateTime now = ZonedDateTime.now();
-        ZonedDateTime tokenExpireTime = now.plusSeconds(jwtProperties.getExpireTime());
+    public String generateToken(Long userId, String role, Long expireTime, TokenCategory category) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime tokenExpireTime = now.plusSeconds(expireTime);
 
+        ZoneId zoneId = ZoneId.systemDefault();
+        Date issuedAt = Date.from(now.atZone(zoneId).toInstant());
+        Date expiration = Date.from(tokenExpireTime.atZone(zoneId).toInstant());
         return Jwts.builder()
                 .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
                 .setIssuer(jwtProperties.getIssuer())
-                .setIssuedAt(Date.from(now.toInstant()))
-                .setExpiration(Date.from(tokenExpireTime.toInstant()))
-                .setSubject(userDetails.getUsername())
-                .claim(USER_ID, userId)
-                .claim(USER_ROLE, userDetails.getAuthorities())
+                .setIssuedAt(issuedAt)
+                .setExpiration(expiration)
+                .claim(CATEGORY, category).setSubject(String.valueOf(userId))
+                .claim(USER_ROLE, role)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public Authentication getAuthentication(String token) {
-        Claims claims = parseClaims(token);
-        System.out.println("JwtTokenProvider.getAuthentication");
-        UserDetails userDetails = loadUserDetailsFromToken(token);
-        return new UsernamePasswordAuthenticationToken(claims.get(USER_ID), null, userDetails.getAuthorities());
-    }
+    public TokenStatus validateToken(String token) {
+        if (token == null) {
+            return INVALID;
+        }
 
-    public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
-            return true;
-        } catch (SecurityException | MalformedJwtException e) {
-            log.info("Invalid JWT Token", e);
+            return VALID;
         } catch (ExpiredJwtException e) {
-            log.info("Expired JWT Token", e);
-        } catch (UnsupportedJwtException e) {
-            log.info("Unsupported JWT Token", e);
-        } catch (IllegalArgumentException e) {
-            log.info("JWT claims string is empty.", e);
+            return EXPIRED;
+        } catch (JwtException | IllegalArgumentException e) {
+            return INVALID;
         }
-        return false;
     }
 
     public Claims parseClaims(String accessToken) {
@@ -78,24 +69,35 @@ public class JwtTokenProvider {
                     .build()
                     .parseClaimsJws(accessToken)
                     .getBody();
-
         } catch (ExpiredJwtException e) {
             return e.getClaims();
         }
     }
 
-    public Long getUserIdFromToken(String token) {
-        Claims claims = parseClaims(token);
-        return claims.get(USER_ID, Long.class);
+
+    public Role getRole(String token) {
+        String role = parseClaims(token)
+                .get(USER_ROLE, String.class);
+        return Role.valueOf(role);
     }
 
-
-    private UserDetails loadUserDetailsFromToken(String token) {
-        System.out.println("JwtTokenProvider.loadUserDetailsFromToken");
-        Claims claims = parseClaims(token);
-        String username = claims.getSubject();
-        return userDetailsService.loadUserByUsername(username);
+    public Long getUserId(String token) {
+        String userId = parseClaims(token).getSubject();
+        return Long.parseLong(userId);
     }
+
+    public LocalDateTime getExpireTime(String token) {
+        Date expiration = parseClaims(token).getExpiration();
+        return expiration.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
+    }
+
+    public TokenCategory getTokenCategory(String token) {
+        String category = parseClaims(token).get(CATEGORY, String.class);
+        return TokenCategory.valueOf(category);
+    }
+
 
     private Key getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.getSecretKey());

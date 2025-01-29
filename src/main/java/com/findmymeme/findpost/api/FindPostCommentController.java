@@ -1,5 +1,6 @@
 package com.findmymeme.findpost.api;
 
+import com.findmymeme.common.resolver.CurrentUserId;
 import com.findmymeme.findpost.dto.*;
 import com.findmymeme.findpost.service.FindPostCommentReadService;
 import com.findmymeme.findpost.service.FindPostCommentWriteService;
@@ -9,7 +10,6 @@ import com.findmymeme.response.SuccessCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,9 +26,8 @@ public class FindPostCommentController {
     public ResponseEntity<ApiResponse<FindPostCommentAddResponse>> addComment(
             @PathVariable("postId") Long postId,
             @Valid @RequestBody FindPostCommentAddRequest request,
-            Authentication authentication
+            @CurrentUserId(required = false) Long userId
     ) {
-        Long userId = Long.parseLong(authentication.getName());
         return ResponseUtil.success(
                 commentWriteService.addComment(request, postId, userId),
                 SuccessCode.FIND_POST_COMMENT_UPLOAD
@@ -39,9 +38,8 @@ public class FindPostCommentController {
     public ResponseEntity<ApiResponse<FindPostCommentGetResponse>> getComment(
             @PathVariable("postId") Long postId,
             @PathVariable("commentId") Long commentId,
-            Authentication authentication
+            @CurrentUserId(required = false) Long userId
     ) {
-        Long userId = Long.parseLong(authentication.getName());
         return ResponseUtil.success(
                 commentReadService.getComment(postId, commentId, userId),
                 SuccessCode.FIND_POST_COMMENT_GET
@@ -63,9 +61,8 @@ public class FindPostCommentController {
             @PathVariable("postId") Long postId,
             @PathVariable("commentId") Long commentId,
             @Valid @RequestBody FindPostCommentUpdateRequest request,
-            Authentication authentication
+            @CurrentUserId(required = false) Long userId
     ) {
-        Long userId = Long.parseLong(authentication.getName());
         return ResponseUtil.success(
                 commentWriteService.updateComment(request, postId, commentId, userId),
                 SuccessCode.FIND_POST_COMMENT_UPDATE
@@ -76,9 +73,8 @@ public class FindPostCommentController {
     public ResponseEntity<ApiResponse<FindPostCommentDeleteResponse>> softDelete(
             @PathVariable("postId") Long postId,
             @PathVariable("commentId") Long commentId,
-            Authentication authentication
+            @CurrentUserId(required = false) Long userId
     ) {
-        Long userId = Long.parseLong(authentication.getName());
         return ResponseUtil.success(
                 commentWriteService.softDelete(postId, commentId, userId),
                 SuccessCode.FIND_POST_COMMENT_DELETE
