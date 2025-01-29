@@ -46,13 +46,22 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String jwt = resolveToken(request);
 
-        if (jwt == null || !jwtTokenProvider.validateToken(jwt) ||
-                !jwtTokenProvider.getTokenCategory(jwt).equals(TokenCategory.ACCESS)
-        ) {
+        TokenStatus tokenStatus = jwtTokenProvider.validateToken(jwt);
+
+        if (tokenStatus.isInvalid() || !jwtTokenProvider.getTokenCategory(jwt).isAccessToken()) {
             chain.doFilter(request, response);
             return;
         }
 
+        if (tokenStatus.isExpired()) {
+            handleExpiredToken(response);
+            return;
+        }
+
+        authenticateUser(request, response, chain, jwt);
+    }
+
+    private void authenticateUser(HttpServletRequest request, HttpServletResponse response, FilterChain chain, String jwt) throws IOException, ServletException {
         Long userId = jwtTokenProvider.getUserId(jwt);
         Role role = jwtTokenProvider.getRole(jwt);
         UserDetails userDetails = new CustomUserDetails(userId, null, role, null);
@@ -69,5 +78,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return bearerToken.substring(BEARER_PREFIX.length());
         }
         return null;
+    }
+
+    private void handleExpiredToken(HttpServletResponse response) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json;charset=UTF-8");
+
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("status", ErrorCode.EXPIRED_TOKEN);
+        errorResponse.put("error", "Token Error");
+        errorResponse.put("message", ErrorCode.EXPIRED_TOKEN.getMessage());
+
+        String jsonResponse = objectMapper.writeValueAsString(errorResponse);
+        response.getWriter().write(jsonResponse);
     }
 }
