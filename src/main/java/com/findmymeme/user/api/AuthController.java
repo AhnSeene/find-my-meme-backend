@@ -33,22 +33,24 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request, HttpServletResponse response
     ) {
 
-        LoginResponse loginResponse = userService.login(request);
-        Cookie refreshCookie = createRefreshCookie(loginResponse.getRefreshToken());
+        LoginDto loginDto = userService.login(request);
+        Cookie refreshCookie = createRefreshCookie(loginDto.getRefreshToken());
         response.addCookie(refreshCookie);
-        response.addHeader(ACCESS, loginResponse.getAccessToken());
-        return ResponseUtil.success(userService.login(request), SuccessCode.LOGIN);
+        response.addHeader(ACCESS, loginDto.getAccessToken());
+        return ResponseUtil.success(
+                LoginResponse.fromLoginDto(userService.login(request)), SuccessCode.LOGIN
+        );
     }
 
     @PostMapping("/reissue")
-    public ResponseEntity<ApiResponse<ReissueTokenResponse>> reissueToken(
+    public ResponseEntity<ApiResponse<TokenDto>> reissueToken(
             @CookieValue(value = "refresh") String refreshToken, HttpServletResponse response
     ) {
-        ReissueTokenResponse reissueTokenResponse = userService.reissueToken(refreshToken);
-        Cookie refreshCookie = createRefreshCookie(reissueTokenResponse.getRefreshToken());
+        TokenDto tokenDto = userService.reissueToken(refreshToken);
+        Cookie refreshCookie = createRefreshCookie(tokenDto.getRefreshToken());
         response.addCookie(refreshCookie);
-        response.addHeader(ACCESS, reissueTokenResponse.getAccessToken());
-        return ResponseUtil.success(reissueTokenResponse, SuccessCode.REISSUE);
+        response.addHeader(ACCESS, tokenDto.getAccessToken());
+        return ResponseUtil.success(null, SuccessCode.REISSUE);
     }
 
     @PostMapping("/logout")
