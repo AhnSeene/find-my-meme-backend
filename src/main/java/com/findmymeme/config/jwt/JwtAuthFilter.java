@@ -1,5 +1,8 @@
 package com.findmymeme.config.jwt;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.findmymeme.config.SecurityWhitelist;
+import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.user.domain.CustomUserDetails;
 import com.findmymeme.user.domain.Role;
 import jakarta.servlet.FilterChain;
@@ -11,10 +14,14 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 
 @RequiredArgsConstructor
@@ -24,6 +31,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final ObjectMapper objectMapper;
+    private final AntPathMatcher antPathMatcher;
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        return Arrays.stream(SecurityWhitelist.PUBLIC_AUTH_URLS)
+                .anyMatch(pattern -> antPathMatcher.match(pattern, request.getServletPath()));
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
