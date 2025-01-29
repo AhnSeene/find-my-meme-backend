@@ -4,7 +4,6 @@ import com.findmymeme.user.domain.Role;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.security.SecurityException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
@@ -12,8 +11,9 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Date;
+
+import static com.findmymeme.config.jwt.TokenStatus.*;
 
 @Slf4j
 @Component
@@ -22,12 +22,10 @@ public class JwtTokenProvider {
     private static final String CATEGORY = "CATEGORY";
     private static final String USER_ROLE = "ROLE";
     private final JwtProperties jwtProperties;
-    private final UserDetailsService userDetailsService;
     private final Key key;
 
-    public JwtTokenProvider(JwtProperties jwtProperties, UserDetailsService userDetailsService) {
+    public JwtTokenProvider(JwtProperties jwtProperties) {
         this.jwtProperties = jwtProperties;
-        this.userDetailsService = userDetailsService;
         this.key = getSigningKey();
     }
 
@@ -49,14 +47,18 @@ public class JwtTokenProvider {
                 .compact();
     }
 
+    public TokenStatus validateToken(String token) {
+        if (token == null) {
+            return INVALID;
+        }
 
-
-    public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
-            return true;
+            return VALID;
+        } catch (ExpiredJwtException e) {
+            return EXPIRED;
         } catch (JwtException | IllegalArgumentException e) {
-            return false;
+            return INVALID;
         }
     }
 
@@ -67,7 +69,6 @@ public class JwtTokenProvider {
                     .build()
                     .parseClaimsJws(accessToken)
                     .getBody();
-
         } catch (ExpiredJwtException e) {
             return e.getClaims();
         }
