@@ -1,5 +1,6 @@
 package com.findmymeme.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.findmymeme.config.jwt.JwtAccessDeniedHandler;
 import com.findmymeme.config.jwt.JwtAuthFilter;
 import com.findmymeme.config.jwt.JwtAuthenticationEntryPoint;
@@ -21,6 +22,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.util.AntPathMatcher;
+
+import static com.findmymeme.config.SecurityWhitelist.*;
 
 @Configuration
 @EnableWebSecurity
@@ -41,20 +45,19 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
 
-                .addFilterBefore(new JwtAuthFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtAuthFilter(jwtTokenProvider, new ObjectMapper(), new AntPathMatcher())
+                        , UsernamePasswordAuthenticationFilter.class
+                )
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler)
                 )
                 .authorizeHttpRequests(requests -> requests
-                        .requestMatchers("/api/v1/signup", "/api/v1/login", "/api/v1/reissue", "/api/v1/logout")
+                        .requestMatchers(PUBLIC_AUTH_URLS)
                         .permitAll()
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/v1/find-posts/**",
-                                 "/api/v1/tags",
-                                "/api/v1/meme-posts/**")
+                        .requestMatchers(HttpMethod.GET, PUBLIC_GET_URLS)
                         .permitAll()
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers(ADMIN_URL).hasRole("ADMIN")
                         .anyRequest()
                         .authenticated()
                 );
