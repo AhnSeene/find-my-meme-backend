@@ -153,9 +153,10 @@ public class MemePostController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @ModelAttribute MemePostSearchCond searchCond,
+            @RequestParam(defaultValue = "CREATED") MemePostSort sort,
             @CurrentUserId(required = false) Optional<Long> userId
     ) {
-        Slice<MemePostSummaryResponse> responses = memePostService.searchMemePosts(page, size, searchCond, userId);
+        Slice<MemePostSummaryResponse> responses = memePostService.searchMemePosts(page, size, sort, searchCond, userId);
         return ResponseUtil.success(new MySlice<>(responses), SuccessCode.MEME_POST_LIST);
     }
 

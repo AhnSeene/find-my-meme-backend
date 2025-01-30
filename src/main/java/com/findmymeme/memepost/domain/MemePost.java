@@ -25,8 +25,13 @@ public class MemePost extends BaseEntity {
     @Column(nullable = false)
     private String imageUrl;
 
+    @Convert(converter = ExtensionConverter.class)
     @Column(nullable = false)
-    private String extension;
+    private Extension extension;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private MediaType mediaType;
 
     private Resolution resolution;
 
@@ -57,7 +62,8 @@ public class MemePost extends BaseEntity {
     @Builder
     public MemePost(String imageUrl, String extension, Resolution resolution, Long size, String originalFilename, User user) {
         this.imageUrl = imageUrl;
-        this.extension = extension;
+        this.extension = Extension.from(extension);
+        this.mediaType = MediaType.fromExtension(extension);
         this.resolution = resolution;
         this.size = size;
         this.originalFilename = originalFilename;

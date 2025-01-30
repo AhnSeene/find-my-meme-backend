@@ -5,9 +5,7 @@ import com.findmymeme.memepost.dto.MemePostSummaryResponse;
 import com.findmymeme.user.domain.User;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
@@ -23,9 +21,9 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long>, MemeP
     Slice<Long> findSliceAllIds(Pageable pageable);
 
     @Query("SELECT mp FROM MemePost mp " +
-            "LEFT JOIN FETCH mp.memePostTags mpt " +
-            "LEFT JOIN FETCH mpt.tag " +
-            "WHERE mp.deletedAt IS NULL order by mp.createdAt desc")
+            "JOIN FETCH mp.memePostTags mpt " +
+            "JOIN FETCH mpt.tag " +
+            "WHERE mp.deletedAt IS NULL")
     Slice<MemePost> findAllWithTags(Pageable pageable);
 
     @Query("SELECT new com.findmymeme.memepost.repository.MemePostTagDto(mp.id, t.name) " +
@@ -40,11 +38,6 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long>, MemeP
             "WHERE mp.id = :id AND mp.deletedAt IS NULL")
     Optional<MemePost> findWithUserById(@Param("id") Long id);
 
-    @Query("SELECT mp.id FROM MemePost mp " +
-            "JOIN MemePostLike mpl ON mpl.memePost = mp " +
-            "WHERE mp.id IN :postIds AND mpl.user = :user")
-    List<Long> findLikedPostIds(@Param("postIds") List<Long> postIds, @Param("user") User user);
-    
     @Query("SELECT new com.findmymeme.memepost.dto.MemePostSummaryResponse(mp, " +
             "EXISTS (SELECT 1 FROM MemePostLike mpl WHERE mpl.memePost = mp AND mpl.user.id = :userId)) " +
             "FROM MemePost mp WHERE mp.deletedAt IS NULL")

@@ -7,6 +7,6 @@ import org.springframework.data.domain.Slice;
 
 public interface MemePostRepositoryCustom {
 
-    Slice<MemePostSummaryResponse> searchByCond(Pageable pageable, MemePostSearchCond cond);
+    Slice<Long> searchByCond(Pageable pageable, MemePostSearchCond cond);
     Slice<MemePostSummaryResponse> searchByCondWithMemePostLike(Pageable pageable, MemePostSearchCond cond, Long userId);
 }
