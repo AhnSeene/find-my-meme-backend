@@ -244,53 +244,73 @@ public class MemePostService {
 
     public Slice<MemePostSummaryResponse> searchMemePostsForGuest(int page, int size, MemePostSort sort, MemePostSearchCond searchCond) {
         Pageable pageable = PageRequest.of(page, size, sort.toSort());
+
         Slice<Long> postIdSlice = memePostRepository.searchByCond(pageable, searchCond);
         List<Long> postIds = postIdSlice.getContent();
 
-        //ID로 MemePost, Tag함께 조회
-        List<MemePost> memePostsWithTags = memePostRepository.findAllWithTagsInPostIds(postIds)
-                .stream()
-                .sorted(Comparator.comparing(mp -> postIds.indexOf(mp.getId())))
-                .toList();
+        if (postIds.isEmpty()) {
+            return new SliceImpl<>(Collections.emptyList(), pageable, postIdSlice.hasNext());
+        }
+
+        List<MemePostSummaryProjection> postDetails = memePostRepository.findPostDetailsByPostIds(postIds);
+        List<MemePostTagProjection> memePostsWithTags = memePostTagRepository.findTagNamesByPostId(postIds);
+
+        Map<Long, List<String>> tagsGroupedByPostId = memePostsWithTags.stream()
+                .collect(Collectors.groupingBy(
+                        MemePostTagProjection::getMemePostId,
+                        Collectors.mapping(MemePostTagProjection::getTagName, Collectors.toList())
+                ));
 
 
-        List<MemePostSummaryResponse> responses = memePostsWithTags.stream()
-                .map(mp -> new MemePostSummaryResponse(
-                        mp,
-                        false,
-                        mp.getTagNames()
-                ))
+        List<MemePostSummaryResponse> updatedResponses = postDetails.stream()
+                .map(post -> MemePostSummaryResponse.builder()
+                        .id(post.getId())
+                        .imageUrl(post.getImageUrl())
+                        .likeCount(post.getLikeCount())
+                        .viewCount(post.getViewCount())
+                        .downloadCount(post.getDownloadCount())
+                        .isLiked(false)
+                        .tags(tagsGroupedByPostId.getOrDefault(post.getId(), Collections.emptyList()))
+                        .build())
                 .toList();
-        return  new SliceImpl<>(responses, pageable, postIdSlice.hasNext());
+
+        return new SliceImpl<>(updatedResponses, pageable, postIdSlice.hasNext());
     }
-
-//    public Slice<MemePostSummaryResponse> searchMemePostsForGuest(int page, int size, MemePostSort sort, MemePostSearchCond searchCond) {
-//        Pageable pageable = PageRequest.of(page, size, sort.toSort());
-//        return memePostRepository.searchByCond(pageable, searchCond);
-//    }
-
 
     public Slice<MemePostSummaryResponse> searchMemePostsForUser(int page, int size, MemePostSort sort, MemePostSearchCond searchCond, Long userId) {
         Pageable pageable = PageRequest.of(page, size, sort.toSort());
+
         Slice<Long> postIdSlice = memePostRepository.searchByCond(pageable, searchCond);
         List<Long> postIds = postIdSlice.getContent();
 
-        //ID로 MemePost, Tag함께 조회
-        List<MemePost> memePostsWithTags = memePostRepository.findAllWithTagsInPostIds(postIds)
-                .stream()
-                .sorted(Comparator.comparing(mp -> postIds.indexOf(mp.getId())))
+        if (postIds.isEmpty()) {
+            return new SliceImpl<>(Collections.emptyList(), pageable, postIdSlice.hasNext());
+        }
+
+        List<MemePostSummaryProjection> postDetails = memePostRepository.findPostDetailsByPostIds(postIds);
+        List<MemePostTagProjection> memePostsWithTags = memePostTagRepository.findTagNamesByPostId(postIds);
+
+        Map<Long, List<String>> tagsGroupedByPostId = memePostsWithTags.stream()
+                .collect(Collectors.groupingBy(
+                        MemePostTagProjection::getMemePostId,
+                        Collectors.mapping(MemePostTagProjection::getTagName, Collectors.toList())
+                ));
+
+        Set<Long> likedPostIds = new HashSet<>(memePostLikeRepository.findLikedPostIds(postIds, userId));
+
+        List<MemePostSummaryResponse> updatedResponses = postDetails.stream()
+                .map(post -> MemePostSummaryResponse.builder()
+                        .id(post.getId())
+                        .imageUrl(post.getImageUrl())
+                        .likeCount(post.getLikeCount())
+                        .viewCount(post.getViewCount())
+                        .downloadCount(post.getDownloadCount())
+                        .isLiked(likedPostIds.contains(post.getId()))
+                        .tags(tagsGroupedByPostId.getOrDefault(post.getId(), Collections.emptyList()))
+                        .build())
                 .toList();
 
-        Set<Long> likedPostIds = new HashSet<>(memePostLikeRepository.findLikedPostIds(postIdSlice.getContent(), userId));
-
-        List<MemePostSummaryResponse> responses = memePostsWithTags.stream()
-                .map(mp -> new MemePostSummaryResponse(
-                        mp,
-                        likedPostIds.contains(mp.getId()),
-                        mp.getTagNames()
-                ))
-                .toList();
-        return  new SliceImpl<>(responses, pageable, postIdSlice.hasNext());
+        return new SliceImpl<>(updatedResponses, pageable, postIdSlice.hasNext());
     }
 
     public List<MemePostSummaryResponse> getRecommendedPosts(Long memePostId, int size, Optional<Long> userId) {
