@@ -13,4 +13,5 @@ public interface MemePostRepositoryCustom {
     Slice<Long> searchByCond(Pageable pageable, MemePostSearchCond cond);
     List<MemePostSummaryProjection> findPostDetailsByPostIds(List<Long> postIds);
     List<Long> findRelatedPostIdsByTagIds(List<Long> tagIds, Long currentPostId, Pageable pageable);
+    Slice<Long> findMemePostIdsByUsername(Pageable pageable, String authorName);
 }

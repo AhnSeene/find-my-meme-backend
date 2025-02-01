@@ -122,6 +122,33 @@ public class MemePostRepositoryCustomImpl implements MemePostRepositoryCustom {
                 .fetch();
     }
 
+    @Override
+    public Slice<Long> findMemePostIdsByUsername(Pageable pageable, String authorName) {
+        List<Long> postIds = queryFactory
+                .select(memePost.id)
+                .from(memePost)
+                .innerJoin(memePost.user, user)
+                .where(
+                        deletedAtIsNull(),
+                        usernameEq(authorName)
+                )
+                .orderBy(memePost.createdAt.desc())
+                .limit(pageable.getPageSize() + 1)
+                .offset(pageable.getOffset())
+                .fetch();
+
+        boolean hasNext = postIds.size() > pageable.getPageSize();
+        if (hasNext) {
+            postIds.remove(postIds.size() - 1);
+        }
+
+        return new SliceImpl<>(postIds, pageable, hasNext);
+    }
+
+    private BooleanExpression usernameEq(String username) {
+        return memePost.user.username.eq(username);
+    }
+
     private BooleanExpression deletedAtIsNull() {
         return memePost.deletedAt.isNull();
     }

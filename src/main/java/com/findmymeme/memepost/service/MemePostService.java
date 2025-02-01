@@ -142,86 +142,30 @@ public class MemePostService {
                 .build();
     }
 
-    public MemePostUserSummaryResponse getMemePostsByAuthorName(int page, int size, String authorName, Optional<Long> userId) {
-        return userId.map(id -> getMemePostsByAuthorNameForUser(page, size, authorName, id))
-                .orElseGet(() -> getMemePostsByAuthorNameForGuest(page, size, authorName));
-    }
-
-    public MemePostUserSummaryResponse getMemePostsByAuthorNameForGuest(int page, int size, String authorName) {
+    public MemePostUserSummaryResponse getMemePostsByAuthorNameWithLikeInfo(int page, int size, String authorName, Optional<Long> userId) {
         User author = userRepository.findByUsername(authorName)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
 
         UserProfileResponse userProfileResponse = new UserProfileResponse(author);
         Pageable pageable = PageRequest.of(page, size);
-        Slice<MemePost> memePostSummaries = memePostRepository.findMemePostByUsername(pageable, authorName);
-        List<MemePostSummaryResponse> responses = memePostSummaries.stream()
-                .map(mp -> new MemePostSummaryResponse(mp, false, mp.getTagNames()))
-                .toList();
-        return MemePostUserSummaryResponse.builder()
-                .user(userProfileResponse)
-                .memePosts(new MySlice<>(new SliceImpl<>(responses, pageable, memePostSummaries.hasNext())))
-                .build();
-    }
-
-    public MemePostUserSummaryResponse getMemePostsByAuthorNameForUser(int page, int size, String authorName, Long userId) {
-        User author = userRepository.findByUsername(authorName)
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
-
-        UserProfileResponse userProfileResponse = new UserProfileResponse(author);
-        Pageable pageable = PageRequest.of(page, size);
-        Slice<MemePostSummaryResponse> memePostSummaries = memePostRepository.findMemePostSummariesWithLikeByAuthorNameAndUserId(pageable, authorName, userId);
-        memePostSummaries.forEach(response -> response.setTags(getTagNames(response.getId())));
-        return MemePostUserSummaryResponse.builder()
-                .user(userProfileResponse)
-                .memePosts(new MySlice<>(memePostSummaries))
-                .build();
-    }
-
-    public MemePostUserSummaryResponse getMemePostsByAuthorName2(int page, int size, String authorName, Optional<Long> userId) {
-        return userId.map(id -> getMemePostsByAuthorNameForUser2(page, size, authorName, id))
-                .orElseGet(() -> getMemePostsByAuthorNameForGuest2(page, size, authorName));
-    }
-
-    public MemePostUserSummaryResponse getMemePostsByAuthorNameForGuest2(int page, int size, String authorName) {
-        User author = userRepository.findByUsername(authorName)
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
-
-        UserProfileResponse userProfileResponse = new UserProfileResponse(author);
-        Pageable pageable = PageRequest.of(page, size);
-        Slice<Long> postIdSlice = memePostRepository.findSliceByUsername(pageable, authorName);
-        List<Long> postIds = postIdSlice.getContent();
-        List<MemePost> memePostsWithTags = memePostRepository.findAllWithTagsInPostIds(postIds);
-        List<MemePostSummaryResponse> responses = memePostsWithTags.stream()
-                .sorted(Comparator.comparing(mp -> postIds.indexOf(mp.getId())))
-                .map(mp -> new MemePostSummaryResponse(mp, false, mp.getTagNames()))
-                .toList();
-        return MemePostUserSummaryResponse.builder()
-                .user(userProfileResponse)
-                .memePosts(new MySlice<>(new SliceImpl<>(responses, pageable, postIdSlice.hasNext())))
-                .build();
-    }
-
-
-    public MemePostUserSummaryResponse getMemePostsByAuthorNameForUser2(int page, int size, String authorName, Long userId) {
-        User author = userRepository.findByUsername(authorName)
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
-        User user = getUserById(userId);
-        UserProfileResponse userProfileResponse = new UserProfileResponse(author);
-
-        Pageable pageable = PageRequest.of(page, size);
-        Slice<Long> postIdSlice = memePostRepository.findSliceByUsername(pageable, authorName);
+        Slice<Long> postIdSlice = memePostRepository.findMemePostIdsByUsername(pageable, authorName);
         List<Long> postIds = postIdSlice.getContent();
 
-        List<MemePost> memePostsWithTags = memePostRepository.findAllWithTagsInPostIds(postIds);
-        Set<Long> likedPostIds = new HashSet<>(memePostLikeRepository.findLikedPostIds(postIds, userId));
+        if (postIds.isEmpty()) {
+            return MemePostUserSummaryResponse.builder()
+                    .user(userProfileResponse)
+                    .memePosts(new MySlice<>(new SliceImpl<>(Collections.emptyList(), pageable, false)))
+                    .build();
+        }
 
-        List<MemePostSummaryResponse> memePostSummaryResponses = memePostsWithTags.stream()
-                .sorted(Comparator.comparing(mp -> postIds.indexOf(mp.getId())))
-                .map(mp -> new MemePostSummaryResponse(mp, likedPostIds.contains(mp.getId()), mp.getTagNames()))
-                .toList();
+        List<MemePostSummaryProjection> postDetails = memePostRepository.findPostDetailsByPostIds(postIds);
+        Map<Long, List<String>> tagsGroupedByPostId = findTagNamesGroupedByPostIds(postIds);
+        Set<Long> likedPostIds = findLikedPostIds(postIds, userId);
+
+        List<MemePostSummaryResponse> memePostSummaries = mapToSummaryResponse(postDetails, likedPostIds, tagsGroupedByPostId);
         return MemePostUserSummaryResponse.builder()
                 .user(userProfileResponse)
-                .memePosts(new MySlice<>(new SliceImpl<>(memePostSummaryResponses, pageable, postIdSlice.hasNext())))
+                .memePosts(new MySlice<>(new SliceImpl<>(memePostSummaries, pageable, postIdSlice.hasNext())))
                 .build();
     }
 
