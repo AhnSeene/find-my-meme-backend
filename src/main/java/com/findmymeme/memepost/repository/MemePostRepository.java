@@ -2,7 +2,7 @@ package com.findmymeme.memepost.repository;
 
 import com.findmymeme.memepost.domain.MemePost;
 import com.findmymeme.memepost.dto.MemePostSummaryResponse;
-import com.findmymeme.user.domain.User;
+import com.findmymeme.memepost.dto.MemePostTagProjection;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.*;
@@ -31,7 +31,7 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long>, MemeP
             "JOIN mp.memePostTags mpt " +
             "JOIN mpt.tag t " +
             "WHERE mp IN :memePosts")
-    List<MemePostTagDto> findTagNamesByMemePosts(@Param("memePosts") List<MemePost> memePosts);
+    List<MemePostTagProjection> findTagNamesByMemePosts(@Param("memePosts") List<MemePost> memePosts);
 
     @EntityGraph(attributePaths = {"user"})
     @Query("SELECT mp FROM MemePost mp " +
