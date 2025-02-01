@@ -115,17 +115,6 @@ public class MemePostController {
         return ResponseUtil.success(new MySlice<>(responses), SuccessCode.MEME_POST_LIST);
     }
 
-    @GetMapping("list/4")
-    public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMemePosts4(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "LIKES") MemePostSort sort,
-            @CurrentUserId(required = false) Optional<Long> userId
-    ) {
-        Slice<MemePostSummaryResponse> responses = memePostService.getMemePosts4(page, size, sort, userId);
-        return ResponseUtil.success(new MySlice<>(responses), SuccessCode.MEME_POST_LIST);
-    }
-
     @GetMapping("list/5")
     public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMemePosts5(
             @RequestParam(defaultValue = "0") int page,
