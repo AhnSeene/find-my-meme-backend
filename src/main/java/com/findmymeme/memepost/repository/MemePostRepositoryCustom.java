@@ -6,7 +6,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 
 public interface MemePostRepositoryCustom {
+import java.util.List;
 
+public interface MemePostRepositoryCustom {
     Slice<Long> searchByCond(Pageable pageable, MemePostSearchCond cond);
-    Slice<MemePostSummaryResponse> searchByCondWithMemePostLike(Pageable pageable, MemePostSearchCond cond, Long userId);
 }

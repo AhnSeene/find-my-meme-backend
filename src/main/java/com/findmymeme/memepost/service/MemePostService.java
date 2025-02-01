@@ -12,10 +12,9 @@ import com.findmymeme.memepost.dto.*;
 import com.findmymeme.memepost.dto.Sort;
 import com.findmymeme.memepost.repository.MemePostLikeRepository;
 import com.findmymeme.memepost.repository.MemePostRepository;
-import com.findmymeme.memepost.repository.MemePostTagDto;
+import com.findmymeme.memepost.dto.MemePostTagProjection;
 import com.findmymeme.response.MySlice;
-import com.findmymeme.tag.repository.MemePostTagRepository;
-import com.findmymeme.tag.service.MemePostTagService;
+import com.findmymeme.memepost.repository.MemePostTagRepository;
 import com.findmymeme.user.domain.User;
 import com.findmymeme.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.*;
 
@@ -189,11 +189,12 @@ public class MemePostService {
         Slice<MemePost> memePostSlice = memePostRepository.findSliceAll(pageable);
         List<Long> postIds = getPostIds(memePostSlice.getContent());
 
-        // MemePostTag와 Tag를 한번에 fetch join 하나의 쿼리로 하되, 위와는 차이점이 MemePostTagRepository에서 entitygraph를 통해 fetch join
-        Map<Long, List<String>> postTagNames = memePostTagRepository.findTagsByMemePostIdIn(postIds)
+        // MemePostTag와 Tag를 한번에 fetch join 하나의 쿼리로
+        Map<Long, List<String>> postTagNames = memePostTagRepository.findTagNamesByPostId(postIds)
                 .stream()
-                .collect(groupingBy(tag -> tag.getMemePost().getId(),
-                        mapping(tag -> tag.getTag().getName(), toList())));
+                .collect(groupingBy(MemePostTagProjection::getMemePostId,
+                        mapping(MemePostTagProjection::getTagName, toList())));
+
         Set<Long> likedPostIds = new HashSet<>(memePostLikeRepository.findLikedPostIds(postIds, userId));
         List<MemePostSummaryResponse> responses = memePostSlice.getContent().stream()
                 .map(mp -> new MemePostSummaryResponse(
@@ -240,6 +241,7 @@ public class MemePostService {
         return userId.map(id -> searchMemePostsForUser(page, size, sort, searchCond, id))
                 .orElseGet(() -> searchMemePostsForGuest(page, size, sort, searchCond));
     }
+
     public Slice<MemePostSummaryResponse> searchMemePostsForGuest(int page, int size, MemePostSort sort, MemePostSearchCond searchCond) {
         Pageable pageable = PageRequest.of(page, size, sort.toSort());
         Slice<Long> postIdSlice = memePostRepository.searchByCond(pageable, searchCond);

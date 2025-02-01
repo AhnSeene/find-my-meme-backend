@@ -1,11 +1,11 @@
-package com.findmymeme.tag.service;
+package com.findmymeme.memepost.service;
 
 import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.exception.FindMyMemeException;
 import com.findmymeme.memepost.domain.MemePost;
 import com.findmymeme.tag.domain.MemePostTag;
 import com.findmymeme.tag.domain.Tag;
-import com.findmymeme.tag.repository.MemePostTagRepository;
+import com.findmymeme.memepost.repository.MemePostTagRepository;
 import com.findmymeme.tag.repository.TagRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,7 +29,9 @@ public class MemePostTagService {
     }
 
     public List<String> getTagNames(Long postId) {
-        return extractTagNames(memePostTagRepository.findAllByMemePostId(postId));
+        return memePostTagRepository.findAllByMemePostId(postId).stream()
+                .map(postTag -> postTag.getTag().getName())
+                .toList();
     }
 
 
@@ -53,11 +55,6 @@ public class MemePostTagService {
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_TAG));
     }
 
-    private List<String> extractTagNames(List<MemePostTag> postTags) {
-        return postTags.stream()
-                .map(postTag -> postTag.getTag().getName())
-                .toList();
-    }
 
     private List<Long> extractTagIds(List<MemePostTag> existingPostTags) {
         return existingPostTags.stream()
