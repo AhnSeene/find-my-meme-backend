@@ -26,8 +26,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.*;
-
 
 @Service
 @Transactional(readOnly = true)
@@ -82,13 +80,8 @@ public class MemePostService {
         return new MemePostGetResponse(memePost, memePost.isOwner(user), isLiked, memePost.getTagNames());
     }
 
-    public Slice<MemePostSummaryResponse> getMemePosts(int page, int size, MemePostSort sort, MemePostSearchCond searchCond, Optional<Long> userId) {
-        return getMemePostsWithLikeInfo(page, size, sort, searchCond, userId);
-    }
-
-    private Slice<MemePostSummaryResponse> getMemePostsWithLikeInfo(
-            int page,
-            int size,
+    public Slice<MemePostSummaryResponse> getMemePostsWithLikeInfo(
+            int page, int size,
             MemePostSort sort,
             MemePostSearchCond searchCond,
             Optional<Long> userId
@@ -111,107 +104,25 @@ public class MemePostService {
         return new SliceImpl<>(updatedResponses, pageable, postIdSlice.hasNext());
     }
 
+    public List<MemePostSummaryResponse> getRecommendedPostsWithLikeInfo(Long memePostId, int size, Optional<Long> userId) {
+        List<Long> tagIds = memePostTagRepository.findTagIdsByPostId(memePostId);
 
-    public List<MemePostSummaryResponse> getRecommendedPosts(Long memePostId, int size, Optional<Long> userId) {
-        return userId.map(id -> getRecommendedPostsForUser(memePostId, size, id))
-                .orElseGet(() -> getRecommendedPostsForGuest(memePostId, size));
+        if (tagIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> recommendedPostIds = memePostRepository.findRelatedPostIdsByTagIds(tagIds, memePostId, PageRequest.of(0, size));
+
+        if (recommendedPostIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<MemePostSummaryProjection> postDetails = memePostRepository.findPostDetailsByPostIds(recommendedPostIds);
+        Map<Long, List<String>> tagsGroupedByPostId = findTagNamesGroupedByPostIds(recommendedPostIds);
+        Set<Long> likedPostIds = findLikedPostIds(recommendedPostIds, userId);
+
+        return mapToSummaryResponse(postDetails, likedPostIds, tagsGroupedByPostId);
     }
-
-    public List<MemePostSummaryResponse> getRecommendedPostsForGuest(Long memePostId, int size) {
-        MemePost memePost = getMemePostById(memePostId);
-        List<String> tagNames = getTagNames(memePostId); //N + 1문제 태그 불러오기
-        List<MemePost> recommendedPosts = memePostRepository.findRelatedPostsByTagNames(tagNames, memePostId, PageRequest.of(0, size));
-        return recommendedPosts.stream()
-                .map(post -> new MemePostSummaryResponse(memePost, false, getTagNames(memePost.getId())))
-                .toList(); //여기서도 n + 1문제
-    }
-
-
-    public List<MemePostSummaryResponse> getRecommendedPostsForUser(Long memePostId, int size, Long userId) {
-        MemePost memePost = getMemePostById(memePostId);
-        User user = getUserById(userId);
-        List<MemePostSummaryResponse> recommendedPosts = memePostRepository.findByTagNamesWithLikeByUserId(getTagNames(memePost.getId()), PageRequest.of(0, size), userId);
-        recommendedPosts.forEach(response -> response.setTags(getTagNames(response.getId())));
-        return recommendedPosts;
-    }
-
-    public List<MemePostSummaryResponse> getRecommendedPosts2(Long memePostId, int size, Optional<Long> userId) {
-        return userId.map(id -> getRecommendedPostsForUser2(memePostId, size, id))
-                .orElseGet(() -> getRecommendedPostsForGuest2(memePostId, size));
-    }
-
-
-    public List<MemePostSummaryResponse> getRecommendedPostsForGuest2(Long memePostId, int size) {
-        MemePost memePost = getMemePostById(memePostId);
-        //fetch join으로 memePost의 태그 정보 미리 가져오기
-        memePostTagRepository.findAllByMemePostId(memePost.getId());
-        //tag 이름으로 관련있는 포스트 찾기
-        List<MemePost> recommendedPosts = memePostRepository.findRelatedPostsByTagNames(memePost.getTagNames(), memePostId, PageRequest.of(0, size));
-        memePostTagRepository.findTagsByMemePostIdIn(getPostIds(recommendedPosts));
-        return recommendedPosts.stream()
-                .map(mp -> new MemePostSummaryResponse(mp, false, mp.getTagNames()))
-                .toList();
-    }
-
-    public List<MemePostSummaryResponse> getRecommendedPosts3(Long memePostId, int size, Optional<Long> userId) {
-        return userId.map(id -> getRecommendedPostsForUser3(memePostId, size, id))
-                .orElseGet(() -> getRecommendedPostsForGuest3(memePostId, size));
-    }
-
-    public List<MemePostSummaryResponse> getRecommendedPostsForGuest3(Long memePostId, int size) {
-        MemePost memePost = memePostRepository.findByIdWithTags(memePostId)
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
-        //fetch join으로 memePost의 태그 정보 미리 가져오기
-        //tag 이름으로 관련있는 포스트 찾기
-        List<MemePost> recommendedPosts = memePostRepository.findRelatedPostsByTagNames(memePost.getTagNames(), memePostId, PageRequest.of(0, size));
-        memePostRepository.findAllWithTagsInPostIds(getPostIds(recommendedPosts));
-        return recommendedPosts.stream()
-                .map(mp -> new MemePostSummaryResponse(mp, false, mp.getTagNames()))
-                .toList();
-    }
-
-    public List<MemePostSummaryResponse> getRecommendedPosts4(Long memePostId, int size, Optional<Long> userId) {
-        return userId.map(id -> getRecommendedPostsForUser(memePostId, size, id))
-                .orElseGet(() -> getRecommendedPostsForGuest4(memePostId, size));
-    }
-
-    public List<MemePostSummaryResponse> getRecommendedPostsForGuest4(Long memePostId, int size) {
-        MemePost memePost = memePostRepository.findByIdWithTags(memePostId)
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
-        //fetch join으로 memePost의 태그 정보 미리 가져오기
-        //tag 이름으로 관련있는 포스트 찾기
-        List<Long> recommendedPostIds = memePostRepository.findRelatedPostIdsByTagNames(memePost.getTagNames(), memePostId, PageRequest.of(0, size));
-        List<MemePost> recommendedPostsWithTags = memePostRepository.findAllWithTagsInPostIds(recommendedPostIds);
-        return recommendedPostsWithTags.stream()
-                .map(mp -> new MemePostSummaryResponse(mp, false, mp.getTagNames()))
-                .toList();
-    }
-
-    public List<MemePostSummaryResponse> getRecommendedPostsForUser2(Long memePostId, int size, Long userId) {
-        MemePost memePost = getMemePostById(memePostId);
-        User user = getUserById(userId);
-        memePostTagRepository.findAllByMemePostId(memePostId);
-        List<MemePost> recommendedPosts = memePostRepository.findRelatedPostsByTagNames(memePost.getTagNames(), memePostId, PageRequest.of(0, size));
-        List<Long> likedPostIds = memePostLikeRepository.findLikedPostIds(getPostIds(recommendedPosts), userId);
-        return recommendedPosts.stream()
-                .map(mp -> new MemePostSummaryResponse(mp, likedPostIds.contains(mp.getId()), mp.getTagNames()))
-                .toList();
-    }
-
-    public List<MemePostSummaryResponse> getRecommendedPostsForUser3(Long memePostId, int size, Long userId) {
-        MemePost memePost = memePostRepository.findByIdWithTags(memePostId)
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
-        //fetch join으로 memePost의 태그 정보 미리 가져오기
-        User user = getUserById(userId);
-        //tag 이름으로 관련있는 포스트 찾기
-        List<Long> recommendedPostIds = memePostRepository.findRelatedPostIdsByTagNames(memePost.getTagNames(), memePostId, PageRequest.of(0, size));
-        List<MemePost> recommendedPostsWithTags = memePostRepository.findAllWithTagsInPostIds(recommendedPostIds);
-        List<Long> likedPostIds = memePostLikeRepository.findLikedPostIds(recommendedPostIds, userId);
-        return recommendedPostsWithTags.stream()
-                .map(mp -> new MemePostSummaryResponse(mp, likedPostIds.contains(mp.getId()), mp.getTagNames()))
-                .toList();
-    }
-
 
     @Transactional
     public void softDelete(Long memePostId, Long userId) {

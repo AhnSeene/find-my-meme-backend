@@ -68,7 +68,7 @@ public class MemePostController {
             @ModelAttribute MemePostSearchCond searchCond,
             @CurrentUserId(required = false) Optional<Long> userId
     ) {
-        Slice<MemePostSummaryResponse> responses = memePostService.searchMemePosts(
+        Slice<MemePostSummaryResponse> responses = memePostService.getMemePostsWithLikeInfo(
                 page, size, MemePostSort.CREATED, searchCond, userId
         );
         return ResponseUtil.success(new MySlice<>(responses), SuccessCode.MEME_POST_LIST);
@@ -80,40 +80,9 @@ public class MemePostController {
             @RequestParam(defaultValue = "20") int size,
             @CurrentUserId(required = false) Optional<Long> userId
     ) {
-        List<MemePostSummaryResponse> responses = memePostService.getRecommendedPosts(memePostId, size, userId);
+        List<MemePostSummaryResponse> responses = memePostService.getRecommendedPostsWithLikeInfo(memePostId, size, userId);
         return ResponseUtil.success(responses, SuccessCode.MEME_POST_LIST);
     }
-
-    @GetMapping("/{memePostId}/recommendations/2")
-    public ResponseEntity<ApiResponse<List<MemePostSummaryResponse>>> getRecommendations2(
-            @PathVariable("memePostId") Long memePostId,
-            @RequestParam(defaultValue = "20") int size,
-            @CurrentUserId(required = false) Optional<Long> userId
-    ) {
-        List<MemePostSummaryResponse> responses = memePostService.getRecommendedPosts2(memePostId, size, userId);
-        return ResponseUtil.success(responses, SuccessCode.MEME_POST_LIST);
-    }
-
-    @GetMapping("/{memePostId}/recommendations/3")
-    public ResponseEntity<ApiResponse<List<MemePostSummaryResponse>>> getRecommendations3(
-            @PathVariable("memePostId") Long memePostId,
-            @RequestParam(defaultValue = "20") int size,
-            @CurrentUserId(required = false) Optional<Long> userId
-    ) {
-        List<MemePostSummaryResponse> responses = memePostService.getRecommendedPosts3(memePostId, size, userId);
-        return ResponseUtil.success(responses, SuccessCode.MEME_POST_LIST);
-    }
-
-    @GetMapping("/{memePostId}/recommendations/4")
-    public ResponseEntity<ApiResponse<List<MemePostSummaryResponse>>> getRecommendations4(
-            @PathVariable("memePostId") Long memePostId,
-            @RequestParam(defaultValue = "20") int size,
-            @CurrentUserId(required = false) Optional<Long> userId
-    ) {
-        List<MemePostSummaryResponse> responses = memePostService.getRecommendedPosts4(memePostId, size, userId);
-        return ResponseUtil.success(responses, SuccessCode.MEME_POST_LIST);
-    }
-
 
     @PostMapping("/{memePostId}/toggleLike")
     public ResponseEntity<ApiResponse<MemePostLikeResponse>> toggleLikeMemePost(
