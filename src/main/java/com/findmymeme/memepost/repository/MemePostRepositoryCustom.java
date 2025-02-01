@@ -9,6 +9,7 @@ import org.springframework.data.domain.Slice;
 import java.util.List;
 
 public interface MemePostRepositoryCustom {
+    List<MemePostSummaryResponse> findPostsWithTags(List<Long> postIds);
     Slice<Long> searchByCond(Pageable pageable, MemePostSearchCond cond);
     List<MemePostSummaryProjection> findPostDetailsByPostIds(List<Long> postIds);
 }

@@ -2,10 +2,7 @@ package com.findmymeme.memepost.repository;
 
 import com.findmymeme.common.util.QuerydslSortUtil;
 import com.findmymeme.memepost.domain.MediaType;
-import com.findmymeme.memepost.dto.MemePostProjection;
-import com.findmymeme.memepost.dto.MemePostSearchCond;
-import com.findmymeme.memepost.dto.MemePostSummaryResponse;
-import com.findmymeme.memepost.dto.TagInfo;
+import com.findmymeme.memepost.dto.*;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -17,14 +14,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.CollectionUtils;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.findmymeme.memepost.domain.QMemePost.memePost;
-import static com.findmymeme.memepost.domain.QMemePostLike.memePostLike;
 import static com.findmymeme.tag.domain.QMemePostTag.memePostTag;
 import static java.util.stream.Collectors.groupingBy;
 
@@ -91,6 +85,22 @@ public class MemePostRepositoryCustomImpl implements MemePostRepositoryCustom {
     }
 
 
+    @Override
+    public List<MemePostSummaryResponse> findPostsWithTags(List<Long> postIds) {
+        return queryFactory
+                .select(Projections.fields(
+                        MemePostSummaryResponse.class,
+                        memePost.id.as("id"),
+                        memePost.imageUrl.as("imageUrl"),
+                        memePost.likeCount.as("likeCount"),
+                        memePost.viewCount.as("viewCount"),
+                        memePost.downloadCount.as("downloadCount"),
+                        memePostTag.tag.name.as("tags")
+                ))
+                .from(memePost)
+                .innerJoin(memePost.memePostTags, memePostTag)
+                .where(memePost.id.in(postIds))
+                .fetch();
     }
 
 
@@ -113,7 +123,7 @@ public class MemePostRepositoryCustomImpl implements MemePostRepositoryCustom {
     }
 
     private BooleanExpression tagCountEq(List<Long> tagIds) {
-        if (tagIds == null || tagIds.isEmpty()) {
+        if (CollectionUtils.isEmpty(tagIds)) {
             return null;
         }
         return memePostTag.tag.id.countDistinct().eq((long) tagIds.size());
