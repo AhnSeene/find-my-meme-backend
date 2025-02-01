@@ -14,27 +14,10 @@ import java.util.Optional;
 
 public interface MemePostRepository extends JpaRepository<MemePost, Long>, MemePostRepositoryCustom {
 
-    @Query("SELECT mp FROM MemePost mp where mp.deletedAt IS NULL")
-    Slice<MemePost> findSliceAll(Pageable pageable);
-
-    @Query("SELECT mp.id FROM MemePost mp where mp.deletedAt IS NULL")
-    Slice<Long> findSliceAllIds(Pageable pageable);
-
-    @Query("SELECT mp FROM MemePost mp " +
-            "JOIN FETCH mp.memePostTags mpt " +
-            "JOIN FETCH mpt.tag " +
-            "WHERE mp.deletedAt IS NULL")
-    Slice<MemePost> findAllWithTags(Pageable pageable);
-
     @EntityGraph(attributePaths = {"user"})
     @Query("SELECT mp FROM MemePost mp " +
             "WHERE mp.id = :id AND mp.deletedAt IS NULL")
     Optional<MemePost> findWithUserById(@Param("id") Long id);
-
-    @Query("SELECT new com.findmymeme.memepost.dto.MemePostSummaryResponse(mp, " +
-            "EXISTS (SELECT 1 FROM MemePostLike mpl WHERE mpl.memePost = mp AND mpl.user.id = :userId)) " +
-            "FROM MemePost mp WHERE mp.deletedAt IS NULL")
-    Slice<MemePostSummaryResponse> findMemePostSummariesWithLike(Pageable pageable, @Param("userId") Long userId);
 
     @Query("SELECT mp FROM MemePost mp " +
             "LEFT JOIN FETCH mp.memePostTags mpt " +
@@ -70,20 +53,23 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long>, MemeP
             "and m.deletedAt is null")
     List<Long> findRelatedPostIdsByTagNames(@Param("tags") List<String> tags, @Param("currentPostId") Long currentPostId, Pageable pageable);
 
-    @Query("select distinct m from MemePost m " +
+    @Query("select m from MemePost m " +
             "left join fetch m.memePostTags mpt " +
             "left join fetch mpt.tag t " +
             "where m.id = :id and m.deletedAt is null")
     Optional<MemePost> findByIdWithTags(@Param("id") Long id);
+
     @Query("SELECT mp FROM MemePost mp " +
             "LEFT JOIN FETCH mp.memePostTags mpt " +
             "LEFT JOIN FETCH mpt.tag " +
             "WHERE mp.id In :postIds")
     List<MemePost> findAllWithTagsInPostIds(@Param("postIds") List<Long> postIds);
 
-    @Query("select distinct new com.findmymeme.memepost.dto.MemePostSummaryResponse(m, " +
+    @Query("select new com.findmymeme.memepost.dto.MemePostSummaryResponse(m, " +
             "exists (select 1 from MemePostLike mpl where mpl.memePost = m and mpl.user.id = :currentUserId)) " +
-            "from MemePost m join MemePostTag pt on m.id = pt.memePost.id where pt.tag.name in :tags and m.deletedAt is null")
+            "from MemePost m " +
+            "join MemePostTag mpt on m.id = mpt.memePost.id " +
+            "where mpt.tag.name in :tags and m.deletedAt is null")
     List<MemePostSummaryResponse> findByTagNamesWithLikeByUserId(@Param("tags") List<String> tags, Pageable pageable, @Param("currentUserId") Long currentUserId);
 
     @Query("SELECT m FROM MemePost m WHERE m.deletedAt IS NULL ORDER BY m.viewCount DESC")

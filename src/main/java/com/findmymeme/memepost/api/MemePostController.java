@@ -71,81 +71,16 @@ public class MemePostController {
                 .body(downloadDto.getResource());
     }
 
-    @GetMapping
-    public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMemePosts(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "LIKES") MemePostSort sort,
-            @CurrentUserId(required = false) Optional<Long> userId
-    ) {
-        Slice<MemePostSummaryResponse> responses = memePostService.getMemePosts(page, size, sort, userId);
-        return ResponseUtil.success(new MySlice<>(responses), SuccessCode.MEME_POST_LIST);
-    }
-
-    @GetMapping("list/1")
-    public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMemePosts1(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "LIKES") MemePostSort sort,
-            @CurrentUserId(required = false) Optional<Long> userId
-    ) {
-        Slice<MemePostSummaryResponse> responses = memePostService.getMemePosts1(page, size, sort, userId);
-        return ResponseUtil.success(new MySlice<>(responses), SuccessCode.MEME_POST_LIST);
-    }
-
-    @GetMapping("list/2")
-    public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMemePosts2(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "LIKES") MemePostSort sort,
-            @CurrentUserId(required = false) Optional<Long> userId
-    ) {
-        Slice<MemePostSummaryResponse> responses = memePostService.getMemePosts2(page, size, sort, userId);
-        return ResponseUtil.success(new MySlice<>(responses), SuccessCode.MEME_POST_LIST);
-    }
-
-    @GetMapping("list/3")
-    public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMemePosts3(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "LIKES") MemePostSort sort,
-            @CurrentUserId(required = false) Optional<Long> userId
-    ) {
-        Slice<MemePostSummaryResponse> responses = memePostService.getMemePosts3(page, size, sort, userId);
-        return ResponseUtil.success(new MySlice<>(responses), SuccessCode.MEME_POST_LIST);
-    }
-
-    @GetMapping("list/5")
-    public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMemePosts5(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "LIKES") MemePostSort sort,
-            @CurrentUserId(required = false) Optional<Long> userId
-    ) {
-        Slice<MemePostSummaryResponse> responses = memePostService.getMemePosts5(page, size, sort, userId);
-        return ResponseUtil.success(new MySlice<>(responses), SuccessCode.MEME_POST_LIST);
-    }
-
-    @GetMapping("list/6")
-    public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMemePosts6(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "LIKES") MemePostSort sort,
-            @CurrentUserId(required = false) Optional<Long> userId
-    ) {
-        Slice<MemePostSummaryResponse> responses = memePostService.getMemePosts6(page, size, sort, userId);
-        return ResponseUtil.success(new MySlice<>(responses), SuccessCode.MEME_POST_LIST);
-    }
-
-    @GetMapping("/search")
+    @GetMapping()
     public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> searchMemePosts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @ModelAttribute MemePostSearchCond searchCond,
-            @RequestParam(defaultValue = "CREATED") MemePostSort sort,
             @CurrentUserId(required = false) Optional<Long> userId
     ) {
-        Slice<MemePostSummaryResponse> responses = memePostService.searchMemePosts(page, size, sort, searchCond, userId);
+        Slice<MemePostSummaryResponse> responses = memePostService.searchMemePosts(
+                page, size, MemePostSort.CREATED, searchCond, userId
+        );
         return ResponseUtil.success(new MySlice<>(responses), SuccessCode.MEME_POST_LIST);
     }
 
