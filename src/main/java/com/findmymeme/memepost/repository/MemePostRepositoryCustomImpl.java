@@ -24,6 +24,7 @@ import java.util.Optional;
 import static com.findmymeme.memepost.domain.QMemePost.memePost;
 import static com.findmymeme.tag.domain.QMemePostTag.memePostTag;
 import static com.findmymeme.tag.domain.QTag.tag;
+import static com.findmymeme.user.domain.QUser.user;
 import static java.util.stream.Collectors.groupingBy;
 
 @Repository
