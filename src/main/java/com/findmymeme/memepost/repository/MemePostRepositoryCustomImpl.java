@@ -13,13 +13,17 @@ import lombok.*;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.findmymeme.memepost.domain.QMemePost.memePost;
 import static com.findmymeme.tag.domain.QMemePostTag.memePostTag;
+import static com.findmymeme.tag.domain.QTag.tag;
 import static java.util.stream.Collectors.groupingBy;
 
 @Repository
@@ -102,7 +106,21 @@ public class MemePostRepositoryCustomImpl implements MemePostRepositoryCustom {
                 .where(memePost.id.in(postIds))
                 .fetch();
     }
-
+    @Override
+    public List<Long> findRelatedPostIdsByTagIds(List<Long> tagIds, Long currentPostId, Pageable pageable) {
+        return queryFactory
+                .select(memePost.id).distinct()
+                .from(memePost)
+                .join(memePost.memePostTags, memePostTag)
+                .where(
+                        tagIn(tagIds),
+                        memePost.id.ne(currentPostId),
+                        deletedAtIsNull()
+                )
+                .limit(pageable.getPageSize() + 1)
+                .offset(pageable.getOffset())
+                .fetch();
+    }
 
     private BooleanExpression deletedAtIsNull() {
         return memePost.deletedAt.isNull();
