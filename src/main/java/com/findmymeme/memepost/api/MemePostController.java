@@ -50,16 +50,6 @@ public class MemePostController {
         );
     }
 
-    @GetMapping("/{memePostId}/2")
-    public ResponseEntity<ApiResponse<MemePostGetResponse>> getMemePost2(
-            @PathVariable("memePostId") Long memePostId,
-            @CurrentUserId(required = false) Optional<Long> userId
-    ) {
-        return ResponseUtil.success(memePostService.getMemePost2(memePostId, userId),
-                SuccessCode.MEME_POST_GET
-        );
-    }
-
     @GetMapping("/{memePostId}/download")
     public ResponseEntity<Resource> downloadMemePost(
             @PathVariable("memePostId") Long memePostId

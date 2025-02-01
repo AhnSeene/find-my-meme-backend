@@ -64,31 +64,15 @@ public class MemePostService {
 
     @Transactional
     public MemePostGetResponse getMemePostForGuest(Long memePostId) {
-        MemePost memePost = getMemePostWithUserById(memePostId);
-        List<String> tagNames = getTagNames(memePostId);
+        MemePost memePost = memePostRepository.findByIdWithTags(memePostId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
 
         memePost.incrementViewCount();
-        return new MemePostGetResponse(memePost, false, false, tagNames);
+        return new MemePostGetResponse(memePost, false, false, memePost.getTagNames());
     }
 
     @Transactional
     public MemePostGetResponse getMemePostForUser(Long memePostId, Long userId) {
-        User user = getUserById(userId);
-        MemePost memePost = getMemePostWithUserById(memePostId);
-        boolean isLiked = memePostLikeRepository.existsByMemePostIdAndUserId(memePostId, userId);
-        List<String> tagNames = getTagNames(memePostId);
-
-        memePost.incrementViewCount();
-        return new MemePostGetResponse(memePost, memePost.isOwner(user), isLiked, tagNames);
-    }
-
-    public MemePostGetResponse getMemePost2(Long memePostId, Optional<Long> userId) {
-        return userId.map(id -> getMemePostForUser2(memePostId, id))
-                .orElseGet(() -> getMemePostForGuest(memePostId));
-    }
-
-    @Transactional
-    public MemePostGetResponse getMemePostForUser2(Long memePostId, Long userId) {
         User user = getUserById(userId);
         MemePost memePost = memePostRepository.findByIdWithTags(memePostId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
