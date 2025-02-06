@@ -2,10 +2,7 @@ package com.findmymeme.memepost.repository;
 
 import com.findmymeme.common.util.QuerydslSortUtil;
 import com.findmymeme.memepost.domain.MediaType;
-import com.findmymeme.memepost.dto.MemePostProjection;
-import com.findmymeme.memepost.dto.MemePostSearchCond;
-import com.findmymeme.memepost.dto.MemePostSummaryResponse;
-import com.findmymeme.memepost.dto.TagInfo;
+import com.findmymeme.memepost.dto.*;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -16,16 +13,18 @@ import lombok.*;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.CollectionUtils;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 import static com.findmymeme.memepost.domain.QMemePost.memePost;
-import static com.findmymeme.memepost.domain.QMemePostLike.memePostLike;
 import static com.findmymeme.tag.domain.QMemePostTag.memePostTag;
+import static com.findmymeme.tag.domain.QTag.tag;
+import static com.findmymeme.user.domain.QUser.user;
 import static java.util.stream.Collectors.groupingBy;
 
 @Repository
@@ -34,48 +33,17 @@ public class MemePostRepositoryCustomImpl implements MemePostRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
-
-//    @Override
-//    public Slice<MemePostSummaryResponse> searchByCond(Pageable pageable, MemePostSearchCond cond) {
-//        List<MemePostSummaryResponse> responses = queryFactory
-//                .select(Projections.constructor(
-//                        MemePostSummaryResponse.class,
-//                        memePost.id,
-//                        memePost.imageUrl,
-//                        memePost.likeCount,
-//                        memePost.viewCount,
-//                        memePost.downloadCount
-//                ))
-//                .from(memePost)
-//                .join(memePost.memePostTags, memePostTag)
-//                .where(deletedAtIsNull(), mediaTypeEq(cond.getMediaType()), tagIn(cond.getTagIds()))
-//                .groupBy(memePost.id)
-//                .having(tagCountEq(cond.getTagIds()))
-//                .orderBy(createOrderSpecifiers(pageable))
-//                .limit(pageable.getPageSize() + 1)
-//                .offset(pageable.getOffset())
-//                .fetch();
-//
-//        boolean hasNext = responses.size() > pageable.getPageSize();
-//        if (hasNext) {
-//            responses.remove(responses.size() - 1);
-//        }
-//
-//        return new SliceImpl<>(responses, pageable, hasNext);
-//    }
-
     @Override
     public Slice<Long> searchByCond(Pageable pageable, MemePostSearchCond cond) {
-        JPQLQuery<Long> query = queryFactory
+
+        List<Long> postIds = queryFactory
                 .select(memePost.id)
                 .from(memePost)
-                .join(memePost.memePostTags, memePostTag)
-                .where(deletedAtIsNull(), mediaTypeEq(cond.getMediaType()), tagIn(cond.getTagIds()));
-
-
-        addGroupByAndHavingTagCount(query, cond.getTagIds());
-
-        List<Long> postIds = query
+                .where(
+                        deletedAtIsNull(),
+                        mediaTypeEq(cond.getMediaType()),
+                        haveTagIds(cond.getTagIds())
+                )
                 .orderBy(createOrderSpecifiers(pageable))
                 .limit(pageable.getPageSize() + 1)
                 .offset(pageable.getOffset())
@@ -89,35 +57,97 @@ public class MemePostRepositoryCustomImpl implements MemePostRepositoryCustom {
         return new SliceImpl<>(postIds, pageable, hasNext);
     }
 
+
+    private BooleanExpression haveTagIds(List<Long> tagIds) {
+        if (CollectionUtils.isEmpty(tagIds)) {
+            return null;
+        }
+
+        JPQLQuery<Long> subQuery = queryFactory
+                .select(memePostTag.memePost.id)
+                .from(memePostTag)
+                .where(tagIn(tagIds))
+                .groupBy(memePostTag.memePost.id)
+                .having(tagCountEq(tagIds));
+
+        return memePost.id.in(subQuery);
+    }
+
     @Override
-    public Slice<MemePostSummaryResponse> searchByCondWithMemePostLike(Pageable pageable, MemePostSearchCond cond, Long userId) {
-        List<MemePostSummaryResponse> responses = queryFactory
+    public List<MemePostSummaryProjection> findPostDetailsByPostIds(List<Long> postIds) {
+        return queryFactory
                 .select(Projections.constructor(
-                        MemePostSummaryResponse.class,
+                        MemePostSummaryProjection.class,
                         memePost.id,
                         memePost.imageUrl,
                         memePost.likeCount,
                         memePost.viewCount,
-                        memePost.downloadCount,
-                        memePostLike.isNotNull()
+                        memePost.downloadCount
                 ))
                 .from(memePost)
-                .join(memePostTag)
-                .leftJoin(memePostLike)
-                .on(memePostLike.memePost.id.eq(memePost.id), memePostLike.user.id.eq(userId))
-                .where(usernameLike(cond.getUsername()), tagIn(cond.getTagIds()))
-                .groupBy(memePost.id)
-                .having(tagCountEq(cond.getTagIds()))
+                .where(memePost.id.in(postIds))
+                .fetch();
+    }
+
+
+    @Override
+    public List<MemePostSummaryResponse> findPostsWithTags(List<Long> postIds) {
+        return queryFactory
+                .select(Projections.fields(
+                        MemePostSummaryResponse.class,
+                        memePost.id.as("id"),
+                        memePost.imageUrl.as("imageUrl"),
+                        memePost.likeCount.as("likeCount"),
+                        memePost.viewCount.as("viewCount"),
+                        memePost.downloadCount.as("downloadCount"),
+                        memePostTag.tag.name.as("tags")
+                ))
+                .from(memePost)
+                .innerJoin(memePost.memePostTags, memePostTag)
+                .where(memePost.id.in(postIds))
+                .fetch();
+    }
+    @Override
+    public List<Long> findRelatedPostIdsByTagIds(List<Long> tagIds, Long currentPostId, Pageable pageable) {
+        return queryFactory
+                .select(memePost.id).distinct()
+                .from(memePost)
+                .join(memePost.memePostTags, memePostTag)
+                .where(
+                        tagIn(tagIds),
+                        memePost.id.ne(currentPostId),
+                        deletedAtIsNull()
+                )
+                .limit(pageable.getPageSize() + 1)
+                .offset(pageable.getOffset())
+                .fetch();
+    }
+
+    @Override
+    public Slice<Long> findMemePostIdsByUsername(Pageable pageable, String authorName) {
+        List<Long> postIds = queryFactory
+                .select(memePost.id)
+                .from(memePost)
+                .innerJoin(memePost.user, user)
+                .where(
+                        deletedAtIsNull(),
+                        usernameEq(authorName)
+                )
+                .orderBy(memePost.createdAt.desc())
                 .limit(pageable.getPageSize() + 1)
                 .offset(pageable.getOffset())
                 .fetch();
 
-        boolean hasNext = responses.size() > pageable.getPageSize();
+        boolean hasNext = postIds.size() > pageable.getPageSize();
         if (hasNext) {
-            responses.remove(responses.size() - 1);
+            postIds.remove(postIds.size() - 1);
         }
 
-        return new SliceImpl<>(responses, pageable, hasNext);
+        return new SliceImpl<>(postIds, pageable, hasNext);
+    }
+
+    private BooleanExpression usernameEq(String username) {
+        return memePost.user.username.eq(username);
     }
 
     private BooleanExpression deletedAtIsNull() {
@@ -132,25 +162,17 @@ public class MemePostRepositoryCustomImpl implements MemePostRepositoryCustom {
     }
 
     private BooleanExpression tagIn(List<Long> tagIds) {
-        if (tagIds == null || tagIds.isEmpty()) {
+        if (CollectionUtils.isEmpty(tagIds)) {
             return null;
         }
         return memePostTag.tag.id.in(tagIds);
     }
 
     private BooleanExpression tagCountEq(List<Long> tagIds) {
-        if (tagIds == null || tagIds.isEmpty()) {
+        if (CollectionUtils.isEmpty(tagIds)) {
             return null;
         }
         return memePostTag.tag.id.countDistinct().eq((long) tagIds.size());
-    }
-
-    private void addGroupByAndHavingTagCount(JPQLQuery<?> query, List<Long> tagIds) {
-        if (tagIds == null || tagIds.isEmpty()) {
-            return;
-        }
-        query.groupBy(memePost.id)
-                .having(tagCountEq(tagIds));
     }
 
     private OrderSpecifier<?>[] createOrderSpecifiers(Pageable pageable) {

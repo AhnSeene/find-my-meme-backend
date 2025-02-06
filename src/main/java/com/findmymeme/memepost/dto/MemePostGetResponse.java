@@ -58,7 +58,7 @@ public class MemePostGetResponse {
     public MemePostGetResponse(MemePost memePost, boolean isOwner, boolean isLiked, List<String> tags) {
         this.id = memePost.getId();
         this.imageUrl = memePost.getImageUrl();
-        this.extension = memePost.getExtension();
+        this.extension = memePost.getExtension().getValue();
         this.height = memePost.getResolution().getHeight();
         this.weight = memePost.getResolution().getWidth();
         this.size = memePost.getSize();
