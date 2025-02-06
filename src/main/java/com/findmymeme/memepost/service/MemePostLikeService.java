@@ -27,22 +27,20 @@ public class MemePostLikeService {
     public MemePostLikeResponse toggleLike(Long memePostId, Long userId) {
         User user = getUserById(userId);
 
-        MemePost memePost = memePostRepository.findWithPessimisticLockById(memePostId)
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
+        MemePost memePost = getMemePostById(memePostId);
 
         Optional<MemePostLike> existingLike = memePostLikeRepository.findByMemePostAndUser(memePost, user);
 
         boolean isLiked = false;
         if (existingLike.isPresent()) {
-            memePost.decrementLikeCount();
+            memePostRepository.decrementLikeCount(memePostId);
             memePostLikeRepository.delete(existingLike.get());
-
         } else {
             MemePostLike memePostLike = MemePostLike.builder()
                     .memePost(memePost)
                     .user(user)
                     .build();
-            memePost.incrementLikeCount();
+            memePostRepository.incrementLikeCount(memePostId);
             memePostLikeRepository.save(memePostLike);
             isLiked = true;
         }

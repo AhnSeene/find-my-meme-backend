@@ -44,4 +44,13 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long>, MemeP
     @Query("SELECT mp FROM MemePost mp WHERE mp.id = :id AND mp.deletedAt IS NULL")
     Optional<MemePost> findWithPessimisticLockById(@Param("id") Long memePostId);
 
+    @Modifying
+    @Query("UPDATE MemePost m SET m.likeCount = m.likeCount + 1 WHERE m.id = :postId")
+    void incrementLikeCount(@Param("postId") Long postId);
+
+    @Modifying
+    @Query("UPDATE MemePost m SET m.likeCount = m.likeCount - 1 WHERE m.id = :postId")
+    void decrementLikeCount(@Param("postId") Long postId);
+
+
 }
