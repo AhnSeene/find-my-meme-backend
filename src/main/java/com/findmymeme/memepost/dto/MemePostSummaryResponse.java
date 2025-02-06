@@ -17,24 +17,38 @@ public class MemePostSummaryResponse {
     private String imageUrl;
     private Long likeCount;
     private Long viewCount;
-    private Boolean isLiked;
+    private Long downloadCount;
+    private Boolean isLiked = false;
     private List<String> tags;
 
     @Builder
-    public MemePostSummaryResponse(Long id, String imageUrl, Long likeCount, Long viewCount, boolean isLiked, List<String> tags) {
+    public MemePostSummaryResponse(Long id, String imageUrl, Long likeCount, Long viewCount, Long downloadCount, Boolean isLiked, List<String> tags) {
         this.id = id;
         this.imageUrl = imageUrl;
         this.likeCount = likeCount;
         this.viewCount = viewCount;
+        this.downloadCount = downloadCount;
         this.isLiked = isLiked;
         this.tags = tags;
     }
 
+    @Builder
+    public MemePostSummaryResponse(Long id, String imageUrl, Long likeCount, Long viewCount, Long downloadCount, Boolean isLiked) {
+        this.id = id;
+        this.imageUrl = imageUrl;
+        this.likeCount = likeCount;
+        this.viewCount = viewCount;
+        this.downloadCount = downloadCount;
+        this.isLiked = isLiked;
+    }
+
+    @Builder
     public MemePostSummaryResponse(MemePost memePost, boolean isLiked, List<String> tags) {
         this.id = memePost.getId();
         this.imageUrl = memePost.getImageUrl();
         this.likeCount = memePost.getLikeCount();
         this.viewCount = memePost.getViewCount();
+        this.downloadCount = memePost.getDownloadCount();
         this.isLiked = isLiked;
         this.tags = tags;
     }
@@ -44,6 +58,9 @@ public class MemePostSummaryResponse {
         this.imageUrl = memePost.getImageUrl();
         this.likeCount = memePost.getLikeCount();
         this.viewCount = memePost.getViewCount();
+        this.downloadCount = memePost.getDownloadCount();
         this.isLiked = isLiked;
     }
+
+
 }

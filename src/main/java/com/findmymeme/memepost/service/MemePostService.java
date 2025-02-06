@@ -7,36 +7,36 @@ import com.findmymeme.file.domain.FileMeta;
 import com.findmymeme.file.repository.FileMetaRepository;
 import com.findmymeme.file.service.FileStorageService;
 import com.findmymeme.memepost.domain.MemePost;
+import com.findmymeme.memepost.domain.MemePostSort;
 import com.findmymeme.memepost.dto.*;
+import com.findmymeme.memepost.dto.Sort;
 import com.findmymeme.memepost.repository.MemePostLikeRepository;
 import com.findmymeme.memepost.repository.MemePostRepository;
+import com.findmymeme.memepost.dto.MemePostTagProjection;
 import com.findmymeme.response.MySlice;
-import com.findmymeme.tag.service.PostTagService;
+import com.findmymeme.memepost.repository.MemePostTagRepository;
 import com.findmymeme.user.domain.User;
 import com.findmymeme.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import static com.findmymeme.tag.domain.PostType.*;
 
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class MemePostService {
 
-    private static final int LIMIT_RECOMMENDED_POST = 20;
 
     private final UserRepository userRepository;
     private final MemePostRepository memePostRepository;
-    private final PostTagService postTagService;
+    private final MemePostTagService memePostTagService;
+    private final MemePostTagRepository memePostTagRepository;
     private final FileStorageService fileStorageService;
     private final FileMetaRepository fileMetaRepository;
     private final MemePostLikeRepository memePostLikeRepository;
@@ -50,63 +50,78 @@ public class MemePostService {
 
         MemePost memePost = createMemePost(permanentImageUrl, user, fileMeta);
         memePostRepository.save(memePost);
-        List<String> tagNames = postTagService.applyTagsToPost(request.getTags(), memePost.getId(), MEME_POST);
+        List<String> tagNames = memePostTagService.applyTagsToPost(request.getTags(), memePost);
         return new MemePostUploadResponse(memePost.getImageUrl(), tagNames);
     }
 
-    @Transactional
-    public MemePostGetResponse getMemePost(Long memePostId) {
-        MemePost memePost = getMemePostWithUserById(memePostId);
-        List<String> tagNames = getTagNames(memePostId);
 
-        memePost.incrementViewCount();
-        return new MemePostGetResponse(memePost, false, false, tagNames);
+    public MemePostGetResponse getMemePost(Long memePostId, Optional<Long> userId) {
+        return userId.map(id -> getMemePostForUser(memePostId, id))
+                .orElseGet(() -> getMemePostForGuest(memePostId));
     }
 
     @Transactional
-    public MemePostGetResponse getMemePost(Long memePostId, Long userId) {
+    public MemePostGetResponse getMemePostForGuest(Long memePostId) {
+        MemePost memePost = memePostRepository.findByIdWithTags(memePostId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
+
+        memePost.incrementViewCount();
+        return new MemePostGetResponse(memePost, false, false, memePost.getTagNames());
+    }
+
+    @Transactional
+    public MemePostGetResponse getMemePostForUser(Long memePostId, Long userId) {
         User user = getUserById(userId);
-        MemePost memePost = getMemePostWithUserById(memePostId);
+        MemePost memePost = memePostRepository.findByIdWithTags(memePostId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
         boolean isLiked = memePostLikeRepository.existsByMemePostIdAndUserId(memePostId, userId);
-        List<String> tagNames = getTagNames(memePostId);
 
         memePost.incrementViewCount();
-        return new MemePostGetResponse(memePost, memePost.isOwner(user), isLiked, tagNames);
+        return new MemePostGetResponse(memePost, memePost.isOwner(user), isLiked, memePost.getTagNames());
     }
 
-    public Slice<MemePostSummaryResponse> getMemePosts(int page, int size, Long userId) {
-        Pageable pageable = PageRequest.of(page, size);
-        Slice<MemePostSummaryResponse> memePosts = memePostRepository.findMemePostSummariesWithLike(pageable, userId);
+    public Slice<MemePostSummaryResponse> getMemePostsWithLikeInfo(
+            int page, int size,
+            MemePostSort sort,
+            MemePostSearchCond searchCond,
+            Optional<Long> userId
+    ) {
+        Pageable pageable = PageRequest.of(page, size, sort.toSort());
 
-        memePosts.forEach(response -> response.setTags(getTagNames(response.getId())));
-        return memePosts;
+        Slice<Long> postIdSlice = memePostRepository.searchByCond(pageable, searchCond);
+        List<Long> postIds = postIdSlice.getContent();
+
+        if (postIds.isEmpty()) {
+            return new SliceImpl<>(Collections.emptyList(), pageable, postIdSlice.hasNext());
+        }
+
+        List<MemePostSummaryProjection> postDetails = memePostRepository.findPostDetailsByPostIds(postIds);
+        Map<Long, List<String>> tagsGroupedByPostId = findTagNamesGroupedByPostIds(postIds);
+        Set<Long> likedPostIds = findLikedPostIds(postIds, userId);
+
+        List<MemePostSummaryResponse> updatedResponses = mapToSummaryResponse(postDetails, likedPostIds, tagsGroupedByPostId);
+
+        return new SliceImpl<>(updatedResponses, pageable, postIdSlice.hasNext());
     }
 
-    public Slice<MemePostSummaryResponse> getMemePosts(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Slice<MemePost> memePosts = memePostRepository.findSliceAll(pageable);
-        List<MemePostSummaryResponse> responses = memePosts.stream()
-                .map(memePost -> new MemePostSummaryResponse(memePost, false, getTagNames(memePost.getId())))
-                .toList();
-        return new SliceImpl<>(responses, pageable, memePosts.hasNext());
-    }
+    public List<MemePostSummaryResponse> getRecommendedPostsWithLikeInfo(Long memePostId, int size, Optional<Long> userId) {
+        List<Long> tagIds = memePostTagRepository.findTagIdsByPostId(memePostId);
 
-    public List<MemePostSummaryResponse> getRecommendedPosts(Long memePostId) {
-        MemePost memePost = getMemePostById(memePostId);
+        if (tagIds.isEmpty()) {
+            return Collections.emptyList();
+        }
 
-        List<String> tagNames = getTagNames(memePostId);
-        List<MemePost> recommendedPosts = memePostRepository.findByTagNames(tagNames, PageRequest.of(0, LIMIT_RECOMMENDED_POST));
-        return recommendedPosts.stream()
-                .map(post -> new MemePostSummaryResponse(memePost, false, getTagNames(memePost.getId())))
-                .toList();
-    }
+        List<Long> recommendedPostIds = memePostRepository.findRelatedPostIdsByTagIds(tagIds, memePostId, PageRequest.of(0, size));
 
-    public List<MemePostSummaryResponse> getRecommendedPosts(Long memePostId, Long userId) {
-        MemePost memePost = getMemePostById(memePostId);
+        if (recommendedPostIds.isEmpty()) {
+            return Collections.emptyList();
+        }
 
-        List<MemePostSummaryResponse> recommendedPosts = memePostRepository.findByTagNamesWithLikeByUserId(getTagNames(memePost.getId()), PageRequest.of(0, LIMIT_RECOMMENDED_POST), userId);
-        recommendedPosts.forEach(response -> response.setTags(getTagNames(response.getId())));
-        return recommendedPosts;
+        List<MemePostSummaryProjection> postDetails = memePostRepository.findPostDetailsByPostIds(recommendedPostIds);
+        Map<Long, List<String>> tagsGroupedByPostId = findTagNamesGroupedByPostIds(recommendedPostIds);
+        Set<Long> likedPostIds = findLikedPostIds(recommendedPostIds, userId);
+
+        return mapToSummaryResponse(postDetails, likedPostIds, tagsGroupedByPostId);
     }
 
     @Transactional
@@ -117,33 +132,40 @@ public class MemePostService {
         memePost.softDelete();
     }
 
-    public MemePostUserSummaryResponse getMemePostsByAuthorId(int page, int size, String authorName) {
-        User author = userRepository.findByUsername(authorName)
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
-
-        UserProfileResponse userProfileResponse = new UserProfileResponse(author);
-        Pageable pageable = PageRequest.of(page, size);
-        Slice<MemePost> memePostSummaries = memePostRepository.findMemePostByUserId(pageable, authorName);
-        List<MemePostSummaryResponse> responses = memePostSummaries.stream()
-                .map(memePost -> new MemePostSummaryResponse(memePost, false, getTagNames(memePost.getId())))
-                .toList();
-        return MemePostUserSummaryResponse.builder()
-                .user(userProfileResponse)
-                .memePosts(new MySlice<>(new SliceImpl<>(responses, pageable, memePostSummaries.hasNext())))
+    @Transactional
+    public MemePostDownloadDto download(Long memePostId) {
+        MemePost memePost = getMemePostById(memePostId);
+        memePost.incrementDownloadCount();
+        return MemePostDownloadDto.builder()
+                .filename(fileStorageService.getFilename(memePost.getImageUrl()))
+                .resource(fileStorageService.downloadFile(memePost.getImageUrl()))
                 .build();
     }
 
-    public MemePostUserSummaryResponse getMemePostsByAuthorId(int page, int size, String authorName, Long userId) {
+    public MemePostUserSummaryResponse getMemePostsByAuthorNameWithLikeInfo(int page, int size, String authorName, Optional<Long> userId) {
         User author = userRepository.findByUsername(authorName)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
 
         UserProfileResponse userProfileResponse = new UserProfileResponse(author);
         Pageable pageable = PageRequest.of(page, size);
-        Slice<MemePostSummaryResponse> memePostSummaries = memePostRepository.findMemePostSummariesWithLikeByUserId(pageable, authorName, userId);
-        memePostSummaries.forEach(response -> response.setTags(getTagNames(response.getId())));
+        Slice<Long> postIdSlice = memePostRepository.findMemePostIdsByUsername(pageable, authorName);
+        List<Long> postIds = postIdSlice.getContent();
+
+        if (postIds.isEmpty()) {
+            return MemePostUserSummaryResponse.builder()
+                    .user(userProfileResponse)
+                    .memePosts(new MySlice<>(new SliceImpl<>(Collections.emptyList(), pageable, false)))
+                    .build();
+        }
+
+        List<MemePostSummaryProjection> postDetails = memePostRepository.findPostDetailsByPostIds(postIds);
+        Map<Long, List<String>> tagsGroupedByPostId = findTagNamesGroupedByPostIds(postIds);
+        Set<Long> likedPostIds = findLikedPostIds(postIds, userId);
+
+        List<MemePostSummaryResponse> memePostSummaries = mapToSummaryResponse(postDetails, likedPostIds, tagsGroupedByPostId);
         return MemePostUserSummaryResponse.builder()
                 .user(userProfileResponse)
-                .memePosts(new MySlice<>(memePostSummaries))
+                .memePosts(new MySlice<>(new SliceImpl<>(memePostSummaries, pageable, postIdSlice.hasNext())))
                 .build();
     }
 
@@ -165,10 +187,45 @@ public class MemePostService {
         LocalDateTime startDateTime = period.getStartDateTime();
         LocalDateTime endDateTime = period.getEndDateTime();
         Pageable pageable = PageRequest.of(page, size);
-        List<MemePost> memePosts = memePostRepository.findTopByLikeCountWithinPeriod(startDateTime, endDateTime, pageable);;
+        List<MemePost> memePosts = memePostRepository.findTopByLikeCountWithinPeriod(startDateTime, endDateTime, pageable);
+
         return memePosts.stream()
                 .map(post -> new MemePostSummaryResponse(post, false, getTagNames(post.getId())))
                 .toList();
+    }
+
+    private List<MemePostSummaryResponse> mapToSummaryResponse(
+            List<MemePostSummaryProjection> postDetails,
+            Set<Long> likedPostIds,
+            Map<Long, List<String>> tagsGroupedByPostId
+    ) {
+        return postDetails.stream()
+                .map(post -> MemePostSummaryResponse.builder()
+                        .id(post.getId())
+                        .imageUrl(post.getImageUrl())
+                        .likeCount(post.getLikeCount())
+                        .viewCount(post.getViewCount())
+                        .downloadCount(post.getDownloadCount())
+                        .isLiked(likedPostIds.contains(post.getId()))
+                        .tags(tagsGroupedByPostId.getOrDefault(post.getId(), Collections.emptyList()))
+                        .build())
+                .toList();
+    }
+
+    private Map<Long, List<String>> findTagNamesGroupedByPostIds(List<Long> postIds) {
+        List<MemePostTagProjection> memePostsWithTags = memePostTagRepository.findTagNamesInPostIds(postIds);
+
+        return memePostsWithTags.stream()
+                .collect(Collectors.groupingBy(
+                        MemePostTagProjection::getMemePostId,
+                        Collectors.mapping(MemePostTagProjection::getTagName, Collectors.toList())
+                ));
+    }
+
+    private Set<Long> findLikedPostIds(List<Long> postIds, Optional<Long> userId) {
+        return userId
+                .map(id -> new HashSet<>(memePostLikeRepository.findLikedPostIds(postIds, id)))
+                .orElseGet(HashSet::new);
     }
 
     private MemePost createMemePost(String permanentImageUrl, User user, FileMeta fileMeta) {
@@ -187,6 +244,12 @@ public class MemePostService {
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
     }
 
+    private List<Long> getPostIds(List<MemePost> memePosts) {
+        return memePosts.stream()
+                .map(MemePost::getId)
+                .toList();
+    }
+
     private MemePost getMemePostById(Long memePostId) {
         return memePostRepository.findById(memePostId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
@@ -199,15 +262,11 @@ public class MemePostService {
 
     private MemePost getMemePostWithUserById(Long memePostId) {
         return memePostRepository.findWithUserById(memePostId)
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST));
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
     }
 
     private List<String> getTagNames(Long memePostId) {
-        return postTagService.getTagNames(memePostId, MEME_POST);
-    }
-
-    private List<Long> getTagIds(Long memePostId) {
-        return postTagService.getTagIds(memePostId, MEME_POST);
+        return memePostTagService.getTagNames(memePostId);
     }
 
     private void verifyOwnership(MemePost memePost, User user) {
@@ -215,6 +274,5 @@ public class MemePostService {
             throw new FindMyMemeException(ErrorCode.FORBIDDEN);
         }
     }
-
 
 }

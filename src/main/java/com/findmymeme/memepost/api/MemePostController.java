@@ -1,5 +1,7 @@
 package com.findmymeme.memepost.api;
 
+import com.findmymeme.common.resolver.CurrentUserId;
+import com.findmymeme.memepost.domain.MemePostSort;
 import com.findmymeme.memepost.dto.*;
 import com.findmymeme.memepost.service.MemePostLikeService;
 import com.findmymeme.memepost.service.MemePostService;
@@ -9,27 +11,30 @@ import com.findmymeme.response.ResponseUtil;
 import com.findmymeme.response.SuccessCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Slice;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/meme-posts")
 public class MemePostController {
 
+    private static final String ATTACHMENT_FILENAME_TEMPLATE = "attachment; filename=\"%s\"";
     private final MemePostService memePostService;
     private final MemePostLikeService memePostLikeService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<MemePostUploadResponse>> uploadMemePost(
             @Valid @RequestBody MemePostUploadRequest request,
-            Authentication authentication
+            @CurrentUserId(required = false) Long userId
     ) {
-        Long userId = Long.parseLong(authentication.getName());
         return ResponseUtil.success(memePostService.uploadMemePost(request, userId),
                 SuccessCode.MEME_POST_UPLOAD
         );
@@ -38,65 +43,53 @@ public class MemePostController {
     @GetMapping("/{memePostId}")
     public ResponseEntity<ApiResponse<MemePostGetResponse>> getMemePost(
             @PathVariable("memePostId") Long memePostId,
-            Authentication authentication
+            @CurrentUserId(required = false) Optional<Long> userId
     ) {
-        MemePostGetResponse responses = null;
-        if (authentication == null) {
-            responses = memePostService.getMemePost(memePostId);
-        } else {
-            Long userId = Long.parseLong(authentication.getName());
-            responses = memePostService.getMemePost(memePostId, userId);
-        }
-        return ResponseUtil.success(
-                responses,
+        return ResponseUtil.success(memePostService.getMemePost(memePostId, userId),
                 SuccessCode.MEME_POST_GET
         );
     }
 
-    @GetMapping
-    public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> getMemePosts(
+    @GetMapping("/{memePostId}/download")
+    public ResponseEntity<Resource> downloadMemePost(
+            @PathVariable("memePostId") Long memePostId
+    ) {
+        MemePostDownloadDto downloadDto = memePostService.download(memePostId);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, String.format(ATTACHMENT_FILENAME_TEMPLATE, downloadDto.getFilename()))
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(downloadDto.getResource());
+    }
+
+    @GetMapping()
+    public ResponseEntity<ApiResponse<MySlice<MemePostSummaryResponse>>> searchMemePosts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            Authentication authentication
+            @ModelAttribute MemePostSearchCond searchCond,
+            @CurrentUserId(required = false) Optional<Long> userId
     ) {
-        Slice<MemePostSummaryResponse> responses = null;
-        if (authentication == null) {
-            responses = memePostService.getMemePosts(page, size);
-        } else {
-            Long userId = Long.parseLong(authentication.getName());
-            responses = memePostService.getMemePosts(page, size, userId);
-        }
-        return ResponseUtil.success(
-                new MySlice<>(responses),
-                SuccessCode.MEME_POST_LIST
+        Slice<MemePostSummaryResponse> responses = memePostService.getMemePostsWithLikeInfo(
+                page, size, MemePostSort.CREATED, searchCond, userId
         );
+        return ResponseUtil.success(new MySlice<>(responses), SuccessCode.MEME_POST_LIST);
     }
 
     @GetMapping("/{memePostId}/recommendations")
-    public ResponseEntity<ApiResponse<List<MemePostSummaryResponse>>> getMemePosts(
+    public ResponseEntity<ApiResponse<List<MemePostSummaryResponse>>> getRecommendations(
             @PathVariable("memePostId") Long memePostId,
-            Authentication authentication
+            @RequestParam(defaultValue = "20") int size,
+            @CurrentUserId(required = false) Optional<Long> userId
     ) {
-        List<MemePostSummaryResponse> responses = null;
-        if (authentication == null) {
-            responses = memePostService.getRecommendedPosts(memePostId);
-        } else {
-            Long userId = Long.parseLong(authentication.getName());
-            responses = memePostService.getRecommendedPosts(memePostId, userId);
-        }
-        return ResponseUtil.success(
-                responses, SuccessCode.MEME_POST_LIST
-        );
+        List<MemePostSummaryResponse> responses = memePostService.getRecommendedPostsWithLikeInfo(memePostId, size, userId);
+        return ResponseUtil.success(responses, SuccessCode.MEME_POST_LIST);
     }
 
     @PostMapping("/{memePostId}/toggleLike")
     public ResponseEntity<ApiResponse<MemePostLikeResponse>> toggleLikeMemePost(
             @PathVariable("memePostId") Long memePostId,
-            Authentication authentication
+            @CurrentUserId Long userId
     ) {
-        Long userId = Long.parseLong(authentication.getName());
-        return ResponseUtil.success(
-                memePostLikeService.toggleLike(memePostId, userId),
+        return ResponseUtil.success(memePostLikeService.toggleLike(memePostId, userId),
                 SuccessCode.MEME_POST_LIKE
         );
     }
@@ -104,9 +97,8 @@ public class MemePostController {
     @DeleteMapping("/{memePostId}")
     public ResponseEntity<ApiResponse<Void>> softDelete(
             @PathVariable("memePostId") Long memePostId,
-            Authentication authentication
+            @CurrentUserId Long userId
     ) {
-        Long userId = Long.parseLong(authentication.getName());
         memePostService.softDelete(memePostId, userId);
         return ResponseUtil.success(
                 null,
@@ -115,23 +107,14 @@ public class MemePostController {
     }
 
     @GetMapping("/users/{authorName}")
-    public ResponseEntity<ApiResponse<MemePostUserSummaryResponse>> getMemePostsByAuthorId(
+    public ResponseEntity<ApiResponse<MemePostUserSummaryResponse>> getMemePostsByAuthorName(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @PathVariable("authorName") String authorName,
-            Authentication authentication
+            @CurrentUserId(required = false) Optional<Long> userId
     ) {
-        MemePostUserSummaryResponse responses = null;
-        if (authentication == null) {
-            responses = memePostService.getMemePostsByAuthorId(page, size, authorName);
-        } else {
-            Long userId = Long.parseLong(authentication.getName());
-            responses =  memePostService.getMemePostsByAuthorId(page, size, authorName, userId);
-        }
-        return ResponseUtil.success(
-                responses,
-                SuccessCode.MEME_POST_AUTHOR_LIST
-        );
+        MemePostUserSummaryResponse responses = memePostService.getMemePostsByAuthorNameWithLikeInfo(page, size, authorName, userId);
+        return ResponseUtil.success(responses, SuccessCode.MEME_POST_AUTHOR_LIST);
     }
 
     @GetMapping("/ranks/all")

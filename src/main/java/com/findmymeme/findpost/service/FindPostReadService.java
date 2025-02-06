@@ -9,7 +9,7 @@ import com.findmymeme.findpost.dto.FindPostSummaryResponse;
 import com.findmymeme.findpost.dto.MyFindPostSummaryResponse;
 import com.findmymeme.findpost.repository.FindPostRepository;
 import com.findmymeme.tag.domain.Tag;
-import com.findmymeme.tag.service.PostTagService;
+import com.findmymeme.tag.service.FindPostTagService;
 import com.findmymeme.user.domain.User;
 import com.findmymeme.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static com.findmymeme.tag.domain.PostType.*;
+//import static com.findmymeme.tag.domain.PostType.*;
 
 @Service
 @Transactional(readOnly = true)
@@ -31,7 +31,7 @@ public class FindPostReadService {
 
     private final UserRepository userRepository;
     private final FindPostRepository findPostRepository;
-    private final PostTagService postTagService;
+    private final FindPostTagService findPostTagService;
 
     @Transactional
     public FindPostGetResponse getFindPost(Long findPostId, Long userId) {
@@ -41,7 +41,7 @@ public class FindPostReadService {
         FindPost findPost = findPostRepository.findWithUserById(findPostId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST));
 
-        List<Tag> tags = postTagService.getTags(findPost.getId(), FIND_POST);
+        List<Tag> tags = findPostTagService.getTags(findPost.getId());
 
         findPost.incrementViewCount();
         return new FindPostGetResponse(findPost, findPost.isOwner(user), tags);
@@ -52,7 +52,7 @@ public class FindPostReadService {
         return findPostRepository.findAll(pageable)
                 .map(findPost ->
                         new FindPostSummaryResponse(findPost,
-                                postTagService.getTagNames(findPost.getId(), FIND_POST)
+                                findPostTagService.getTagNames(findPost.getId())
                         )
                 );
     }
@@ -62,7 +62,7 @@ public class FindPostReadService {
         return findPostRepository.findAllByFindStatus(pageable, findStatus)
                 .map(findPost ->
                         new FindPostSummaryResponse(findPost,
-                                postTagService.getTagNames(findPost.getId(), FIND_POST)
+                                findPostTagService.getTagNames(findPost.getId())
                         )
                 );
     }
@@ -72,7 +72,7 @@ public class FindPostReadService {
         return findPostRepository.findAllByUsername(pageable, authorName)
                 .map(findPost ->
                         new MyFindPostSummaryResponse(findPost,
-                                postTagService.getTagNames(findPost.getId(), FIND_POST)
+                                findPostTagService.getTagNames(findPost.getId())
                         )
                 );
     }
@@ -82,7 +82,7 @@ public class FindPostReadService {
         return findPostRepository.findAllByUsernameAndFindStatus(pageable, authorName, findStatus)
                 .map(findPost ->
                         new MyFindPostSummaryResponse(findPost,
-                                postTagService.getTagNames(findPost.getId(), FIND_POST)
+                                findPostTagService.getTagNames(findPost.getId())
                         )
                 );
     }

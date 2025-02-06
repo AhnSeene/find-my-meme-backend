@@ -38,3 +38,6 @@ out/
 
 ### env file ###
 .env
+
+# QueryDSL Q파일
+src/main/generated/*

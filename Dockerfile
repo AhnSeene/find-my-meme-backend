@@ -1,41 +1,5 @@
-FROM gradle:7.6-jdk17 AS build
-WORKDIR /app
-COPY gradle /app/gradle
-COPY settings.gradle /app/
-COPY build.gradle /app/
-COPY src /app/src
-RUN gradle build --no-daemon
-
-ARG DB_HOST
-ARG DB_PORT
-ARG DB_NAME
-ARG DB_USERNAME
-ARG DB_PASSWORD
-ARG JWT_SECRET_KEY
-ARG AWS_ACCESS_KEY
-ARG AWS_SECRET_KEY
-ARG AWS_REGION
-ARG AWS_BUCKET
-ARG FILE_BASEURL
-ARG FILE_BASEDIR
-ARG DEFAULT_PROFILE_URL
-
-ENV DB_HOST=${DB_HOST}
-ENV DB_PORT=${DB_PORT}
-ENV DB_NAME=${DB_NAME}
-ENV DB_USERNAME=${DB_USERNAME}
-ENV DB_PASSWORD=${DB_PASSWORD}
-ENV JWT_SECRET_KEY=${JWT_SECRET_KEY}
-ENV AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
-ENV AWS_SECRET_KEY=${AWS_SECRET_KEY}
-ENV AWS_REGION=${AWS_REGION}
-ENV AWS_BUCKET=${AWS_BUCKET}
-ENV FILE_BASEURL=${FILE_BASEURL}
-ENV FILE_BASEDIR=${FILE_BASEDIR}
-ENV DEFAULT_PROFILE_URL=${DEFAULT_PROFILE_URL}
-
 FROM openjdk:17-jdk
-COPY --from=build --chown=gradle:gradle /app/build/libs/find-my-meme-0.0.1-SNAPSHOT.jar /usr/app/find-my-meme-0.0.1-SNAPSHOT.jar
+COPY build/libs/find-my-meme-0.0.1-SNAPSHOT.jar /usr/app/find-my-meme-0.0.1-SNAPSHOT.jar
 WORKDIR /usr/app
 EXPOSE 8080
-CMD ["java", "-jar", "find-my-meme-0.0.1-SNAPSHOT.jar"]
+CMD ["java", "-jar", "find-my-meme-0.0.1-SNAPSHOT.jar", "--spring.profiles.active=prod"]

@@ -1,6 +1,7 @@
 package com.findmymeme.findpost.domain;
 
 import com.findmymeme.BaseEntity;
+import com.findmymeme.tag.domain.FindPostTag;
 import com.findmymeme.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -9,6 +10,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Entity
@@ -51,6 +54,9 @@ public class FindPost extends BaseEntity {
     @JoinColumn(name = "selected_comment_id")
     private FindPostComment selectedComment;
 
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "findPost")
+    private List<FindPostTag> findPostTags = new ArrayList<>();
+
     @Builder
     public FindPost(String title, String htmlContent, String content, LocalDateTime deletedAt, User user, FindPostComment selectedComment) {
         this.title = title;
@@ -62,6 +68,20 @@ public class FindPost extends BaseEntity {
         this.selectedComment = selectedComment;
     }
 
+    public void addFindPostTag(FindPostTag findPostTag) {
+        this.findPostTags.add(findPostTag);
+    }
+
+    public void removeFindPostTag(FindPostTag findPostTag) {
+        this.findPostTags.remove(findPostTag);
+        findPostTag.changeFindPost(null);
+    }
+
+    public List<String> getTagNames() {
+        return this.findPostTags.stream()
+                .map(fpt -> fpt.getTag().getName())
+                .toList();
+    }
     public boolean isOwner(User user) {
         return this.user.getId().equals(user.getId());
     }

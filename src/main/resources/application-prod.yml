@@ -1,0 +1,68 @@
+spring:
+  sql:
+    init:
+      mode: never
+      encoding: UTF-8
+  datasource:
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        default_batch_fetch_size: 1000
+        session.events.log.LOG_QUERIES_SLOWER_THAN_MS: 300
+    open-in-view: false
+    defer-datasource-initialization: true
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+  messages:
+    basename: messages
+    encoding: UTF-8
+
+logging:
+  level:
+    org.hibernate: ERROR
+
+jwt:
+  access-expire-time: 1800 #30분 1800
+  refresh-expire-time: 1209600 #14일 1209600
+  secret-key: ${JWT_SECRET_KEY}
+  issuer: find-my-meme
+
+file:
+  upload:
+    temp-dir: temps
+    image-dir: images
+  base-dir: ${FILE_BASEDIR}
+  base-url: ${FILE_BASEURL}
+
+default:
+  profile-image-url: ${DEFAULT_PROFILE_URL}
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+    region:
+      static: ${AWS_REGION}
+      auto: false
+    stack:
+      auto: false
+    s3:
+      bucket: ${AWS_BUCKET}
+
+allowed:
+  origins: "https://findmymeme.site,https://www.findmymeme.site"
+
+admin:
+  username: ${ADMIN_USERNAME}
+  password: ${ADMIN_PASSWORD}
+  email: ${ADMIN_EMAIL}

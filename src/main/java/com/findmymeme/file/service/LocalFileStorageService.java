@@ -4,15 +4,19 @@ import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.file.exception.FileStorageException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.*;
 import java.util.function.Function;
 
 @Slf4j
-//@Service
+@Service
+@Profile("local")
 public class LocalFileStorageService implements FileStorageService {
 
     private static final String URL_FORMAT = "%s/%s";
@@ -57,6 +61,18 @@ public class LocalFileStorageService implements FileStorageService {
             throw new FileStorageException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
         return getPermanentFileUrl(savedFilename);
+    }
+
+    @Override
+    public Resource downloadFile(String fileUrl) {
+        File file = new File(baseDir + URL_SLASH + fileUrl);
+        InputStream inputStream = null;
+        try {
+            inputStream = new FileInputStream(file);
+        } catch (FileNotFoundException e) {
+            throw new FileStorageException(ErrorCode.FILE_DOWNLOAD_ERROR);
+        }
+        return new InputStreamResource(inputStream);
     }
 
     @Override
@@ -112,10 +128,6 @@ public class LocalFileStorageService implements FileStorageService {
 
     private String getPermanentFileUrl(String storedFilename) {
         return String.format(URL_FORMAT, permanentDir, storedFilename);
-    }
-
-    private String getFilename(String url) {
-        return url.substring(url.lastIndexOf(URL_SLASH) + 1);
     }
 
     private Path getTempFilePath(String savedFilename) {

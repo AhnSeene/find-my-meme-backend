@@ -10,7 +10,7 @@ import com.findmymeme.findpost.dto.*;
 import com.findmymeme.findpost.repository.FindPostCommentRepository;
 import com.findmymeme.findpost.repository.FindPostImageRepository;
 import com.findmymeme.findpost.repository.FindPostRepository;
-import com.findmymeme.tag.service.PostTagService;
+import com.findmymeme.tag.service.FindPostTagService;
 import com.findmymeme.user.domain.User;
 import com.findmymeme.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
-import static com.findmymeme.tag.domain.PostType.*;
+//import static com.findmymeme.tag.domain.PostType.*;
 
 @Slf4j
 @Service
@@ -33,21 +33,21 @@ public class FindPostWriteService {
     private final FindPostImageRepository findPostImageRepository;
     private final FindPostCommentRepository findPostCommentRepository;
     private final ImageService imageService;
-    private final PostTagService postTagService;
+    private final FindPostTagService findPostTagService;
 
     public FindPostWriteService(
             UserRepository userRepository,
             FindPostRepository findPostRepository,
             FindPostImageRepository findPostImageRepository,
             ImageService imageService,
-            PostTagService postTagService,
+            FindPostTagService findPostTagService,
             FindPostCommentRepository findPostCommentRepository
     ) {
         this.userRepository = userRepository;
         this.findPostRepository = findPostRepository;
         this.findPostImageRepository = findPostImageRepository;
         this.imageService = imageService;
-        this.postTagService = postTagService;
+        this.findPostTagService = findPostTagService;
         this.findPostCommentRepository = findPostCommentRepository;
     }
 
@@ -61,7 +61,7 @@ public class FindPostWriteService {
         findPost.changeHtmlContent(doc.body().html());
         FindPost savedFindPost = findPostRepository.save(findPost);
         findPostImageRepository.saveAll(findPostImages);
-        List<String> tags = postTagService.applyTagsToPost(request.getTags(), savedFindPost.getId(), FIND_POST);
+        List<String> tags = findPostTagService.applyTagsToPost(request.getTags(), savedFindPost);
         return new FindPostUploadResponse(savedFindPost, tags);
     }
 
@@ -78,7 +78,7 @@ public class FindPostWriteService {
         updateFindPostImages(findPost, addedImageMetas, deletedImageUrls);
 
         updateFindPost(findPost, request.getTitle(), request.getContent(), doc.body().html());
-        List<String> tags = postTagService.updateTagsToPost(request.getTags(), findPost.getId(), FIND_POST);
+        List<String> tags = findPostTagService.updateTagsToPost(request.getTags(), findPost);
         return new FindPostUpdateResponse(findPost, tags);
     }
 
@@ -123,13 +123,11 @@ public class FindPostWriteService {
 
     private List<FindPostImage> createFindPostImages(Collection<ImageService.ImageMeta> imageMetas, FindPost findPost) {
         return imageMetas.stream()
-                .map(image -> {
-                    return FindPostImage.builder()
-                            .imageUrl(image.getImageUrl())
-                            .originalFilename(image.getFileMeta().getOriginalFilename())
-                            .findPost(findPost)
-                            .build();
-                }).toList();
+                .map(image -> FindPostImage.builder()
+                        .imageUrl(image.getImageUrl())
+                        .originalFilename(image.getFileMeta().getOriginalFilename())
+                        .findPost(findPost)
+                        .build()).toList();
     }
 
 

@@ -37,12 +37,12 @@ public class SignupRequest {
         this.email = email;
     }
 
-    public static User toEntity(final SignupRequest signupRequest, final String encodedPassword, String defaultProfileImageUrl) {
+    public static User toEntity(final SignupRequest signupRequest, final Role role, final String encodedPassword, String defaultProfileImageUrl) {
         return User.builder()
                 .username(signupRequest.getUsername())
                 .password(encodedPassword)
                 .email(signupRequest.getEmail())
-                .role(Role.ROLE_USER)
+                .role(role)
                 .profileImageUrl(defaultProfileImageUrl)
                 .build();
     }

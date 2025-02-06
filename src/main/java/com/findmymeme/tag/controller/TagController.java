@@ -22,13 +22,6 @@ public class TagController {
 
     private final TagService tagService;
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<TagCreateResponse>> createTag(
-            @Valid @RequestBody TagCreateRequest request
-            ) {
-        return ResponseUtil.success(tagService.createTag(request), SuccessCode.TAG_CREATE);
-    }
-
     @GetMapping
     public ResponseEntity<ApiResponse<List<TagSummaryResponse>>> getTagsWithSubTags() {
         return ResponseUtil.success(tagService.getTagsWithSubTags(), SuccessCode.TAG_LIST);
