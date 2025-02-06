@@ -3,6 +3,7 @@ package com.findmymeme.memepost.repository;
 import com.findmymeme.memepost.domain.MemePost;
 import com.findmymeme.memepost.dto.MemePostSummaryResponse;
 import com.findmymeme.memepost.dto.MemePostTagProjection;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.*;
@@ -38,5 +39,9 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long>, MemeP
             "GROUP BY mpl.memePost " +
             "ORDER BY COUNT(mpl.id) DESC")
     List<MemePost> findTopByLikeCountWithinPeriod(@Param("startOfWeek") LocalDateTime startOfWeek, @Param("endOfWeek") LocalDateTime endOfWeek, Pageable pageable);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT mp FROM MemePost mp WHERE mp.id = :id AND mp.deletedAt IS NULL")
+    Optional<MemePost> findWithPessimisticLockById(@Param("id") Long memePostId);
 
 }
