@@ -26,6 +26,12 @@ spring:
     basename: messages
     encoding: UTF-8
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
 logging:
   level:
     org.hibernate: ERROR
