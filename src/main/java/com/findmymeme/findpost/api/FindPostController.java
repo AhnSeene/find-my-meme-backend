@@ -37,7 +37,7 @@ public class FindPostController {
     public ResponseEntity<ApiResponse<FindPostGetResponse>> getFindPost(
             @PathVariable("id") Long findPostId,
             @CurrentUserId(required = false) Optional<Long> userId
-            ) {
+    ) {
         return ResponseUtil.success(findPostReadService.getFindPost(findPostId, userId),
                 SuccessCode.FIND_POST_GET);
     }

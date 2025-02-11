@@ -49,8 +49,7 @@ public class FindPostCommentController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<FindPostCommentSummaryResponse>>> getComments(
-            @PathVariable("postId") Long postId,
-            @CurrentUserId(required = false) Optional<Long> userId
+            @PathVariable("postId") Long postId
     ) {
         return ResponseUtil.success(
                 commentReadService.getCommentsWithReplys(postId),

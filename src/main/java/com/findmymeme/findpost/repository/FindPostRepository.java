@@ -19,8 +19,8 @@ public interface FindPostRepository extends JpaRepository<FindPost, Long> {
 
     @Query("SELECT fp FROM FindPost fp " +
             "JOIN FETCH fp.user " +
-            "JOIN FETCH fp.findPostTags fpt " +
-            "JOIN FETCH fpt.tag " +
+            "LEFT JOIN FETCH fp.findPostTags fpt " +
+            "LEFT JOIN FETCH fpt.tag " +
             "WHERE fp.id = :id AND fp.deletedAt IS NULL")
     Optional<FindPost> findDetailsById(@Param("id") Long id);
     @Override

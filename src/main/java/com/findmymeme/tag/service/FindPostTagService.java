@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -22,6 +23,9 @@ public class FindPostTagService {
     private final FindPostTagRepository findPostTagRepository;
 
     public List<String> applyTagsToPost(List<Long> tagIds, FindPost findPost) {
+        if (tagIds.isEmpty()) {
+            return Collections.emptyList();
+        }
         List<FindPostTag> findPostTags = createPostTags(tagIds, findPost);
         findPostTagRepository.saveAll(findPostTags);
         return findPost.getTagNames();
