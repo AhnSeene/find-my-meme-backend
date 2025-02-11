@@ -1,5 +1,6 @@
 package com.findmymeme.findpost.api;
 
+import com.findmymeme.common.resolver.CurrentUserId;
 import com.findmymeme.findpost.domain.FindStatus;
 import com.findmymeme.findpost.dto.*;
 import com.findmymeme.findpost.service.FindPostReadService;
@@ -11,8 +12,9 @@ import com.findmymeme.response.SuccessCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,18 +27,18 @@ public class FindPostController {
     @PostMapping
     public ResponseEntity<ApiResponse<FindPostUploadResponse>> uploadFindPost(
             @Valid @RequestBody FindPostUploadRequest request,
-            Authentication authentication
+            @CurrentUserId Long userId
     ) {
-        Long userId = Long.parseLong(authentication.getName());
         return ResponseUtil.success(findPostWriteService.uploadFindPost(request, userId),
                 SuccessCode.FIND_POST_UPLOAD);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<FindPostGetResponse>> getFindPost(
-            @PathVariable("id") Long findPostId
-    ) {
-        return ResponseUtil.success(findPostReadService.getFindPost(findPostId, 1L),
+            @PathVariable("id") Long findPostId,
+            @CurrentUserId(required = false) Optional<Long> userId
+            ) {
+        return ResponseUtil.success(findPostReadService.getFindPost(findPostId, userId),
                 SuccessCode.FIND_POST_GET);
     }
 
@@ -75,9 +77,8 @@ public class FindPostController {
     public ResponseEntity<ApiResponse<FindPostUpdateResponse>> updateFindPost(
             @PathVariable("id") Long findPostId,
             @Valid @RequestBody FindPostUpdateRequest request,
-            Authentication authentication
+            @CurrentUserId Long userId
     ) {
-        Long userId = Long.parseLong(authentication.getName());
         return ResponseUtil.success(findPostWriteService.updateFindPost(request, findPostId, userId),
                 SuccessCode.FIND_POST_UPDATE);
     }
@@ -86,9 +87,8 @@ public class FindPostController {
     public ResponseEntity<ApiResponse<FindPostFoundResponse>> found(
             @PathVariable("postId") Long findPostId,
             @PathVariable("commentId") Long commentId,
-            Authentication authentication
+            @CurrentUserId Long userId
     ) {
-        Long userId = Long.parseLong(authentication.getName());
         return ResponseUtil.success(findPostWriteService.selectComment(findPostId, commentId, userId),
                 SuccessCode.FIND_POST_FOUND);
     }
@@ -96,9 +96,8 @@ public class FindPostController {
     @DeleteMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> softDelete(
             @PathVariable("postId") Long findPostId,
-            Authentication authentication
+            @CurrentUserId Long userId
     ) {
-        Long userId = Long.parseLong(authentication.getName());
         findPostWriteService.softDelete(findPostId, userId);
         return ResponseUtil.success(null,
                 SuccessCode.FIND_POST_DELETE);

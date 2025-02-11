@@ -39,6 +39,8 @@ public class FindPostCommentWriteService {
     public FindPostCommentAddResponse addComment(FindPostCommentAddRequest request, Long postId, Long userId) {
         User user = getUserById(userId);
         FindPost findPost = getFindPostById(postId);
+        validateFindPostStatus(findPost);
+
         FindPostComment comment = createFindPostComment(request, findPost, user);
         Document doc = Jsoup.parse(request.getHtmlContent());
         List<ImageService.ImageMeta> imageMetas = imageService.convertAndMoveImageUrls(doc);
@@ -52,13 +54,12 @@ public class FindPostCommentWriteService {
     }
 
     public FindPostCommentUpdateResponse updateComment(FindPostCommentUpdateRequest request, Long findPostId, Long commentId, Long userId) {
-        User user = getUserById(userId);
         FindPost findPost = getFindPostById(findPostId);
-        //TODO 게시글이 삭제되었는지 검증
-        FindPostComment comment = getCommentWithUserById(commentId);
-        verifyOwnership(comment, user);
-        validateCommentBelongsToPost(findPostId, comment);
+        validateFindPostStatus(findPost);
 
+        FindPostComment comment = getCommentWithUserById(commentId);
+        validateFindPost(comment, findPostId);
+        verifyOwnership(comment, userId);
 
         Document doc = Jsoup.parse(request.getHtmlContent());
         Set<String> existingImageUrls = commentImageRepository.findImageUrlsByComment(comment);
@@ -71,16 +72,32 @@ public class FindPostCommentWriteService {
         return new FindPostCommentUpdateResponse(comment);
     }
 
-
-
-    public FindPostCommentDeleteResponse softDelete(Long postId, Long commentId, Long userId) {
-        //TODO 이미 삭제된 댓글인지 확인
-        User user =  getUserById(userId);
+    public FindPostCommentDeleteResponse softDelete(Long findPostId, Long commentId, Long userId) {
         FindPostComment comment = getCommentWithUserById(commentId);
-        validateCommentBelongsToPost(postId, comment);
-        verifyOwnership(comment, user);
+        validateAlreadyDeleted(comment);
+        validateFindPost(comment, findPostId);
+        verifyOwnership(comment, userId);
         comment.softDelete();
-        return new FindPostCommentDeleteResponse(comment, comment.isOwner(user));
+        return new FindPostCommentDeleteResponse(comment, comment.isAuthor(userId));
+    }
+
+
+    private void validateAlreadyDeleted(FindPostComment comment) {
+        if (comment.isDeleted()) {
+            throw new FindMyMemeException(ErrorCode.ALREADY_DELETED_COMMENT);
+        }
+    }
+
+    private void validateFindPostStatus(FindPost findPost) {
+        if (findPost.isDeleted()) {
+            throw new FindMyMemeException(ErrorCode.CANNOT_WRITE_COMMENT_ON_DELETED_POST);
+        }
+    }
+
+    private void validateFindPost(FindPostComment comment, Long findPostId) {
+        if (comment.isNotOfPost(findPostId)) {
+            throw new FindMyMemeException(ErrorCode.COMMENT_NOT_BELONG_TO_POST);
+        }
     }
 
 
@@ -94,6 +111,7 @@ public class FindPostCommentWriteService {
         FindPostComment parentComment = null;
         if (request.getParentCommentId() != null) {
             parentComment = getParentCommentById(request.getParentCommentId());
+            validateCommentStatus(parentComment);
         }
         return FindPostComment.builder()
                 .htmlContent(request.getHtmlContent())
@@ -102,6 +120,13 @@ public class FindPostCommentWriteService {
                 .findPost(findPost)
                 .user(user)
                 .build();
+    }
+
+
+    private void validateCommentStatus(FindPostComment findPostComment) {
+        if (findPostComment.isDeleted()) {
+            throw new FindMyMemeException(ErrorCode.CANNOT_WRITE_COMMENT_ON_DELETED_COMMENT);
+        }
     }
 
     private FindPostComment getParentCommentById(Long parentCommentId) {
@@ -137,15 +162,9 @@ public class FindPostCommentWriteService {
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST));
     }
 
-    private void verifyOwnership(FindPostComment comment, User user) {
-        if (!comment.isOwner(user)) {
+    private void verifyOwnership(FindPostComment comment, Long userId) {
+        if (!comment.isAuthor(userId)) {
             throw new FindMyMemeException(ErrorCode.FORBIDDEN);
-        }
-    }
-
-    private void validateCommentBelongsToPost(Long postId, FindPostComment comment) {
-        if (!comment.isBelongsToPost(postId)) {
-            throw new FindMyMemeException(ErrorCode.INVALID_COMMENT_POST_RELATION);
         }
     }
 

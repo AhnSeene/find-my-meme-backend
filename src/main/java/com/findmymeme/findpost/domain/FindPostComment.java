@@ -52,8 +52,12 @@ public class FindPostComment extends BaseEntity {
         this.findPost = findPost;
     }
 
-    public boolean isOwner(User user) {
-        return this.user.getId().equals(user.getId());
+    public boolean isAuthor(Long userId) {
+        return this.user.getId().equals(userId);
+    }
+
+    public boolean isNotOfPost(Long findPostId) {
+        return !this.findPost.getId().equals(findPostId);
     }
 
     public void changeHtmlContent(String htmlContent) {
