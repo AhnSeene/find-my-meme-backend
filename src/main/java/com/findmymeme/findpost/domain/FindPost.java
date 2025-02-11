@@ -1,7 +1,7 @@
 package com.findmymeme.findpost.domain;
 
 import com.findmymeme.BaseEntity;
-import com.findmymeme.tag.domain.FindPostTag;
+import com.findmymeme.tag.domain.Tag;
 import com.findmymeme.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -69,12 +69,11 @@ public class FindPost extends BaseEntity {
     }
 
     public void addFindPostTag(FindPostTag findPostTag) {
-        this.findPostTags.add(findPostTag);
+        findPostTags.add(findPostTag);
     }
 
     public void removeFindPostTag(FindPostTag findPostTag) {
-        this.findPostTags.remove(findPostTag);
-        findPostTag.changeFindPost(null);
+        findPostTags.remove(findPostTag);
     }
 
     public List<String> getTagNames() {
