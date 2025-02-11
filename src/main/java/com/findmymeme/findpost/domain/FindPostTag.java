@@ -1,7 +1,7 @@
-package com.findmymeme.tag.domain;
+package com.findmymeme.findpost.domain;
 
 import com.findmymeme.BaseEntity;
-import com.findmymeme.findpost.domain.FindPost;
+import com.findmymeme.tag.domain.Tag;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
