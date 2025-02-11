@@ -14,10 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -29,25 +26,37 @@ public class FindPostCommentReadService {
     private final FindPostRepository findPostRepository;
     private final FindPostCommentRepository commentRepository;
 
-    public FindPostCommentGetResponse getComment(Long findPostId, Long commentId, Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
 
+    public FindPostCommentGetResponse getComment(Long findPostId, Long commentId, Optional<Long> userId) {
         FindPostComment comment = commentRepository.findWithUserById(commentId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST_COMMENT));
 
-        return new FindPostCommentGetResponse(comment, comment.isOwner(user));
+        validateFindPost(comment, findPostId);
+
+        boolean isAuthor = checkIfUserIsAuthor(userId, comment);
+
+        return new FindPostCommentGetResponse(comment, isAuthor);
     }
 
-    public List<FindPostCommentSummaryResponse> getCommentsWithReplys(Long postId) {
-        FindPost findPost = findPostRepository.findWithUserById(postId)
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST));
+    private void validateFindPost(FindPostComment comment, Long findPostId) {
+        if (!comment.belongsToFindPost(findPostId)) {
+            throw new FindMyMemeException(ErrorCode.COMMENT_NOT_BELONG_TO_POST);
+        }
+    }
 
+    private boolean checkIfUserIsAuthor(Optional<Long> userId, FindPostComment findPostComment) {
+        if (userId.isEmpty()) {
+            return false;
+        }
+        return findPostComment.isAuthor(userId.get());
+    }
+
+    public List<FindPostCommentSummaryResponse> getCommentsWithReplys(Long findPostId) {
         Map<Long, FindPostCommentSummaryResponse> commentMaps = new HashMap<>();
         List<FindPostCommentSummaryResponse> response = new ArrayList<>();
 
         //TODO 게시글 상태확인하기
-        List<FindPostComment> comments = commentRepository.findAllCommentsAndReplies(postId);
+        List<FindPostComment> comments = commentRepository.findAllCommentsAndReplies(findPostId);
         for (FindPostComment comment : comments) {
             FindPostCommentSummaryResponse commentSummaryResponse = new FindPostCommentSummaryResponse(comment);
             if (comment.getParentComment() == null) {
