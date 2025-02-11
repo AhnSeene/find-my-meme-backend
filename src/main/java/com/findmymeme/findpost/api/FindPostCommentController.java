@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,7 +27,7 @@ public class FindPostCommentController {
     public ResponseEntity<ApiResponse<FindPostCommentAddResponse>> addComment(
             @PathVariable("postId") Long postId,
             @Valid @RequestBody FindPostCommentAddRequest request,
-            @CurrentUserId(required = false) Long userId
+            @CurrentUserId Long userId
     ) {
         return ResponseUtil.success(
                 commentWriteService.addComment(request, postId, userId),
@@ -38,7 +39,7 @@ public class FindPostCommentController {
     public ResponseEntity<ApiResponse<FindPostCommentGetResponse>> getComment(
             @PathVariable("postId") Long postId,
             @PathVariable("commentId") Long commentId,
-            @CurrentUserId(required = false) Long userId
+            @CurrentUserId(required = false) Optional<Long> userId
     ) {
         return ResponseUtil.success(
                 commentReadService.getComment(postId, commentId, userId),
@@ -48,7 +49,8 @@ public class FindPostCommentController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<FindPostCommentSummaryResponse>>> getComments(
-            @PathVariable("postId") Long postId
+            @PathVariable("postId") Long postId,
+            @CurrentUserId(required = false) Optional<Long> userId
     ) {
         return ResponseUtil.success(
                 commentReadService.getCommentsWithReplys(postId),
@@ -61,7 +63,7 @@ public class FindPostCommentController {
             @PathVariable("postId") Long postId,
             @PathVariable("commentId") Long commentId,
             @Valid @RequestBody FindPostCommentUpdateRequest request,
-            @CurrentUserId(required = false) Long userId
+            @CurrentUserId Long userId
     ) {
         return ResponseUtil.success(
                 commentWriteService.updateComment(request, postId, commentId, userId),
@@ -73,7 +75,7 @@ public class FindPostCommentController {
     public ResponseEntity<ApiResponse<FindPostCommentDeleteResponse>> softDelete(
             @PathVariable("postId") Long postId,
             @PathVariable("commentId") Long commentId,
-            @CurrentUserId(required = false) Long userId
+            @CurrentUserId Long userId
     ) {
         return ResponseUtil.success(
                 commentWriteService.softDelete(postId, commentId, userId),
