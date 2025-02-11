@@ -8,7 +8,6 @@ import com.findmymeme.findpost.dto.FindPostGetResponse;
 import com.findmymeme.findpost.dto.FindPostSummaryResponse;
 import com.findmymeme.findpost.dto.MyFindPostSummaryResponse;
 import com.findmymeme.findpost.repository.FindPostRepository;
-import com.findmymeme.tag.domain.Tag;
 import com.findmymeme.tag.service.FindPostTagService;
 import com.findmymeme.user.domain.User;
 import com.findmymeme.user.repository.UserRepository;
@@ -20,9 +19,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.Optional;
 
-//import static com.findmymeme.tag.domain.PostType.*;
 
 @Service
 @Transactional(readOnly = true)
@@ -34,17 +32,24 @@ public class FindPostReadService {
     private final FindPostTagService findPostTagService;
 
     @Transactional
-    public FindPostGetResponse getFindPost(Long findPostId, Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
-
-        FindPost findPost = findPostRepository.findWithUserById(findPostId)
+    public FindPostGetResponse getFindPost(Long findPostId, Optional<Long> userId) {
+        FindPost findPost = findPostRepository.findDetailsById(findPostId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST));
 
-        List<Tag> tags = findPostTagService.getTags(findPost.getId());
-
         findPost.incrementViewCount();
-        return new FindPostGetResponse(findPost, findPost.isOwner(user), tags);
+
+        boolean isOwner = checkIfUserIsAuthor(userId, findPost);
+        return new FindPostGetResponse(findPost, isOwner, findPost.getTags());
+    }
+
+    private boolean checkIfUserIsAuthor(Optional<Long> userId, FindPost findPost) {
+        if (userId.isEmpty()) {
+            return false;
+        }
+        User user = userRepository.findById(userId.get())
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
+
+        return findPost.isAuthor(user);
     }
 
     public Page<FindPostSummaryResponse> getFindPosts(int page, int size) {

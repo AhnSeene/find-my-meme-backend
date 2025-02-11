@@ -1,6 +1,6 @@
 package com.findmymeme.tag.repository;
 
-import com.findmymeme.tag.domain.FindPostTag;
+import com.findmymeme.findpost.domain.FindPostTag;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 

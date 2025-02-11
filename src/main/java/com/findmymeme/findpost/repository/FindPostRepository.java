@@ -17,6 +17,12 @@ public interface FindPostRepository extends JpaRepository<FindPost, Long> {
     @Query("SELECT fp FROM FindPost fp WHERE fp.id = :id AND fp.deletedAt IS NULL")
     Optional<FindPost> findWithUserById(@Param("id") Long id);
 
+    @Query("SELECT fp FROM FindPost fp " +
+            "JOIN FETCH fp.user " +
+            "JOIN FETCH fp.findPostTags fpt " +
+            "JOIN FETCH fpt.tag " +
+            "WHERE fp.id = :id AND fp.deletedAt IS NULL")
+    Optional<FindPost> findDetailsById(@Param("id") Long id);
     @Override
     @EntityGraph(attributePaths = {"user"})
     @Query("SELECT fp FROM FindPost fp WHERE fp.deletedAt IS NULL")

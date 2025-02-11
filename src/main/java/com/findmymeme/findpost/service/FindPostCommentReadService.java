@@ -7,17 +7,12 @@ import com.findmymeme.findpost.domain.FindPostComment;
 import com.findmymeme.findpost.dto.*;
 import com.findmymeme.findpost.repository.FindPostCommentRepository;
 import com.findmymeme.findpost.repository.FindPostRepository;
-import com.findmymeme.user.domain.User;
-import com.findmymeme.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -25,29 +20,41 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class FindPostCommentReadService {
 
-    private final UserRepository userRepository;
-    private final FindPostRepository findPostRepository;
     private final FindPostCommentRepository commentRepository;
+    private final FindPostRepository findPostRepository;
 
-    public FindPostCommentGetResponse getComment(Long findPostId, Long commentId, Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
-
+    public FindPostCommentGetResponse getComment(Long findPostId, Long commentId, Optional<Long> userId) {
+        FindPost findPost = getFindPostById(findPostId);
+        validateFindPostStatus(findPost);
         FindPostComment comment = commentRepository.findWithUserById(commentId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST_COMMENT));
 
-        return new FindPostCommentGetResponse(comment, comment.isOwner(user));
+        validateFindPost(comment, findPostId);
+        boolean isAuthor = checkIfUserIsAuthor(comment, userId);
+        return new FindPostCommentGetResponse(comment, isAuthor);
     }
 
-    public List<FindPostCommentSummaryResponse> getCommentsWithReplys(Long postId) {
-        FindPost findPost = findPostRepository.findWithUserById(postId)
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST));
+    private void validateFindPost(FindPostComment comment, Long findPostId) {
+        if (comment.isNotOfPost(findPostId)) {
+            throw new FindMyMemeException(ErrorCode.COMMENT_NOT_BELONG_TO_POST);
+        }
+    }
+
+    private boolean checkIfUserIsAuthor(FindPostComment findPostComment, Optional<Long> userId) {
+        if (userId.isEmpty()) {
+            return false;
+        }
+        return findPostComment.isAuthor(userId.get());
+    }
+
+    public List<FindPostCommentSummaryResponse> getCommentsWithReplys(Long findPostId) {
+        FindPost findPost = getFindPostById(findPostId);
+        validateFindPostStatus(findPost);
 
         Map<Long, FindPostCommentSummaryResponse> commentMaps = new HashMap<>();
         List<FindPostCommentSummaryResponse> response = new ArrayList<>();
 
-        //TODO 게시글 상태확인하기
-        List<FindPostComment> comments = commentRepository.findAllCommentsAndReplies(postId);
+        List<FindPostComment> comments = commentRepository.findAllCommentsAndReplies(findPostId);
         for (FindPostComment comment : comments) {
             FindPostCommentSummaryResponse commentSummaryResponse = new FindPostCommentSummaryResponse(comment);
             if (comment.getParentComment() == null) {
@@ -61,5 +68,14 @@ public class FindPostCommentReadService {
         return response;
     }
 
+    private void validateFindPostStatus(FindPost findPost) {
+        if (findPost.isDeleted()) {
+            throw new FindMyMemeException(ErrorCode.CANNOT_WRITE_COMMENT_ON_DELETED_POST);
+        }
+    }
 
+    private FindPost getFindPostById(Long findPostId) {
+        return findPostRepository.findById(findPostId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST));
+    }
 }

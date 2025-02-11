@@ -3,8 +3,7 @@ package com.findmymeme.tag.service;
 import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.exception.FindMyMemeException;
 import com.findmymeme.findpost.domain.FindPost;
-import com.findmymeme.tag.domain.FindPostTag;
-import com.findmymeme.tag.domain.MemePostTag;
+import com.findmymeme.findpost.domain.FindPostTag;
 import com.findmymeme.tag.domain.Tag;
 import com.findmymeme.tag.repository.FindPostTagRepository;
 import com.findmymeme.tag.repository.TagRepository;
@@ -53,12 +52,10 @@ public class FindPostTagService {
         return tagIds.stream()
                 .map(this::getTagById)
                 .map(tag -> {
-                    FindPostTag findPostTag = FindPostTag.builder()
+                    return FindPostTag.builder()
                             .findPost(findPost)
                             .tag(tag)
                             .build();
-                    findPostTag.changeFindPost(findPost);
-                    return findPostTag;
                 })
                 .toList();
     }
@@ -78,7 +75,7 @@ public class FindPostTagService {
         List<FindPostTag> tagsToDelete = existingPostTags.stream()
                 .filter(postTag -> !updatedTagIds.contains(postTag.getTag().getId()))
                 .toList();
-        tagsToDelete.forEach(findPostTag -> findPostTag.removeFindPost(findPost));
+        tagsToDelete.forEach(FindPostTag::clearFindPost);
         findPostTagRepository.deleteAll(tagsToDelete);
     }
 
