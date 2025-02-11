@@ -76,12 +76,17 @@ public class FindPost extends BaseEntity {
         findPostTags.remove(findPostTag);
     }
 
+    public List<Tag> getTags() {
+        return this.findPostTags.stream()
+                .map(FindPostTag::getTag)
+                .toList();
+    }
     public List<String> getTagNames() {
         return this.findPostTags.stream()
                 .map(fpt -> fpt.getTag().getName())
                 .toList();
     }
-    public boolean isOwner(User user) {
+    public boolean isAuthor(User user) {
         return this.user.getId().equals(user.getId());
     }
 
@@ -109,6 +114,10 @@ public class FindPost extends BaseEntity {
 
     public boolean isFound() {
         return this.findStatus.equals(FindStatus.FOUND);
+    }
+
+    public boolean isDeleted() {
+        return this.deletedAt != null;
     }
 
     public void softDelete() {

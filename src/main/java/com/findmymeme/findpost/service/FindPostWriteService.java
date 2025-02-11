@@ -21,8 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
-//import static com.findmymeme.tag.domain.PostType.*;
-
 @Slf4j
 @Service
 @Transactional
@@ -147,7 +145,7 @@ public class FindPostWriteService {
     }
 
     private void verifyOwnership(FindPost findPost, User user) {
-        if (!findPost.isOwner(user)) {
+        if (!findPost.isAuthor(user)) {
             throw new FindMyMemeException(ErrorCode.FORBIDDEN);
         }
     }

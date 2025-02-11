@@ -56,8 +56,8 @@ public class FindPostComment extends BaseEntity {
         return this.user.getId().equals(userId);
     }
 
-    public boolean belongsToFindPost(Long findPostId) {
-        return this.findPost.getId().equals(findPostId);
+    public boolean isNotOfPost(Long findPostId) {
+        return !this.findPost.getId().equals(findPostId);
     }
 
     public void changeHtmlContent(String htmlContent) {
