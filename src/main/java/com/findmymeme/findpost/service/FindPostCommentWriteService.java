@@ -111,7 +111,6 @@ public class FindPostCommentWriteService {
         FindPostComment parentComment = null;
         if (request.getParentCommentId() != null) {
             parentComment = getParentCommentById(request.getParentCommentId());
-            validateCommentStatus(parentComment);
         }
         return FindPostComment.builder()
                 .htmlContent(request.getHtmlContent())
@@ -120,13 +119,6 @@ public class FindPostCommentWriteService {
                 .findPost(findPost)
                 .user(user)
                 .build();
-    }
-
-
-    private void validateCommentStatus(FindPostComment findPostComment) {
-        if (findPostComment.isDeleted()) {
-            throw new FindMyMemeException(ErrorCode.CANNOT_WRITE_COMMENT_ON_DELETED_COMMENT);
-        }
     }
 
     private FindPostComment getParentCommentById(Long parentCommentId) {
