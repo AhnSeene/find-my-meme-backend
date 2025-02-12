@@ -25,6 +25,13 @@ spring:
   messages:
     basename: messages
     encoding: UTF-8
+  cloud:
+    aws:
+      credentials:
+        access-key: ${AWS_ACCESS_KEY}
+        secret-key: ${AWS_SECRET_KEY}
+      region:
+        static: ${AWS_REGION}
 
 management:
   endpoints:
@@ -52,18 +59,9 @@ file:
 default:
   profile-image-url: ${DEFAULT_PROFILE_URL}
 
-cloud:
-  aws:
-    credentials:
-      access-key: ${AWS_ACCESS_KEY}
-      secret-key: ${AWS_SECRET_KEY}
-    region:
-      static: ${AWS_REGION}
-      auto: false
-    stack:
-      auto: false
-    s3:
-      bucket: ${AWS_BUCKET}
+aws:
+  s3:
+    bucket: ${AWS_BUCKET}
 
 allowed:
   origins: "https://findmymeme.site,https://www.findmymeme.site"
