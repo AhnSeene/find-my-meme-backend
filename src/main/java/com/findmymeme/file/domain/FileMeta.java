@@ -1,5 +1,6 @@
 package com.findmymeme.file.domain;
 
+import com.findmymeme.BaseEntity;
 import com.findmymeme.memepost.domain.Resolution;
 import com.findmymeme.user.domain.User;
 import jakarta.persistence.*;
@@ -11,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class FileMeta {
+public class FileMeta extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

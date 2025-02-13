@@ -23,3 +23,11 @@ public class S3PresignedUrlController {
         return s3PresignedUrlService.generatePresignedUrl(filename, userId);
     }
 
+    @PostMapping("/upload-complete")
+    public FileUploadResponse completeUpload(
+            @RequestBody @Valid FileMetaRequest fileMetaRequest,
+            @CurrentUserId Long userId
+    ) {
+        return s3PresignedUrlService.saveFileMeta(fileMetaRequest, userId);
+    }
+

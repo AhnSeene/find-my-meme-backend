@@ -60,6 +60,20 @@ public class S3PresignedUrlService {
         return presignedRequest.url().toString();
     }
 
+    public FileUploadResponse saveFileMeta(FileMetaRequest request, Long userId) {
+        User user = getUserById(userId);
+
+        FileMeta fileMeta = FileMeta.builder()
+                .originalFilename(request.getOriginalFilename())
+                .fileUrl(extractFileKey(request.getPresignedUrl()))
+                .size(request.getSize())
+                .resolution(determineResolution(request))
+                .extension(fileStorageService.extractExtension(request.getOriginalFilename()))
+                .user(user)
+                .build();
+        return new FileUploadResponse(fileMetaRepository.save(fileMeta));
+    }
+
     }
 
     private String generateKey(String dir, Long userId, String filename) {
