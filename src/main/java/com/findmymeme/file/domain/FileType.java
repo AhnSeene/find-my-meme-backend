@@ -8,7 +8,8 @@ public enum FileType {
 
     FINDPOST("findposts"),
 
-    COMMENT("comments/findposts");
+    COMMENT("comments/findposts"),
+    PROFILE("profile");
 
     private final String prefix;
 
