@@ -61,7 +61,7 @@ public class S3PresignedUrlService {
         PutObjectRequest objectRequest = PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(key)
-                .acl(ObjectCannedACL.PUBLIC_READ)
+                // .acl(ObjectCannedACL.PUBLIC_READ)
                 .build();
         PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(req -> req
                 .signatureDuration(Duration.ofMinutes(presignedDuration))
