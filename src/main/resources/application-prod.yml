@@ -25,6 +25,13 @@ spring:
   messages:
     basename: messages
     encoding: UTF-8
+  cloud:
+    aws:
+      credentials:
+        access-key: ${AWS_ACCESS_KEY}
+        secret-key: ${AWS_SECRET_KEY}
+      region:
+        static: ${AWS_REGION}
 
 management:
   endpoints:
@@ -37,7 +44,7 @@ logging:
     org.hibernate: ERROR
 
 jwt:
-  access-expire-time: 1800 #30분 1800
+  access-expire-time: 18000 #30분 1800
   refresh-expire-time: 1209600 #14일 1209600
   secret-key: ${JWT_SECRET_KEY}
   issuer: find-my-meme
@@ -52,18 +59,10 @@ file:
 default:
   profile-image-url: ${DEFAULT_PROFILE_URL}
 
-cloud:
-  aws:
-    credentials:
-      access-key: ${AWS_ACCESS_KEY}
-      secret-key: ${AWS_SECRET_KEY}
-    region:
-      static: ${AWS_REGION}
-      auto: false
-    stack:
-      auto: false
-    s3:
-      bucket: ${AWS_BUCKET}
+aws:
+  s3:
+    bucket: ${AWS_BUCKET}
+    presigned-duration: 5
 
 allowed:
   origins: "https://findmymeme.site,https://www.findmymeme.site"
