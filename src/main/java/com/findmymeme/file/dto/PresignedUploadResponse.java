@@ -6,9 +6,9 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 public class PresignedUploadResponse {
-    private String presinedUrl;
+    private String presignedUrl;
 
-    public PresignedUploadResponse(String presinedUrl) {
-        this.presinedUrl = presinedUrl;
+    public PresignedUploadResponse(String presignedUrl) {
+        this.presignedUrl = presignedUrl;
     }
 }
