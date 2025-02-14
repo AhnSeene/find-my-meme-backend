@@ -19,6 +19,13 @@ spring:
   messages:
     basename: messages
     encoding: UTF-8
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2    # 또는 필요한 리전
+      credentials:
+        access-key: test
+        secret-key: test
 
 logging:
   level:
