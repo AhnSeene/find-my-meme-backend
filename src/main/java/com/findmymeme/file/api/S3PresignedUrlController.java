@@ -10,9 +10,10 @@ import com.findmymeme.response.ResponseUtil;
 import com.findmymeme.response.SuccessCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+@Profile("prod")
 @RestController
 @RequestMapping("/api/v1/files")
 @RequiredArgsConstructor
