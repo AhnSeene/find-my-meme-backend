@@ -30,7 +30,7 @@ public class FileService {
         User user = findUserById(userId);
         String tempUrl = null;
         try {
-            tempUrl = fileStorageService.storeTempFile(file);
+            tempUrl = fileStorageService.storeTempFile(file, userId);
             FileMeta fileMeta = saveFileMeta(file, tempUrl, user);
             return new FileUploadResponse(fileMeta);
         } catch (Exception e) {

@@ -5,6 +5,7 @@ import com.findmymeme.exception.FindMyMemeException;
 import com.findmymeme.file.domain.FileMeta;
 import com.findmymeme.file.dto.FileMetaRequest;
 import com.findmymeme.file.dto.FileUploadResponse;
+import com.findmymeme.file.dto.PresignedUploadResponse;
 import com.findmymeme.file.repository.FileMetaRepository;
 import com.findmymeme.memepost.domain.Resolution;
 import com.findmymeme.user.domain.User;
@@ -51,13 +52,15 @@ public class S3PresignedUrlService {
         this.presignedDuration = presignedDuration;
     }
 
-    public String generatePresignedUrl(String originalFilename, Long userId) {
+    public PresignedUploadResponse generatePresignedUrl(String originalFilename, Long userId) {
         String key = generateKey(tempDir, userId, fileStorageService.generateStoredFilename(originalFilename));
         PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(req -> req
                 .signatureDuration(Duration.ofMinutes(presignedDuration))
-                .putObjectRequest(p -> p.bucket(bucket).key(key)));
+                .putObjectRequest(p ->
+                        p.bucket(bucket)
+                                .key(key)));
 
-        return presignedRequest.url().toString();
+        return new PresignedUploadResponse(presignedRequest.url().toString());
     }
 
     public FileUploadResponse saveFileMeta(FileMetaRequest request, Long userId) {
@@ -74,6 +77,12 @@ public class S3PresignedUrlService {
         return new FileUploadResponse(fileMetaRepository.save(fileMeta));
     }
 
+    public String generatePresignedDownloadUrl(String objectKey) {
+        PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(req -> req
+                .signatureDuration(Duration.ofMinutes(presignedDuration))
+                .getObjectRequest(p -> p.bucket(bucket).key(objectKey)));
+
+        return presignedRequest.url().toString();
     }
 
     private String generateKey(String dir, Long userId, String filename) {
@@ -84,6 +93,7 @@ public class S3PresignedUrlService {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
     }
+
     private String extractFileKey(String presignedUrl) {
         try {
             URL url = new URL(presignedUrl);

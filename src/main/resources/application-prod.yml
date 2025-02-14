@@ -44,7 +44,7 @@ logging:
     org.hibernate: ERROR
 
 jwt:
-  access-expire-time: 1800 #30분 1800
+  access-expire-time: 18000 #30분 1800
   refresh-expire-time: 1209600 #14일 1209600
   secret-key: ${JWT_SECRET_KEY}
   issuer: find-my-meme
@@ -62,6 +62,7 @@ default:
 aws:
   s3:
     bucket: ${AWS_BUCKET}
+    presigned-duration: 5
 
 allowed:
   origins: "https://findmymeme.site,https://www.findmymeme.site"
