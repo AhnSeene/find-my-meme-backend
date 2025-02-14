@@ -1,6 +1,7 @@
 package com.findmymeme.file.service;
 
 import com.findmymeme.exception.ErrorCode;
+import com.findmymeme.file.domain.FileType;
 import com.findmymeme.file.exception.FileStorageException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,12 +16,14 @@ import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 @Slf4j
 @Service
 @Profile("prod")
 public class S3FileStorageService implements FileStorageService {
-    private static final String URL_FORMAT = "%s/%s";
+    private static final String URL_FORMAT = "%s/%d/%s";
     private static final String URL_SLASH = "/";
 
     private final S3Client s3Client;
@@ -41,13 +44,15 @@ public class S3FileStorageService implements FileStorageService {
     }
 
     @Override
-    public String storeTempFile(MultipartFile file) {
-        return storeFile(file, tempDir);
+    public String storeTempFile(MultipartFile file, Long userId) {
+        String key = generateTempKey(userId, generateStoredFilename(file.getOriginalFilename()));
+        return storeFile(file, key);
     }
 
     @Override
-    public String storePermanentFile(MultipartFile file) {
-        return storeFile(file, permanentDir);
+    public String storePermanentFile(MultipartFile file, FileType fileType) {
+        String key = generatePermanentKey(fileType, generateStoredFilename(file.getOriginalFilename()));
+        return storeFile(file, key);
     }
 
     @Override
@@ -61,15 +66,15 @@ public class S3FileStorageService implements FileStorageService {
     }
 
     @Override
-    public String moveFileToPermanent(String tempFileUrl) {
-        String orgKey = tempDir + URL_SLASH + getFilename(tempFileUrl);
-        String copyKey = permanentDir + URL_SLASH + getFilename(tempFileUrl);
+    public String moveFileToPermanent(String tempFileUrl, FileType fileType) {
+        String copyKey = generatePermanentKey(fileType, getFilename(tempFileUrl));
 
         CopyObjectRequest copyObjectRequest = CopyObjectRequest.builder()
                 .sourceBucket(bucket)
-                .sourceKey(orgKey)
+                .sourceKey(tempFileUrl)
                 .destinationBucket(bucket)
                 .destinationKey(copyKey)
+                .acl(ObjectCannedACL.PUBLIC_READ)
                 .build();
 
         s3Client.copyObject(copyObjectRequest);
@@ -88,17 +93,16 @@ public class S3FileStorageService implements FileStorageService {
     }
 
     @Override
-    public String convertToPermanentUrl(String permanentUrl) {
-        return generateKey(permanentDir, getFilename(permanentUrl));
+    public String convertToPermanentUrl(String permanentUrl, FileType fileType) {
+        return generatePermanentKey(fileType, getFilename(permanentUrl));
     }
 
     @Override
-    public String convertToTempUrl(String tempUrl) {
-        return generateKey(tempDir, getFilename(tempUrl));
+    public String convertToTempUrl(String tempUrl, Long userId) {
+        return generateTempKey(userId, getFilename(tempUrl));
     }
 
-    private String storeFile(MultipartFile file, String dir) {
-        String key = generateKey(dir, generateStoredFilename(file.getOriginalFilename()));
+    private String storeFile(MultipartFile file, String key) {
         try {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucket)
@@ -122,8 +126,20 @@ public class S3FileStorageService implements FileStorageService {
         s3Client.deleteObject(deleteObjectRequest);
     }
 
-    private String generateKey(String dir, String filename) {
-        return String.format(URL_FORMAT, dir, filename);
+    private String generateTempKey(Long userId, String filename) {
+        return String.format(URL_FORMAT, tempDir, userId, filename);
     }
+    private String generatePermanentKey(FileType fileType, String filename) {
+        return String.format("%s/%s/%s/%s",
+                permanentDir,
+                fileType.getPrefix(),
+                getYearMonthPath(),
+                filename);
+    }
+
+    private String getYearMonthPath() {
+        return LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM"));
+    }
+
 
 }
