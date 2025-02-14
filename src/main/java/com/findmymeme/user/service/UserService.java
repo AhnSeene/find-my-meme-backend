@@ -5,6 +5,7 @@ import com.findmymeme.config.jwt.JwtTokenProvider;
 import com.findmymeme.config.jwt.TokenStatus;
 import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.exception.FindMyMemeException;
+import com.findmymeme.file.domain.FileType;
 import com.findmymeme.file.service.FileStorageService;
 import com.findmymeme.token.domain.RefreshToken;
 import com.findmymeme.token.repository.RefreshTokenRepository;
@@ -148,7 +149,7 @@ public class UserService {
     @Transactional
     public UserProfileImageResponse updateProfileImage(MultipartFile file, Long userId) {
         User user = getUserById(userId);
-        String profileImageUrl = fileStorageService.storePermanentFile(file);
+        String profileImageUrl = fileStorageService.storePermanentFile(file, FileType.PROFILE);
         user.updateProfileImageUrl(profileImageUrl);
         return new UserProfileImageResponse(profileImageUrl);
     }

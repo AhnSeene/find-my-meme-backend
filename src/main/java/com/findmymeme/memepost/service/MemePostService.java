@@ -4,6 +4,7 @@ import com.findmymeme.common.dto.UserProfileResponse;
 import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.exception.FindMyMemeException;
 import com.findmymeme.file.domain.FileMeta;
+import com.findmymeme.file.domain.FileType;
 import com.findmymeme.file.repository.FileMetaRepository;
 import com.findmymeme.file.service.FileStorageService;
 import com.findmymeme.memepost.domain.MemePost;
@@ -18,6 +19,7 @@ import com.findmymeme.memepost.repository.MemePostTagRepository;
 import com.findmymeme.user.domain.User;
 import com.findmymeme.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +28,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -46,12 +48,17 @@ public class MemePostService {
         User user = getUserById(userId);
 
         FileMeta fileMeta = findFileMetaByFileUrl(request.getImageUrl());
-        String permanentImageUrl = fileStorageService.moveFileToPermanent(request.getImageUrl());
-
-        MemePost memePost = createMemePost(permanentImageUrl, user, fileMeta);
-        memePostRepository.save(memePost);
-        List<String> tagNames = memePostTagService.applyTagsToPost(request.getTags(), memePost);
-        return new MemePostUploadResponse(memePost.getImageUrl(), tagNames);
+        String permanentImageUrl = fileStorageService.moveFileToPermanent(request.getImageUrl(), FileType.MEME);
+        try {
+            MemePost memePost = createMemePost(permanentImageUrl, user, fileMeta);
+            memePostRepository.save(memePost);
+            List<String> tagNames = memePostTagService.applyTagsToPost(request.getTags(), memePost);
+            return new MemePostUploadResponse(memePost.getImageUrl(), tagNames);
+        }
+        catch (Exception e) {
+            log.warn("MemePost 저장 실패: userId={}, permanentImageUrl={}", userId, permanentImageUrl, e);
+            throw e;
+        }
     }
 
 

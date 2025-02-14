@@ -1,19 +1,20 @@
 package com.findmymeme.file.service;
 
+import com.findmymeme.file.domain.FileType;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
 public interface FileStorageService {
-    String storeTempFile(MultipartFile file);
-    String storePermanentFile(MultipartFile file);
+    String storeTempFile(MultipartFile file, Long userId);
+    String storePermanentFile(MultipartFile file, FileType fileType);
     void deleteTempFile(String tempUrl);
     void deletePermanentFile(String permanentUrl);
-    String moveFileToPermanent(String tempFileUrl);
+    String moveFileToPermanent(String tempFileUrl, FileType fileType);
     Resource downloadFile(String fileUrl);
-    String convertToPermanentUrl(String permanentUrl);
-    String convertToTempUrl(String tempUrl);
+    String convertToPermanentUrl(String permanentUrl, FileType fileType);
+    String convertToTempUrl(String tempUrl, Long userId);
     default String generateStoredFilename(String originalFilename) {
         String ext = extractExtension(originalFilename);
         String uuid = UUID.randomUUID().toString();

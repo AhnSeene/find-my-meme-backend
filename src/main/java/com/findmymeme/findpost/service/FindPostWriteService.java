@@ -2,6 +2,7 @@ package com.findmymeme.findpost.service;
 
 import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.exception.FindMyMemeException;
+import com.findmymeme.file.domain.FileType;
 import com.findmymeme.file.service.ImageService;
 import com.findmymeme.findpost.domain.FindPost;
 import com.findmymeme.findpost.domain.FindPostComment;
@@ -53,7 +54,7 @@ public class FindPostWriteService {
         User user = getUserById(userId);
         FindPost findPost = createFindPost(request, user);
         Document doc = Jsoup.parse(request.getHtmlContent());
-        List<ImageService.ImageMeta> ImageMetas = imageService.convertAndMoveImageUrls(doc);
+        List<ImageService.ImageMeta> ImageMetas = imageService.convertAndMoveImageUrls(doc, FileType.FINDPOST);
         List<FindPostImage> findPostImages = createFindPostImages(ImageMetas, findPost);
 
         findPost.changeHtmlContent(doc.body().html());
@@ -71,7 +72,7 @@ public class FindPostWriteService {
         Document doc = Jsoup.parse(request.getHtmlContent());
         Set<String> existingImageUrls = findPostImageRepository.findImageUrlsByFindPost(findPost);
         Set<String> newImageUrls = imageService.extractImageUrls(doc);
-        List<ImageService.ImageMeta> addedImageMetas = imageService.handleAddedImages(doc, newImageUrls, existingImageUrls);
+        List<ImageService.ImageMeta> addedImageMetas = imageService.handleAddedImages(doc, newImageUrls, FileType.FINDPOST);
         Set<String> deletedImageUrls = imageService.handleDeletedImages(newImageUrls, existingImageUrls);
         updateFindPostImages(findPost, addedImageMetas, deletedImageUrls);
 

@@ -25,6 +25,7 @@ repositories {
 }
 
 ext {
+	springCloudAwsVersion = "3.0.4"
 	set('snippetsDir', file("build/generated-snippets"))
 }
 
@@ -50,7 +51,9 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
 	//AWS
-	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+	implementation platform("io.awspring.cloud:spring-cloud-aws-dependencies:${springCloudAwsVersion}")
+	implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3'
+
 	//XML binding
 	implementation 'javax.xml.bind:jaxb-api:2.3.1'
 

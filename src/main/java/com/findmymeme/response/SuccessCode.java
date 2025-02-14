@@ -15,6 +15,8 @@ public enum SuccessCode {
     USER_DUPLICATE_VALIDATION(HttpStatus.OK),
 
     FILE_UPLOAD(HttpStatus.OK),
+    PRESIGNEDURL_UPLOAD(HttpStatus.CREATED),
+    COMPLETE_FILE_UPLOAD(HttpStatus.CREATED),
 
     FIND_POST_UPLOAD(HttpStatus.CREATED),
     FIND_POST_GET(HttpStatus.OK),

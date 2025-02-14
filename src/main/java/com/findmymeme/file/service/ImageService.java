@@ -3,6 +3,7 @@ package com.findmymeme.file.service;
 import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.exception.FindMyMemeException;
 import com.findmymeme.file.domain.FileMeta;
+import com.findmymeme.file.domain.FileType;
 import com.findmymeme.file.repository.FileMetaRepository;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -27,20 +28,26 @@ public class ImageService {
     private final FileMetaRepository fileMetaRepository;
     private final FileStorageService fileStorageService;
     private final String fileBaseUrl;
+    private final String tempDir;
+    private final String permanentDir;
 
     public ImageService(FileStorageService fileStorageService,
                         FileMetaRepository fileMetaRepository,
+                        @Value("${file.upload.temp-dir}") String tempDir,
+                        @Value("${file.upload.image-dir}") String permanentDir,
                         @Value("${file.base-url}") String fileBaseUrl) {
         this.fileStorageService = fileStorageService;
+        this.tempDir = tempDir;
+        this.permanentDir = permanentDir;
         this.fileMetaRepository = fileMetaRepository;
         this.fileBaseUrl = fileBaseUrl;
     }
 
-    public List<ImageMeta> convertAndMoveImageUrls(Document doc) {
+    public List<ImageMeta> convertAndMoveImageUrls(Document doc, FileType fileType) {
         List<ImageMeta> imageMetas = new ArrayList<>();
         doc.select(IMG_TAG).forEach(img -> {
             String tempUrl = convertToRelativeUrl(img.attr(IMG_SRC));
-            String permanentUrl = fileStorageService.moveFileToPermanent(tempUrl);
+            String permanentUrl = fileStorageService.moveFileToPermanent(tempUrl, fileType);
             img.attr(IMG_SRC, convertToAbsoluteUrl(permanentUrl));
             imageMetas.add(new ImageMeta(findFileMetaByFileUrl(tempUrl), permanentUrl));
         });
@@ -51,16 +58,15 @@ public class ImageService {
         return doc.select(IMG_TAG)
                 .stream()
                 .map(img -> img.attr(IMG_SRC))
-                .filter(src -> !src.isEmpty())
+                .filter(src -> src.startsWith(fileBaseUrl))
                 .map(this::convertToRelativeUrl)
-                .map(fileStorageService::convertToPermanentUrl)
                 .collect(Collectors.toSet());
     }
 
-    public List<ImageMeta> handleAddedImages(Document doc, Set<String> newImageUrls, Set<String> existingImageUrls) {
-        Set<String> addedImageUrls = getAddedImageUrls(newImageUrls, existingImageUrls);
-        replaceImageUrls(doc, addedImageUrls);
-        return getImageMetasFromUrls(addedImageUrls);
+    public List<ImageMeta> handleAddedImages(Document doc, Set<String> newImageUrls, FileType fileType) {
+        Set<String> addedImageUrls = getAddedImageUrls(newImageUrls);
+        replaceImageUrls(doc, addedImageUrls, fileType);
+        return getImageMetasFromUrls(addedImageUrls, fileType);
     }
 
     public Set<String> handleDeletedImages(Set<String> newImageUrls, Set<String> existingImageUrls) {
@@ -69,10 +75,10 @@ public class ImageService {
         return deletedImageUrls;
     }
 
-    private List<ImageMeta> getImageMetasFromUrls(Set<String> imageUrls) {
+    private List<ImageMeta> getImageMetasFromUrls(Set<String> imageUrls, FileType fileType) {
         return imageUrls.stream()
                 .map(this::findFileMetaByFileUrl)
-                .map(fileMeta -> new ImageMeta(fileMeta, fileStorageService.convertToPermanentUrl(fileMeta.getFileUrl())))
+                .map(fileMeta -> new ImageMeta(fileMeta, fileStorageService.convertToPermanentUrl(fileMeta.getFileUrl(), fileType)))
                 .collect(Collectors.toList());
     }
 
@@ -81,24 +87,24 @@ public class ImageService {
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FILE_META));
     }
 
-    private Set<String> getAddedImageUrls(Set<String> newImageUrls, Set<String> existingImageUrls) {
+    private Set<String> getAddedImageUrls(Set<String> newImageUrls) {
         return newImageUrls.stream()
-                .filter(url -> !existingImageUrls.contains(url))
-                .map(fileStorageService::convertToTempUrl)
+                .filter(url -> url.startsWith(tempDir))
                 .collect(Collectors.toSet());
     }
 
     private Set<String> getDeletedImageUrls(Set<String> newImageUrls, Set<String> existingImageUrls) {
         return existingImageUrls.stream()
+                .filter(url -> url.startsWith(permanentDir))
                 .filter(url -> !newImageUrls.contains(url))
                 .collect(Collectors.toSet());
     }
 
-    private void replaceImageUrls(Document doc, Set<String> addedImageUrls) {
+    private void replaceImageUrls(Document doc, Set<String> addedImageUrls, FileType fileType) {
         doc.select(IMG_TAG).forEach(img -> {
             String imgUrl = convertToRelativeUrl(img.attr(IMG_SRC));
             if (addedImageUrls.contains(imgUrl)) {
-                String permanentUrl = fileStorageService.moveFileToPermanent(imgUrl);
+                String permanentUrl = fileStorageService.moveFileToPermanent(imgUrl, fileType);
                 img.attr(IMG_SRC, convertToAbsoluteUrl(permanentUrl));
             }
         });

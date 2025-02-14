@@ -1,6 +1,7 @@
 package com.findmymeme.file.service;
 
 import com.findmymeme.exception.ErrorCode;
+import com.findmymeme.file.domain.FileType;
 import com.findmymeme.file.exception.FileStorageException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +13,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.nio.file.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 @Slf4j
@@ -36,82 +40,74 @@ public class LocalFileStorageService implements FileStorageService {
     }
 
     @Override
-    public String storeTempFile(MultipartFile file) {
-        return storeFile(file, this::getTempFilePath, this::getTempFileUrl);
+    public String storeTempFile(MultipartFile file, Long userId) {
+        return storeFile(file, Paths.get(baseDir, tempDir, String.valueOf(userId), generateStoredFilename(file.getOriginalFilename())));
     }
 
     @Override
-    public String storePermanentFile(MultipartFile file) {
-        return storeFile(file, this::getPermanentFilePath, this::getPermanentFileUrl);
+    public String storePermanentFile(MultipartFile file, FileType fileType) {
+        return storeFile(file, Paths.get(baseDir, permanentDir, fileType.getPrefix(), getYearMonthPath(), generateStoredFilename(file.getOriginalFilename())));
     }
 
-    @Override
-    public String moveFileToPermanent(String tempUrl) {
-        String savedFilename = getFilename(tempUrl);
-        Path tempFilePath = getTempFilePath(savedFilename);
-        Path permanentFilePath = getPermanentFilePath(savedFilename);
+    private String storeFile(MultipartFile file, Path filePath) {
         try {
-            log.info(savedFilename);
-            log.info(tempFilePath.toString());
-            log.info(permanentFilePath.toString());
-            Files.copy(tempFilePath, permanentFilePath, StandardCopyOption.REPLACE_EXISTING);
-        } catch (NoSuchFileException e) {
-            throw new FileStorageException(ErrorCode.NOT_FOUND_FILE);
+            Files.createDirectories(filePath.getParent());
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            return filePath.toString();
         } catch (IOException e) {
             throw new FileStorageException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
-        return getPermanentFileUrl(savedFilename);
+    }
+
+    @Override
+    public String moveFileToPermanent(String tempFileUrl, FileType fileType) {
+        Path tempFilePath = Paths.get(tempFileUrl);
+        Path permanentFilePath = Paths.get(baseDir, permanentDir, fileType.getPrefix(), getYearMonthPath(), getFilename(tempFileUrl));
+
+        try {
+            Files.move(tempFilePath, permanentFilePath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new FileStorageException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
+
+        return permanentFilePath.toString();
     }
 
     @Override
     public Resource downloadFile(String fileUrl) {
         File file = new File(baseDir + URL_SLASH + fileUrl);
-        InputStream inputStream = null;
         try {
-            inputStream = new FileInputStream(file);
+            InputStream inputStream = new FileInputStream(file);
+            return new InputStreamResource(inputStream);
         } catch (FileNotFoundException e) {
             throw new FileStorageException(ErrorCode.FILE_DOWNLOAD_ERROR);
         }
-        return new InputStreamResource(inputStream);
     }
 
     @Override
     public void deleteTempFile(String tempUrl) {
-        deleteFile(tempUrl, this::getTempFilePath);
+        Path filePath = Paths.get(baseDir, tempUrl);
+        deleteFile(filePath);
     }
 
     @Override
     public void deletePermanentFile(String permanentUrl) {
-        deleteFile(permanentUrl, this::getPermanentFilePath);
+        Path filePath = Paths.get(baseDir, permanentUrl);
+        deleteFile(filePath);
+    }
+
+
+    @Override
+    public String convertToPermanentUrl(String tempUrl, FileType fileType) {
+        return Paths.get(baseDir, permanentDir, fileType.getPrefix(), getYearMonthPath(), getFilename(tempUrl)).toString();
     }
 
     @Override
-    public String convertToPermanentUrl(String tempUrl) {
-        return getPermanentFileUrl(getFilename(tempUrl));
+    public String convertToTempUrl(String tempUrl, Long userId) {
+        return Paths.get(baseDir, tempDir, String.valueOf(userId), getFilename(tempUrl)).toString();
     }
 
-    @Override
-    public String convertToTempUrl(String permanentUrl) {
-        return getTempFileUrl(getFilename(permanentUrl));
-    }
-
-    private String storeFile(MultipartFile file,
-                             Function<String, Path> pathFunction,
-                             Function<String, String> urlFunction) {
-        String savedFilename = generateStoredFilename(file.getOriginalFilename());
-        Path filePath = pathFunction.apply(savedFilename);
-        try {
-            Files.copy(file.getInputStream(), filePath);
-        } catch (FileAlreadyExistsException e) {
-            throw new FileStorageException(ErrorCode.ALREADY_EXIST_FILE);
-        } catch (IOException e) {
-            throw new FileStorageException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
-        return urlFunction.apply(savedFilename);
-    }
-
-    private void deleteFile(String fileUrl, Function<String, Path> pathFunction) {
-        Path filePath = pathFunction.apply(getFilename(fileUrl));
+    private void deleteFile(Path filePath) {
         try {
             Files.deleteIfExists(filePath);
         } catch (NoSuchFileException e) {
@@ -125,16 +121,19 @@ public class LocalFileStorageService implements FileStorageService {
         return String.format(URL_FORMAT, tempDir, storedFilename);
     }
 
-
     private String getPermanentFileUrl(String storedFilename) {
         return String.format(URL_FORMAT, permanentDir, storedFilename);
     }
 
-    private Path getTempFilePath(String savedFilename) {
-        return Paths.get(baseDir, tempDir, savedFilename);
+    private Path getTempFilePath(String storedFilename, Long userId) {
+        return Paths.get(baseDir, tempDir, String.valueOf(userId), storedFilename);
     }
 
-    private Path getPermanentFilePath(String savedFilename) {
-        return Paths.get(baseDir, permanentDir, savedFilename);
+    private Path getPermanentFilePath(String storedFilename, FileType fileType) {
+        return Paths.get(baseDir, permanentDir, fileType.getPrefix(), storedFilename);
+    }
+
+    private String getYearMonthPath() {
+        return LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM"));
     }
 }
