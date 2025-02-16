@@ -5,6 +5,7 @@ import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.response.ApiResponse;
 import com.findmymeme.response.ResponseUtil;
 import com.findmymeme.response.SuccessCode;
+import com.findmymeme.user.dto.EmailCheckRequest;
 import com.findmymeme.user.dto.UserInfoResponse;
 import com.findmymeme.user.dto.UserProfileImageResponse;
 import com.findmymeme.user.dto.UsernameCheckRequest;
@@ -49,5 +50,13 @@ public class UserController {
             return ResponseUtil.error(null, ErrorCode.ALREADY_EXIST_USERNAME);
         }
         return ResponseUtil.success(null, SuccessCode.USER_DUPLICATE_VALIDATION);
+    }
+
+    @PostMapping("/check-email")
+    public ResponseEntity<ApiResponse<Void>> checkUsername(@Valid @RequestBody EmailCheckRequest request) {
+        if (userService.existsEmail(request)) {
+            return ResponseUtil.error(null, ErrorCode.ALREADY_EXIST_USERNAME);
+        }
+        return ResponseUtil.success(null, SuccessCode.EMAIL_DUPLICATE_VALIDATION);
     }
 }

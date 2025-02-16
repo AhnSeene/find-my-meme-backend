@@ -158,6 +158,11 @@ public class UserService {
         return userRepository.existsByUsername(request.getUsername());
     }
 
+    public boolean existsEmail(EmailCheckRequest request) {
+        return userRepository.existsByEmail(request.getEmail());
+    }
+
+
     private User getUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
