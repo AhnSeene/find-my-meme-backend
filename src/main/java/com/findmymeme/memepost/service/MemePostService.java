@@ -42,6 +42,7 @@ public class MemePostService {
     private final FileStorageService fileStorageService;
     private final FileMetaRepository fileMetaRepository;
     private final MemePostLikeRepository memePostLikeRepository;
+    private final MemePostViewCountService memePostViewCountService;
 
     @Transactional
     public MemePostUploadResponse uploadMemePost(MemePostUploadRequest request, Long userId) {
@@ -61,30 +62,24 @@ public class MemePostService {
         }
     }
 
-
-    public MemePostGetResponse getMemePost(Long memePostId, Optional<Long> userId) {
-        return userId.map(id -> getMemePostForUser(memePostId, id))
-                .orElseGet(() -> getMemePostForGuest(memePostId));
-    }
-
     @Transactional
-    public MemePostGetResponse getMemePostForGuest(Long memePostId) {
+    public MemePostGetResponse getMemePost(Long memePostId, Optional<Long> userId) {
         MemePost memePost = memePostRepository.findByIdWithTags(memePostId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
 
-        memePost.incrementViewCount();
+        memePostViewCountService.incrementViewCount(memePostId);
+
+        return userId.map(id -> createUserGetResponse(memePost, id))
+                .orElseGet(() -> createGuestGetResponse(memePost));
+    }
+
+    private MemePostGetResponse createGuestGetResponse(MemePost memePost) {
         return new MemePostGetResponse(memePost, false, false, memePost.getTagNames());
     }
 
-    @Transactional
-    public MemePostGetResponse getMemePostForUser(Long memePostId, Long userId) {
-        User user = getUserById(userId);
-        MemePost memePost = memePostRepository.findByIdWithTags(memePostId)
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
-        boolean isLiked = memePostLikeRepository.existsByMemePostIdAndUserId(memePostId, userId);
-
-        memePost.incrementViewCount();
-        return new MemePostGetResponse(memePost, memePost.isOwner(user), isLiked, memePost.getTagNames());
+    private MemePostGetResponse createUserGetResponse(MemePost memePost, Long userId) {
+        boolean isLiked = memePostLikeRepository.existsByMemePostIdAndUserId(memePost.getId(), userId);
+        return new MemePostGetResponse(memePost, memePost.isOwner(userId), isLiked, memePost.getTagNames());
     }
 
     public Slice<MemePostSummaryResponse> getMemePostsWithLikeInfo(
@@ -135,7 +130,7 @@ public class MemePostService {
     public void softDelete(Long memePostId, Long userId) {
         User user = getUserById(userId);
         MemePost memePost = getMemePostWithUserById(memePostId);
-        verifyOwnership(memePost, user);
+        verifyOwnership(memePost, userId);
         memePost.softDelete();
     }
 
@@ -276,8 +271,8 @@ public class MemePostService {
         return memePostTagService.getTagNames(memePostId);
     }
 
-    private void verifyOwnership(MemePost memePost, User user) {
-        if (!memePost.isOwner(user)) {
+    private void verifyOwnership(MemePost memePost, Long userId) {
+        if (!memePost.isOwner(userId)) {
             throw new FindMyMemeException(ErrorCode.FORBIDDEN);
         }
     }
