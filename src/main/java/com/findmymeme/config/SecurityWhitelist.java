@@ -7,6 +7,7 @@ public class SecurityWhitelist {
             "/api/v1/reissue",
             "/api/v1/logout",
             "/api/v1/users/check-username",
+            "/api/v1/users/check-email",
             "/actuator/**"
     };
 

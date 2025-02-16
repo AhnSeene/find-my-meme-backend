@@ -13,6 +13,7 @@ public enum SuccessCode {
     USER_INFO(HttpStatus.OK),
     USER_PROFILE_IMAGE_UPDATE(HttpStatus.OK),
     USER_DUPLICATE_VALIDATION(HttpStatus.OK),
+    EMAIL_DUPLICATE_VALIDATION(HttpStatus.OK),
 
     FILE_UPLOAD(HttpStatus.OK),
     PRESIGNEDURL_UPLOAD(HttpStatus.CREATED),

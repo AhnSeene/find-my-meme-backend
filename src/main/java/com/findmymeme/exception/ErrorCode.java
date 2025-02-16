@@ -25,6 +25,7 @@ public enum ErrorCode {
     NOT_FOUND_MEME_POST(HttpStatus.NOT_FOUND, "해당 밈게시글이 존재하지 않습니다."),
     COMMENT_NOT_BELONG_TO_POST(HttpStatus.NOT_FOUND, "해당 게시글에 해당 댓글이 존재하지 않습니다."),
     ALREADY_EXIST_USERNAME(HttpStatus.CONFLICT, "이미 존재하는 아이디입니다."),
+    ALREADY_EXIST_EMAIL(HttpStatus.CONFLICT, "이미 존재하는 이메일입니다."),
     ALREADY_EXIST_FILE(HttpStatus.CONFLICT, "파일이 이미 존재합니다."),
     FIND_POST_ALREADY_FOUND(HttpStatus.CONFLICT, "이미 채택된 댓글이 있습니다."),
     CANNOT_WRITE_COMMENT_ON_DELETED_POST(HttpStatus.BAD_REQUEST, "삭제된 게시글에 댓글을 쓸 수 없습니다."),
