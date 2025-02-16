@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -51,6 +52,10 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long>, MemeP
     @Modifying
     @Query("UPDATE MemePost m SET m.likeCount = m.likeCount - 1 WHERE m.id = :postId")
     void decrementLikeCount(@Param("postId") Long postId);
+
+    @Modifying
+    @Query("UPDATE MemePost m SET m.viewCount = m.viewCount + 1 WHERE m.id = :postId")
+    void incrementViewCount(@Param("postId") Long postId);
 
 
 }
