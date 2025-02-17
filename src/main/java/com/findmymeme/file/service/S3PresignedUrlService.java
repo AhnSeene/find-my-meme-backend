@@ -14,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
@@ -61,7 +60,6 @@ public class S3PresignedUrlService {
         PutObjectRequest objectRequest = PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(key)
-                // .acl(ObjectCannedACL.PUBLIC_READ)
                 .build();
         PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(req -> req
                 .signatureDuration(Duration.ofMinutes(presignedDuration))
