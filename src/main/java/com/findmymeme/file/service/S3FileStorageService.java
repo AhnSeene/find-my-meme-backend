@@ -74,7 +74,6 @@ public class S3FileStorageService implements FileStorageService {
                 .sourceKey(tempFileUrl)
                 .destinationBucket(bucket)
                 .destinationKey(copyKey)
-                .acl(ObjectCannedACL.PUBLIC_READ)
                 .build();
 
         s3Client.copyObject(copyObjectRequest);
@@ -108,7 +107,6 @@ public class S3FileStorageService implements FileStorageService {
                     .bucket(bucket)
                     .key(key)
                     .contentType(file.getContentType())
-                    .acl(ObjectCannedACL.PUBLIC_READ)
                     .build();
 
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
