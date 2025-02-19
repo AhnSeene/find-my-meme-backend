@@ -1,6 +1,7 @@
 package com.findmymeme.memepost.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,7 +15,7 @@ public class MemePostUploadRequest {
 
     @NotBlank
     private String imageUrl;
-    @NotNull
+    @NotEmpty(message = "{tags.notblank}")
     private List<Long> tags;
 
     @Builder
