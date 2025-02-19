@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -101,9 +102,17 @@ public class MemePostService {
         Map<Long, List<String>> tagsGroupedByPostId = findTagNamesGroupedByPostIds(postIds);
         Set<Long> likedPostIds = findLikedPostIds(postIds, userId);
 
-        List<MemePostSummaryResponse> updatedResponses = mapToSummaryResponse(postDetails, likedPostIds, tagsGroupedByPostId);
+        Map<Long, MemePostSummaryProjection> postDetailsMap = postDetails.stream()
+                .collect(Collectors.toMap(MemePostSummaryProjection::getId, Function.identity()));
 
-        return new SliceImpl<>(updatedResponses, pageable, postIdSlice.hasNext());
+        List<MemePostSummaryProjection> sortedPostDetails = postIds.stream()
+                .map(postDetailsMap::get)
+                .filter(Objects::nonNull)
+                .toList();
+
+        List<MemePostSummaryResponse> memePostSummaries = mapToSummaryResponse(sortedPostDetails, likedPostIds, tagsGroupedByPostId);
+
+        return new SliceImpl<>(memePostSummaries, pageable, postIdSlice.hasNext());
     }
 
     public List<MemePostSummaryResponse> getRecommendedPostsWithLikeInfo(Long memePostId, int size, Optional<Long> userId) {
@@ -123,12 +132,19 @@ public class MemePostService {
         Map<Long, List<String>> tagsGroupedByPostId = findTagNamesGroupedByPostIds(recommendedPostIds);
         Set<Long> likedPostIds = findLikedPostIds(recommendedPostIds, userId);
 
-        return mapToSummaryResponse(postDetails, likedPostIds, tagsGroupedByPostId);
+        Map<Long, MemePostSummaryProjection> postDetailsMap = postDetails.stream()
+                .collect(Collectors.toMap(MemePostSummaryProjection::getId, Function.identity()));
+
+        List<MemePostSummaryProjection> sortedPostDetails = recommendedPostIds.stream()
+                .map(postDetailsMap::get)
+                .filter(Objects::nonNull)
+                .toList();
+
+        return mapToSummaryResponse(sortedPostDetails, likedPostIds, tagsGroupedByPostId);
     }
 
     @Transactional
     public void softDelete(Long memePostId, Long userId) {
-        User user = getUserById(userId);
         MemePost memePost = getMemePostWithUserById(memePostId);
         verifyOwnership(memePost, userId);
         memePost.softDelete();
@@ -164,7 +180,15 @@ public class MemePostService {
         Map<Long, List<String>> tagsGroupedByPostId = findTagNamesGroupedByPostIds(postIds);
         Set<Long> likedPostIds = findLikedPostIds(postIds, userId);
 
-        List<MemePostSummaryResponse> memePostSummaries = mapToSummaryResponse(postDetails, likedPostIds, tagsGroupedByPostId);
+        Map<Long, MemePostSummaryProjection> postDetailsMap = postDetails.stream()
+                .collect(Collectors.toMap(MemePostSummaryProjection::getId, Function.identity()));
+
+        List<MemePostSummaryProjection> sortedPostDetails = postIds.stream()
+                .map(postDetailsMap::get)
+                .filter(Objects::nonNull)
+                .toList();
+
+        List<MemePostSummaryResponse> memePostSummaries = mapToSummaryResponse(sortedPostDetails, likedPostIds, tagsGroupedByPostId);
         return MemePostUserSummaryResponse.builder()
                 .user(userProfileResponse)
                 .memePosts(new MySlice<>(new SliceImpl<>(memePostSummaries, pageable, postIdSlice.hasNext())))
