@@ -49,4 +49,5 @@ jobs:
             echo "ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}" >> .env
             
             docker-compose down
+            docker image prune -a -f
             docker-compose up -d
