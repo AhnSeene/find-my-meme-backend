@@ -57,5 +57,8 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long>, MemeP
     @Query("UPDATE MemePost m SET m.viewCount = m.viewCount + 1 WHERE m.id = :postId")
     void incrementViewCount(@Param("postId") Long postId);
 
+    @Modifying
+    @Query("UPDATE MemePost m SET m.viewCount = m.viewCount + :increment WHERE m.id = :postId")
+    void batchIncrementViewCount(@Param("postId") Long postId, @Param("increment") Long increment);
 
 }

@@ -49,6 +49,16 @@ public class MemePostController {
                 SuccessCode.MEME_POST_GET
         );
     }
+    @GetMapping("/{memePostId}/redis")
+    public ResponseEntity<ApiResponse<MemePostGetResponse>> getMemePostRedis(
+            @PathVariable("memePostId") Long memePostId,
+            @CurrentUserId(required = false) Optional<Long> userId
+    ) {
+        return ResponseUtil.success(memePostService.getMemePostRedis(memePostId, userId),
+                SuccessCode.MEME_POST_GET
+        );
+    }
+
 
     @GetMapping("/{memePostId}/download")
     public ResponseEntity<Resource> downloadMemePost(
