@@ -74,6 +74,17 @@ public class MemePostService {
                 .orElseGet(() -> createGuestGetResponse(memePost));
     }
 
+    @Transactional(readOnly = true)
+    public MemePostGetResponse getMemePostRedis(Long memePostId, Optional<Long> userId) {
+        MemePost memePost = memePostRepository.findByIdWithTags(memePostId)
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_MEME_POST));
+
+        memePostViewCountService.incrementViewCountRedis(memePostId);
+
+        return userId.map(id -> createUserGetResponse(memePost, id))
+                .orElseGet(() -> createGuestGetResponse(memePost));
+    }
+
     private MemePostGetResponse createGuestGetResponse(MemePost memePost) {
         return new MemePostGetResponse(memePost, false, false, memePost.getTagNames());
     }
