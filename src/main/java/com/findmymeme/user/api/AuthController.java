@@ -1,6 +1,7 @@
 package com.findmymeme.user.api;
 
 import com.findmymeme.config.jwt.JwtProperties;
+import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.response.ApiResponse;
 import com.findmymeme.response.SuccessCode;
 import com.findmymeme.response.ResponseUtil;
@@ -11,6 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private static final String REFRESH = "refresh";
-    
+
     private final UserService userService;
     private final JwtProperties jwtProperties;
 
@@ -33,12 +35,17 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request, HttpServletResponse response
     ) {
 
-        LoginDto loginDto = userService.login(request);
-        Cookie refreshCookie = createRefreshCookie(loginDto.getRefreshToken());
-        response.addCookie(refreshCookie);
-        return ResponseUtil.success(
-                LoginResponse.fromLoginDto(userService.login(request)), SuccessCode.LOGIN
-        );
+        try {
+            LoginDto loginDto = userService.login(request);
+            Cookie refreshCookie = createRefreshCookie(loginDto.getRefreshToken());
+            response.addCookie(refreshCookie);
+            return ResponseUtil.success(
+                    LoginResponse.fromLoginDto(loginDto), SuccessCode.LOGIN
+            );
+        } catch (AuthenticationException e) {
+            return ResponseUtil.error(null, ErrorCode.INVALID_CREDENTIALS);
+        }
+
     }
 
     @PostMapping("/reissue")
