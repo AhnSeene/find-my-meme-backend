@@ -47,7 +47,7 @@ public class UserController {
     @PostMapping("/check-username")
     public ResponseEntity<ApiResponse<Void>> checkUsername(@Valid @RequestBody UsernameCheckRequest request) {
         if (userService.existsUsername(request)) {
-            return ResponseUtil.error(null, ErrorCode.ALREADY_EXIST_USERNAME);
+            return ResponseUtil.error(null, ErrorCode.CONFLICT_USERNAME_EXISTS);
         }
         return ResponseUtil.success(null, SuccessCode.USER_DUPLICATE_VALIDATION);
     }
@@ -55,7 +55,7 @@ public class UserController {
     @PostMapping("/check-email")
     public ResponseEntity<ApiResponse<Void>> checkUsername(@Valid @RequestBody EmailCheckRequest request) {
         if (userService.existsEmail(request)) {
-            return ResponseUtil.error(null, ErrorCode.ALREADY_EXIST_USERNAME);
+            return ResponseUtil.error(null, ErrorCode.CONFLICT_EMAIL_EXISTS);
         }
         return ResponseUtil.success(null, SuccessCode.EMAIL_DUPLICATE_VALIDATION);
     }

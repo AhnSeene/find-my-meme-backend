@@ -38,7 +38,8 @@ public class S3PresignedUrlController {
     }
 
     @GetMapping("/presigned-download")
-    public String getPresignedDownloadUrl(@RequestParam String filename) {
+    public String getPresignedDownloadUrl(@RequestParam String filename,
+                                          @CurrentUserId Long userId) {
         return s3PresignedUrlService.generatePresignedDownloadUrl("uploads/" + filename);
     }
 }

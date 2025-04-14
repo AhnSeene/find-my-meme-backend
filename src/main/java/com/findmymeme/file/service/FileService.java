@@ -35,7 +35,7 @@ public class FileService {
             return new FileUploadResponse(fileMeta);
         } catch (Exception e) {
             deleteFile(tempUrl);
-            throw new FindMyMemeException(ErrorCode.INTERNAL_SERVER_ERROR);
+            throw new FindMyMemeException(ErrorCode.SERVER_ERROR);
         }
     }
 
@@ -72,7 +72,7 @@ public class FileService {
                 return new Resolution(width, height);
             }
         } catch (IOException e) {
-            throw new FindMyMemeException(ErrorCode.INTERNAL_SERVER_ERROR);
+            throw new FindMyMemeException(ErrorCode.SERVER_ERROR);
         }
         return new Resolution(0, 0);
     }

@@ -36,7 +36,7 @@ public class FindPostCommentReadService {
 
     private void validateFindPost(FindPostComment comment, Long findPostId) {
         if (comment.isNotOfPost(findPostId)) {
-            throw new FindMyMemeException(ErrorCode.COMMENT_NOT_BELONG_TO_POST);
+            throw new FindMyMemeException(ErrorCode.REQUEST_INVALID_COMMENT_POST_RELATION);
         }
     }
 
@@ -70,7 +70,7 @@ public class FindPostCommentReadService {
 
     private void validateFindPostStatus(FindPost findPost) {
         if (findPost.isDeleted()) {
-            throw new FindMyMemeException(ErrorCode.CANNOT_WRITE_COMMENT_ON_DELETED_POST);
+            throw new FindMyMemeException(ErrorCode.REQUEST_CANNOT_WRITE_COMMENT_ON_DELETED_POST);
         }
     }
 

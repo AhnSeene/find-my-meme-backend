@@ -87,7 +87,7 @@ public class FindPostWriteService {
         verifyOwnership(findPost, user);
 
         if (findPost.isFound()) {
-            throw new FindMyMemeException(ErrorCode.FIND_POST_ALREADY_FOUND);
+            throw new FindMyMemeException(ErrorCode.CONFLICT_FIND_POST_ALREADY_FOUND);
         }
         FindPostComment comment = findPostCommentRepository.findById(commentId)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_FIND_POST_COMMENT));
@@ -147,7 +147,7 @@ public class FindPostWriteService {
 
     private void verifyOwnership(FindPost findPost, User user) {
         if (!findPost.isAuthor(user)) {
-            throw new FindMyMemeException(ErrorCode.FORBIDDEN);
+            throw new FindMyMemeException(ErrorCode.AUTH_FORBIDDEN);
         }
     }
 

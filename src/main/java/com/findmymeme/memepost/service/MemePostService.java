@@ -308,7 +308,7 @@ public class MemePostService {
 
     private void verifyOwnership(MemePost memePost, Long userId) {
         if (!memePost.isOwner(userId)) {
-            throw new FindMyMemeException(ErrorCode.FORBIDDEN);
+            throw new FindMyMemeException(ErrorCode.AUTH_FORBIDDEN);
         }
     }
 

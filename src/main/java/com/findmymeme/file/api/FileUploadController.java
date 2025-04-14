@@ -26,7 +26,7 @@ public class FileUploadController {
             @CurrentUserId Long userId
     ) {
         if (file.isEmpty()) {
-            return ResponseUtil.error(null, ErrorCode.INVALID_INPUT_VALUE);
+            return ResponseUtil.error(null, ErrorCode.REQUEST_INVALID_INPUT);
         }
         return ResponseUtil.success(fileService.uploadFile(file, userId), SuccessCode.FILE_UPLOAD);
     }

@@ -79,7 +79,7 @@ public class UserService {
         validateRefreshToken(refreshToken);
 
         RefreshToken storedToken = refreshTokenRepository.findById(refreshToken)
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.INVALID_TOKEN));
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.AUTH_INVALID_REFRESH_TOKEN));
 
         Long userId = storedToken.getUserId();
         Role role = storedToken.getRole();
@@ -93,11 +93,11 @@ public class UserService {
     private void validateRefreshToken(String refreshToken) {
         TokenStatus tokenStatus = jwtTokenProvider.validateToken(refreshToken);
         if (tokenStatus.isInvalid() || !jwtTokenProvider.getTokenCategory(refreshToken).isRefreshToken()) {
-            throw new FindMyMemeException(ErrorCode.INVALID_TOKEN);
+            throw new FindMyMemeException(ErrorCode.AUTH_INVALID_REFRESH_TOKEN);
         }
 
         if (tokenStatus.isExpired()) {
-            throw new FindMyMemeException(ErrorCode.EXPIRED_TOKEN);
+            throw new FindMyMemeException(ErrorCode.AUTH_EXPIRED_REFRESH_TOKEN);
         }
     }
 
@@ -122,7 +122,7 @@ public class UserService {
     public void logout(String refreshToken) {
         TokenStatus tokenStatus = jwtTokenProvider.validateToken(refreshToken);
         if (tokenStatus.isInvalid() || !jwtTokenProvider.getTokenCategory(refreshToken).isRefreshToken()) {
-            throw new FindMyMemeException(ErrorCode.INVALID_TOKEN);
+            throw new FindMyMemeException(ErrorCode.AUTH_INVALID_ACCESS_TOKEN);
         }
 
         if (tokenStatus.isExpired()) {
@@ -176,7 +176,7 @@ public class UserService {
 
     private void checkDuplicateUsername(String username) {
         if (userRepository.existsByUsername(username)) {
-            throw new FindMyMemeException(ErrorCode.ALREADY_EXIST_USERNAME);
+            throw new FindMyMemeException(ErrorCode.CONFLICT_USERNAME_EXISTS);
         }
     }
 }
