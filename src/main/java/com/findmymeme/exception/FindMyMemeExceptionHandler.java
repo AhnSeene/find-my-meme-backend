@@ -40,12 +40,12 @@ public class FindMyMemeExceptionHandler {
                         .build())
                 .toList();
 
-        return ResponseUtil.error(fieldErrors, ErrorCode.INVALID_INPUT_VALUE);
+        return ResponseUtil.error(fieldErrors, ErrorCode.REQUEST_INVALID_INPUT);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneralException(final Exception e) {
         log.error("Unexpected error occurred: {}", e.getMessage(), e);
-        return ResponseUtil.error(null, ErrorCode.INTERNAL_SERVER_ERROR);
+        return ResponseUtil.error(null, ErrorCode.SERVER_ERROR);
     }
 }

@@ -85,19 +85,19 @@ public class FindPostCommentWriteService {
 
     private void validateAlreadyDeleted(FindPostComment comment) {
         if (comment.isDeleted()) {
-            throw new FindMyMemeException(ErrorCode.ALREADY_DELETED_COMMENT);
+            throw new FindMyMemeException(ErrorCode.CONFLICT_ALREADY_DELETED_COMMENT);
         }
     }
 
     private void validateFindPostStatus(FindPost findPost) {
         if (findPost.isDeleted()) {
-            throw new FindMyMemeException(ErrorCode.CANNOT_WRITE_COMMENT_ON_DELETED_POST);
+            throw new FindMyMemeException(ErrorCode.REQUEST_CANNOT_WRITE_COMMENT_ON_DELETED_POST);
         }
     }
 
     private void validateFindPost(FindPostComment comment, Long findPostId) {
         if (comment.isNotOfPost(findPostId)) {
-            throw new FindMyMemeException(ErrorCode.COMMENT_NOT_BELONG_TO_POST);
+            throw new FindMyMemeException(ErrorCode.REQUEST_INVALID_COMMENT_POST_RELATION);
         }
     }
 
@@ -157,7 +157,7 @@ public class FindPostCommentWriteService {
 
     private void verifyOwnership(FindPostComment comment, Long userId) {
         if (!comment.isAuthor(userId)) {
-            throw new FindMyMemeException(ErrorCode.FORBIDDEN);
+            throw new FindMyMemeException(ErrorCode.AUTH_FORBIDDEN);
         }
     }
 

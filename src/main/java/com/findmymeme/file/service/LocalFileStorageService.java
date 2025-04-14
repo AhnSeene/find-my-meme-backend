@@ -55,7 +55,7 @@ public class LocalFileStorageService implements FileStorageService {
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
             return filePath.toString();
         } catch (IOException e) {
-            throw new FileStorageException(ErrorCode.INTERNAL_SERVER_ERROR);
+            throw new FileStorageException(ErrorCode.SERVER_ERROR);
         }
     }
 
@@ -67,7 +67,7 @@ public class LocalFileStorageService implements FileStorageService {
         try {
             Files.move(tempFilePath, permanentFilePath, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            throw new FileStorageException(ErrorCode.INTERNAL_SERVER_ERROR);
+            throw new FileStorageException(ErrorCode.SERVER_ERROR);
         }
 
         return permanentFilePath.toString();
@@ -113,7 +113,7 @@ public class LocalFileStorageService implements FileStorageService {
         } catch (NoSuchFileException e) {
             throw new FileStorageException(ErrorCode.NOT_FOUND_FILE);
         } catch (IOException e) {
-            throw new FileStorageException(ErrorCode.INTERNAL_SERVER_ERROR);
+            throw new FileStorageException(ErrorCode.SERVER_ERROR);
         }
     }
 
