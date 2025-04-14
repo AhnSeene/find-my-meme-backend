@@ -43,7 +43,7 @@ public class AuthController {
                     LoginResponse.fromLoginDto(loginDto), SuccessCode.LOGIN
             );
         } catch (AuthenticationException e) {
-            return ResponseUtil.error(null, ErrorCode.INVALID_CREDENTIALS);
+            return ResponseUtil.error(null, ErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
     }

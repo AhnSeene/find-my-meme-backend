@@ -11,7 +11,7 @@ public class ResponseUtil {
     }
 
     public static <T> ResponseEntity<ApiResponse<T>> error(T data, ErrorCode errorCode) {
-        ApiResponse<T> response = ApiResponse.error(errorCode.getMessage(), data);
+        ApiResponse<T> response = ApiResponse.error(errorCode, data);
         return new ResponseEntity<>(response, errorCode.getHttpStatus());
     }
 }

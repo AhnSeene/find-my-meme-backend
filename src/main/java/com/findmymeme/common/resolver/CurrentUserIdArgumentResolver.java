@@ -57,7 +57,7 @@ public class CurrentUserIdArgumentResolver implements HandlerMethodArgumentResol
         }
 
         if (isRequired) {
-            throw new FindMyMemeException(ErrorCode.UNAUTHORIZED_USER);
+            throw new FindMyMemeException(ErrorCode.AUTH_UNAUTHORIZED_USER);
         }
         return null;
     }

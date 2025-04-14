@@ -85,9 +85,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         response.setContentType("application/json;charset=UTF-8");
 
         Map<String, Object> errorResponse = new HashMap<>();
-        errorResponse.put("status", ErrorCode.EXPIRED_TOKEN);
+        errorResponse.put("status", ErrorCode.AUTH_EXPIRED_ACCESS_TOKEN);
         errorResponse.put("error", "Token Error");
-        errorResponse.put("message", ErrorCode.EXPIRED_TOKEN.getMessage());
+        errorResponse.put("message", ErrorCode.AUTH_EXPIRED_ACCESS_TOKEN.getMessage());
 
         String jsonResponse = objectMapper.writeValueAsString(errorResponse);
         response.getWriter().write(jsonResponse);

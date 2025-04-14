@@ -21,6 +21,6 @@ public enum Extension {
         return Arrays.stream(values())
                 .filter(extension -> extension.value.equalsIgnoreCase(value))
                 .findFirst()
-                .orElseThrow(() -> new FindMyMemeException(ErrorCode.INVALID_EXTENSION));
+                .orElseThrow(() -> new FindMyMemeException(ErrorCode.REQUEST_INVALID_EXTENSION));
     }
 }

@@ -112,7 +112,7 @@ public class S3FileStorageService implements FileStorageService {
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
             return key;
         } catch (IOException e) {
-            throw new FileStorageException(ErrorCode.INTERNAL_SERVER_ERROR);
+            throw new FileStorageException(ErrorCode.SERVER_ERROR);
         }
     }
 
