@@ -11,10 +11,9 @@ import com.findmymeme.response.ResponseUtil;
 import com.findmymeme.response.SuccessCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -61,14 +60,14 @@ public class MemePostController {
 
 
     @GetMapping("/{memePostId}/download")
-    public ResponseEntity<Resource> downloadMemePost(
+    public ResponseEntity<?> downloadMemePost(
             @PathVariable("memePostId") Long memePostId
     ) {
         MemePostDownloadDto downloadDto = memePostService.download(memePostId);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, String.format(ATTACHMENT_FILENAME_TEMPLATE, downloadDto.getFilename()))
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(downloadDto.getResource());
+        return ResponseEntity
+                .status(HttpStatus.FOUND)
+                .header(HttpHeaders.LOCATION, downloadDto.getPresignedUrl())
+                .build();
     }
 
     @GetMapping()
