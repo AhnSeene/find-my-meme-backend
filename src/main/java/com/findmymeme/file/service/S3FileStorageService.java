@@ -13,9 +13,12 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
@@ -27,20 +30,28 @@ public class S3FileStorageService implements FileStorageService {
     private static final String URL_SLASH = "/";
 
     private final S3Client s3Client;
+    private final S3Presigner s3Presigner;
     private final String tempDir;
     private final String permanentDir;
     private final String bucket;
+    private final int presignedDuration;
 
     public S3FileStorageService(
             S3Client s3Client,
+            S3Presigner s3Presigner,
             @Value("${file.upload.temp-dir}") String tempDir,
             @Value("${file.upload.image-dir}") String permanentDir,
-            @Value("${aws.s3.bucket}") String bucket
+            @Value("${aws.s3.bucket}") String bucket,
+            @Value("${aws.s3.presigned-duration}") int presignedDuration
+
     ) {
         this.s3Client = s3Client;
+        this.s3Presigner = s3Presigner;
         this.tempDir = tempDir;
         this.permanentDir = permanentDir;
         this.bucket = bucket;
+        this.presignedDuration = presignedDuration;
+
     }
 
     @Override
@@ -89,6 +100,21 @@ public class S3FileStorageService implements FileStorageService {
                 .build();
         InputStream inputStream = s3Client.getObject(getObjectRequest);
         return new InputStreamResource(inputStream);
+    }
+
+    @Override
+    public String generatePresignedDownloadUrl(String objectKey) {
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(objectKey)
+                .responseContentDisposition("attachment; filename=\"findmymeme-" + getFilename(objectKey) + "\"")
+                .build();
+
+        PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(req -> req
+                .signatureDuration(Duration.ofMinutes(presignedDuration))
+                .getObjectRequest(getObjectRequest));
+
+        return presignedRequest.url().toString();
     }
 
     @Override

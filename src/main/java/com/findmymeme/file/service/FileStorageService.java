@@ -13,6 +13,7 @@ public interface FileStorageService {
     void deletePermanentFile(String permanentUrl);
     String moveFileToPermanent(String tempFileUrl, FileType fileType);
     Resource downloadFile(String fileUrl);
+    String generatePresignedDownloadUrl(String objectKey);
     String convertToPermanentUrl(String permanentUrl, FileType fileType);
     String convertToTempUrl(String tempUrl, Long userId);
     default String generateStoredFilename(String originalFilename) {
