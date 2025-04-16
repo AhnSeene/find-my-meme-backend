@@ -85,6 +85,12 @@ public class LocalFileStorageService implements FileStorageService {
     }
 
     @Override
+    public String generatePresignedDownloadUrl(String objectKey) {
+        //로컬에서는 그냥 proxy 역할의 API 경로 반환
+        return "/api/v1/files/temp-download?path=" + objectKey;
+    }
+
+    @Override
     public void deleteTempFile(String tempUrl) {
         Path filePath = Paths.get(baseDir, tempUrl);
         deleteFile(filePath);

@@ -9,11 +9,11 @@ import org.springframework.core.io.Resource;
 @Getter
 public class MemePostDownloadDto {
     private String filename;
-    private Resource resource;
+    private String presignedUrl;
 
     @Builder
-    public MemePostDownloadDto(String filename, Resource resource) {
+    public MemePostDownloadDto(String filename, String presignedUrl) {
         this.filename = filename;
-        this.resource = resource;
+        this.presignedUrl = presignedUrl;
     }
 }
