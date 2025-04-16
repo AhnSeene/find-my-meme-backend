@@ -167,7 +167,7 @@ public class MemePostService {
         memePost.incrementDownloadCount();
         return MemePostDownloadDto.builder()
                 .filename(fileStorageService.getFilename(memePost.getImageUrl()))
-                .resource(fileStorageService.downloadFile(memePost.getImageUrl()))
+                .presignedUrl(fileStorageService.generatePresignedDownloadUrl(memePost.getImageUrl()))
                 .build();
     }
 
