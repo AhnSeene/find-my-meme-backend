@@ -25,6 +25,17 @@ public class MemePost extends BaseEntity {
     @Column(nullable = false)
     private String imageUrl;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ProcessingStatus processingStatus;
+
+
+    @Column(name = "thumbnail288_url", length = 512)
+    private String thumbnail288Url;
+
+    @Column(name = "thumbnail657_url", length = 512)
+    private String thumbnail657Url;
+
     @Convert(converter = ExtensionConverter.class)
     @Column(nullable = false)
     private Extension extension;
@@ -60,7 +71,8 @@ public class MemePost extends BaseEntity {
     private List<MemePostTag> memePostTags = new ArrayList<>();
 
     @Builder
-    public MemePost(String imageUrl, String extension, Resolution resolution, Long size, String originalFilename, User user) {
+    public MemePost(String imageUrl, String extension, Resolution resolution, Long size, String originalFilename,
+                    User user, String thumbnail288Url, String thumbnail657Url) {
         this.imageUrl = imageUrl;
         this.extension = Extension.from(extension);
         this.mediaType = MediaType.fromExtension(extension);
@@ -68,6 +80,9 @@ public class MemePost extends BaseEntity {
         this.size = size;
         this.originalFilename = originalFilename;
         this.user = user;
+        this.thumbnail288Url = thumbnail288Url;
+        this.thumbnail657Url = thumbnail657Url;
+        this.processingStatus = ProcessingStatus.PROCESSING;
     }
 
     public void addMemePostTag(MemePostTag memePostTag) {
@@ -106,6 +121,10 @@ public class MemePost extends BaseEntity {
 
     public void incrementDownloadCount() {
         this.downloadCount++;
+    }
+
+    public void changeProcessingStatus(ProcessingStatus status) {
+        this.processingStatus = status;
     }
 
     public void softDelete() {
