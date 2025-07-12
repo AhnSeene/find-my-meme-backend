@@ -41,3 +41,6 @@ out/
 
 # QueryDSL Q파일
 src/main/generated/*
+
+# LocalStack data
+.localstack-data/
