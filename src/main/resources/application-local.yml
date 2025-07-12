@@ -9,7 +9,7 @@ spring:
     password: 1234
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
 
     properties:
       hibernate:
@@ -26,6 +26,16 @@ spring:
   messages:
     basename: messages
     encoding: UTF-8
+  cloud:
+    aws:
+      credentials:
+        access-key: test
+        secret-key: test
+      region:
+        static: ap-northeast-2
+      endpoint: http://localhost:4566
+      s3:
+        path-style-access-enabled: true
 
 logging:
   level:
@@ -44,6 +54,14 @@ file:
     image-dir: images
   base-dir: C:/Users/ACY/filestore
   base-url: http://localhost:8080/
+
+aws:
+  s3:
+    bucket: find-my-meme
+
+    presigned-duration: 5
+  lambda:
+    function-name: local-image-resizer
 
 default:
   profile-image-url: images/6372d43a-81e8-4464-9998-4a1c1cd1267e.jpg
