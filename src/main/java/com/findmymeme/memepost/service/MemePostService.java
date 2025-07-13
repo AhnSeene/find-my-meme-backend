@@ -20,6 +20,7 @@ import com.findmymeme.user.domain.User;
 import com.findmymeme.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +45,7 @@ public class MemePostService {
     private final FileMetaRepository fileMetaRepository;
     private final MemePostLikeRepository memePostLikeRepository;
     private final MemePostViewCountService memePostViewCountService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public MemePostUploadResponse uploadMemePost(MemePostUploadRequest request, Long userId) {
@@ -53,8 +55,10 @@ public class MemePostService {
         String permanentImageUrl = fileStorageService.moveFileToPermanent(request.getImageUrl(), FileType.MEME);
         try {
             MemePost memePost = createMemePost(permanentImageUrl, user, fileMeta);
-            memePostRepository.save(memePost);
-            List<String> tagNames = memePostTagService.applyTagsToPost(request.getTags(), memePost);
+            MemePost savedMemePost = memePostRepository.save(memePost);
+            List<String> tagNames = memePostTagService.applyTagsToPost(request.getTags(), savedMemePost);
+
+            eventPublisher.publishEvent(new MemePostCreatedEvent(savedMemePost.getId(), permanentImageUrl));
             return new MemePostUploadResponse(memePost.getImageUrl(), tagNames);
         }
         catch (Exception e) {

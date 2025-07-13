@@ -24,7 +24,6 @@ import java.time.format.DateTimeFormatter;
 
 @Slf4j
 @Service
-@Profile("prod")
 public class S3FileStorageService implements FileStorageService {
     private static final String URL_FORMAT = "%s/%d/%s";
     private static final String URL_SLASH = "/";

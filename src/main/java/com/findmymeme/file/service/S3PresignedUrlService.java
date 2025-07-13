@@ -22,7 +22,6 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequ
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Duration;
-@Profile("prod")
 @Slf4j
 @Service
 public class S3PresignedUrlService {
@@ -103,7 +102,12 @@ public class S3PresignedUrlService {
         try {
             URL url = new URL(presignedUrl);
             String path = url.getPath();
-            return path.substring(1);
+            String key = path.startsWith("/") ? path.substring(1) : path;
+            String bucketPrefix = bucket + "/";
+            if (key.startsWith(bucketPrefix)) {
+                return key.substring(bucketPrefix.length());
+            }
+            return key;
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("Invalid Presigned URL", e);
         }

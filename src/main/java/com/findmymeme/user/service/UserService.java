@@ -43,6 +43,7 @@ public class UserService {
 
     public SignupResponse signup(SignupRequest signupRequest) {
         checkDuplicateUsername(signupRequest.getUsername());
+        checkDuplicateEmail(signupRequest.getEmail()); // 이메일 중복 체크 추가
 
         String encodedPassword = passwordEncoder.encode(signupRequest.getPassword());
         User user = SignupRequest.toEntity(signupRequest, Role.ROLE_USER, encodedPassword, defaultProfileImageUrl);
@@ -177,6 +178,12 @@ public class UserService {
     private void checkDuplicateUsername(String username) {
         if (userRepository.existsByUsername(username)) {
             throw new FindMyMemeException(ErrorCode.CONFLICT_USERNAME_EXISTS);
+        }
+    }
+
+    private void checkDuplicateEmail(String email) {
+        if (userRepository.existsByEmail(email)) {
+            throw new FindMyMemeException(ErrorCode.CONFLICT_EMAIL_EXISTS);
         }
     }
 }
