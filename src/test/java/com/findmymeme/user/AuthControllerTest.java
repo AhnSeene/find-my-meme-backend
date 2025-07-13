@@ -8,6 +8,7 @@ import com.findmymeme.user.dto.SignupResponse;
 import com.findmymeme.user.service.UserService;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -70,17 +71,18 @@ class AuthControllerTest {
     }
 
     @ParameterizedTest
+    @DisplayName("회원가입 실패 시: 유효성 검사를 통과하지 못한다")
     @CsvSource({
-            "'', Test1234!, test@example.com, 아이디",          // 빈 username
-            "testuser, '', test@example.com, 비밀번호",        // 빈 password
-            "testuser, short, test@example.com, 비밀번호",     // password 길이 짧음
-            "testuser, Test1234!, '', 이메일",                  // 빈 email (password 정상값으로 수정)
-            "testuser, Test1234!, invalid-email, 이메일",      // email 형식 틀림
-            "test, Test1234!, test@example.com, 아이디",        // 아이디 길이
-            "testuser, test1234, test@example.com, 비밀번호",     // password 형식틀림
-            "testuser, testuser!, test@example.com, 비밀번호",     // password 형식틀림
+            "'', Test1234!, test@example.com, username",          // 빈 username
+            "testuser, '', test@example.com, password",        // 빈 password
+            "testuser, short, test@example.com, password",     // password 길이 짧음
+            "testuser, Test1234!, '', email",                  // 빈 email
+            "testuser, Test1234!, invalid-email, email",      // email 형식 틀림
+            "test, Test1234!, test@example.com, username",        // 아이디 길이
+            "testuser, test1234, test@example.com, password",     // password 형식틀림
+            "testuser, testuser!, test@example.com, password",     // password 형식틀림
     })
-    void 회원가입_유효성검사_실패(String username, String password, String email, String expectedPartialMessage) throws Exception {
+    void 회원가입_유효성검사_실패(String username, String password, String email, String expectedField) throws Exception {
         SignupRequest signupRequest = new SignupRequest(username, password, email);
 
         mockMvc.perform(post("/api/v1/signup")
@@ -90,7 +92,7 @@ class AuthControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value(ErrorCode.REQUEST_INVALID_INPUT.getMessage()))
-                .andExpect(jsonPath("$.data[0].reason").value(Matchers.containsString(expectedPartialMessage))); // 부분 문자열 검사
+                .andExpect(jsonPath("$.data[0].field").value(expectedField)); // 에러가 발생한 필드 이름을 직접 비교
     }
 
 }
