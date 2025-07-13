@@ -9,7 +9,7 @@ spring:
     password: ${DB_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
 
     properties:
       hibernate:
@@ -44,7 +44,7 @@ logging:
     org.hibernate: ERROR
 
 jwt:
-  access-expire-time: 18000 #30분 1800
+  access-expire-time: 18000 #30분 18000
   refresh-expire-time: 1209600 #14일 1209600
   secret-key: ${JWT_SECRET_KEY}
   issuer: find-my-meme
@@ -63,6 +63,9 @@ aws:
   s3:
     bucket: ${AWS_BUCKET}
     presigned-duration: 5
+  lambda:
+    function-name: ${LAMBDA_FUNCTION_NAME}
+
 
 allowed:
   origins: "https://findmymeme.site,https://www.findmymeme.site"

@@ -1,3 +1,75 @@
 spring:
-  profiles:
-    active: local
+  sql:
+    init:
+      mode: never
+      encoding: UTF-8
+  datasource:
+    url: jdbc:mysql://localhost:3306/findmymeme_db
+    username: meme
+    password: 1234
+  jpa:
+    hibernate:
+      ddl-auto: none
+
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+        #        default_batch_fetch_size: 1000
+        use_sql_comments: true
+    open-in-view: false
+    defer-datasource-initialization: true
+  data:
+    redis:
+      host: localhost
+      port: 16379
+  messages:
+    basename: messages
+    encoding: UTF-8
+  cloud:
+    aws:
+      credentials:
+        access-key: test
+        secret-key: test
+      region:
+        static: ap-northeast-2
+      endpoint: http://localhost:4566
+      s3:
+        path-style-access-enabled: true
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+
+jwt:
+  access-expire-time: 1800 #30분
+  refresh-expire-time: 1209600 #14일
+  #  RefreshToken의 ttl설정도 함께 해줘야됨
+  secret-key: dgwgwgwdkljwljgjgjgjgjjgawoijawoijifjltjestksjigjdcndngkskgksnggiwigjwgggwg
+  issuer: find-my-meme
+
+file:
+  upload:
+    temp-dir: temps
+    image-dir: images
+  base-dir: C:/Users/ACY/filestore
+  base-url: http://localhost:8080/
+
+aws:
+  s3:
+    bucket: find-my-meme
+
+    presigned-duration: 5
+  lambda:
+    function-name: local-image-resizer
+
+default:
+  profile-image-url: images/6372d43a-81e8-4464-9998-4a1c1cd1267e.jpg
+
+allowed:
+  origins: http://localhost:3000
+
+admin:
+  username: adminuser8
+  password: adminuser8!
+  email: adminuser@example.com

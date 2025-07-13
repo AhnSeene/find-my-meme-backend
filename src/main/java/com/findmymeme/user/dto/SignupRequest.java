@@ -25,7 +25,7 @@ public class SignupRequest {
     )
     private final String password;
 
-    @NotBlank(message = "{email.notBlank}")
+    @NotBlank(message = "{email.notblank}")
     @Email(message = "{email.pattern}")
     @Size(min = 5, max = 50, message = "{email.size}")
     private final String email;
