@@ -182,7 +182,7 @@ public class MemePostService {
         User author = userRepository.findByUsername(authorName)
                 .orElseThrow(() -> new FindMyMemeException(ErrorCode.NOT_FOUND_USER));
 
-        UserProfileResponse userProfileResponse = new UserProfileResponse(author);
+        UserProfileResponse userProfileResponse = UserProfileResponse.from(author, fileBaseUrl);
         Pageable pageable = PageRequest.of(page, size);
         Slice<Long> postIdSlice = memePostRepository.findMemePostIdsByUsername(pageable, authorName);
         List<Long> postIds = postIdSlice.getContent();
@@ -215,7 +215,7 @@ public class MemePostService {
 
     public MemePostUserSummaryResponse getMyMemePosts(int page, int size, Long userId) {
         User user = getUserById(userId);
-        UserProfileResponse userProfileResponse = new UserProfileResponse(user);
+        UserProfileResponse userProfileResponse = UserProfileResponse.from(user, fileBaseUrl);
         Pageable pageable = PageRequest.of(page, size);
 
         Slice<Long> postIdSlice = memePostRepository.findMyMemePostIdsByUserId(pageable, userId);

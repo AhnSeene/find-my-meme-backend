@@ -1,6 +1,7 @@
 package com.findmymeme.findpost.dto;
 
 import com.findmymeme.findpost.domain.FindPostComment;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Schema(description = "'찾아줘' 게시판 댓글 목록 요약 정보 응답 DTO (계층 구조 포함)")
 @Getter
 @NoArgsConstructor
 public class FindPostCommentSummaryResponse {
@@ -17,15 +19,24 @@ public class FindPostCommentSummaryResponse {
 
     private static final String DELETED_COMMENT = "삭제된 댓글입니다.";
 
+    @Schema(description = "댓글 ID", example = "201")
     private Long id;
+    @Schema(description = "게시글 ID", example = "101")
     private Long postId;
+    @Schema(description = "부모 댓글 ID (최상위 댓글은 null)", example = "null")
     private Long parentCommentId;
+    @Schema(description = "댓글 내용 (HTML). 삭제된 경우 '삭제된 댓글입니다.' 반환", example = "<p>이거 혹시 <strong>XX 밈</strong> 아닌가요?</p>")
     private String htmlContent;
+    @Schema(description = "작성자 닉네임", example = "meme_finder")
     private String username;
+    @Schema(description = "채택된 댓글인지 여부", example = "false")
     private Boolean selected;
+    @Schema(description = "생성 일시", example = "2023-10-27T10:15:00")
     private LocalDateTime createdAt;
+    @Schema(description = "삭제 일시 (삭제된 경우)", example = "null")
     private LocalDateTime deletedAt;
 
+    @Schema(description = "이 댓글에 달린 대댓글 목록")
     private List<FindPostCommentSummaryResponse> replies = new ArrayList<>();
 
     @Builder
