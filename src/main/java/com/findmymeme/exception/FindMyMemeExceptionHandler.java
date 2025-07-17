@@ -1,6 +1,6 @@
 package com.findmymeme.exception;
 
-import com.findmymeme.response.ApiResponse;
+import com.findmymeme.response.ApiResult;
 import com.findmymeme.response.ResponseUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ public class FindMyMemeExceptionHandler {
     private final MessageSource messageSource;
 
     @ExceptionHandler(FindMyMemeException.class)
-    public ResponseEntity<ApiResponse<Void>> handleFindMyMemeException(final FindMyMemeException e) {
+    public ResponseEntity<ApiResult<Void>> handleFindMyMemeException(final FindMyMemeException e) {
         final ErrorCode errorCode = e.getErrorCode();
         log.error("Error: code={}, message={}", errorCode, errorCode.getMessage(), e);
         return ResponseUtil.error(null, errorCode); //TODO null처리 변경
@@ -31,7 +31,7 @@ public class FindMyMemeExceptionHandler {
      * 유효성 검사에서 실패할 때 발생한다.
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<List<FieldErrorDto>>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+    public ResponseEntity<ApiResult<List<FieldErrorDto>>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         List<FieldErrorDto> fieldErrors = e.getBindingResult().getFieldErrors().stream()
                 .map(fieldError -> FieldErrorDto.builder()
                         .field(fieldError.getField())
@@ -44,7 +44,7 @@ public class FindMyMemeExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleGeneralException(final Exception e) {
+    public ResponseEntity<ApiResult<Void>> handleGeneralException(final Exception e) {
         log.error("Unexpected error occurred: {}", e.getMessage(), e);
         return ResponseUtil.error(null, ErrorCode.SERVER_ERROR);
     }
