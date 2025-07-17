@@ -41,6 +41,10 @@ public class UserService {
     @Value("${default.profile-image-url}")
     private String defaultProfileImageUrl;
 
+    @Value("${file.base-url}")
+    private String fileBaseUrl;
+
+
     public SignupResponse signup(SignupRequest signupRequest) {
         checkDuplicateUsername(signupRequest.getUsername());
         checkDuplicateEmail(signupRequest.getEmail()); // 이메일 중복 체크 추가
@@ -144,7 +148,7 @@ public class UserService {
 
     public UserInfoResponse getMyInfo(Long userId) {
         User user = getUserById(userId);
-        return new UserInfoResponse(user);
+        return UserInfoResponse.from(user, fileBaseUrl);
     }
 
     @Transactional
@@ -152,7 +156,7 @@ public class UserService {
         User user = getUserById(userId);
         String profileImageUrl = fileStorageService.storePermanentFile(file, FileType.PROFILE);
         user.updateProfileImageUrl(profileImageUrl);
-        return new UserProfileImageResponse(profileImageUrl);
+        return UserProfileImageResponse.from(user.getProfileImageUrl(), fileBaseUrl);
     }
 
     public boolean existsUsername(UsernameCheckRequest request) {

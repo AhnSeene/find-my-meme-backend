@@ -4,6 +4,7 @@ import com.findmymeme.config.jwt.JwtProperties;
 import com.findmymeme.config.jwt.JwtTokenProvider;
 import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.exception.FindMyMemeException;
+import com.findmymeme.file.domain.FileType;
 import com.findmymeme.file.service.FileStorageService;
 import com.findmymeme.token.repository.RefreshTokenRepository;
 import com.findmymeme.user.domain.Role;
@@ -22,6 +23,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
@@ -175,8 +177,9 @@ public class UserServiceTest {
         MultipartFile file = mock(MultipartFile.class);
         String newImageUrl = "new-profile.jpg";
 
+        ReflectionTestUtils.setField(userService, "fileBaseUrl", "");
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(fileStorageService.storePermanentFile(file, com.findmymeme.file.domain.FileType.PROFILE)).thenReturn(newImageUrl);
+        when(fileStorageService.storePermanentFile(file, FileType.PROFILE)).thenReturn(newImageUrl);
 
         // when
         var response = userService.updateProfileImage(file, userId);
@@ -185,7 +188,7 @@ public class UserServiceTest {
         assertThat(response.getProfileImageUrl()).isEqualTo(newImageUrl);
         assertThat(user.getProfileImageUrl()).isEqualTo(newImageUrl);
         verify(userRepository, times(1)).findById(userId);
-        verify(fileStorageService, times(1)).storePermanentFile(file, com.findmymeme.file.domain.FileType.PROFILE);
+        verify(fileStorageService, times(1)).storePermanentFile(file, FileType.PROFILE);
     }
 
     @Test
@@ -200,6 +203,7 @@ public class UserServiceTest {
                 .role(Role.ROLE_USER)
                 .build();
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        ReflectionTestUtils.setField(userService, "fileBaseUrl", "");
 
         // when
         var response = userService.getMyInfo(userId);
@@ -210,5 +214,4 @@ public class UserServiceTest {
         assertThat(response.getProfileImageUrl()).isEqualTo(user.getProfileImageUrl());
         verify(userRepository, times(1)).findById(userId);
     }
-
 }
