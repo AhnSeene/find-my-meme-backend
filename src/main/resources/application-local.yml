@@ -22,7 +22,7 @@ spring:
   data:
     redis:
       host: localhost
-      port: 6379
+      port: 16379
   messages:
     basename: messages
     encoding: UTF-8
@@ -73,3 +73,9 @@ admin:
   username: adminuser8
   password: adminuser8!
   email: adminuser@example.com
+
+springdoc:
+  swagger-ui:
+    tags-sorter: tags
+    operations-sorter: method
+    doc-expansion: none
