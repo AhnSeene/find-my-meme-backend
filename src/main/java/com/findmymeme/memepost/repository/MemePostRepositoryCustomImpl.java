@@ -2,6 +2,7 @@ package com.findmymeme.memepost.repository;
 
 import com.findmymeme.common.util.QuerydslSortUtil;
 import com.findmymeme.memepost.domain.MediaType;
+import com.findmymeme.memepost.domain.ProcessingStatus;
 import com.findmymeme.memepost.dto.*;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
@@ -13,17 +14,13 @@ import lombok.*;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
-import java.util.Optional;
 
 import static com.findmymeme.memepost.domain.QMemePost.memePost;
 import static com.findmymeme.tag.domain.QMemePostTag.memePostTag;
-import static com.findmymeme.tag.domain.QTag.tag;
 import static com.findmymeme.user.domain.QUser.user;
 import static java.util.stream.Collectors.groupingBy;
 
@@ -41,6 +38,7 @@ public class MemePostRepositoryCustomImpl implements MemePostRepositoryCustom {
                 .from(memePost)
                 .where(
                         deletedAtIsNull(),
+                        processingStatusEq(ProcessingStatus.READY),
                         mediaTypeEq(cond.getMediaType()),
                         haveTagIds(cond.getTagIds())
                 )
@@ -89,24 +87,6 @@ public class MemePostRepositoryCustomImpl implements MemePostRepositoryCustom {
                 .fetch();
     }
 
-
-    @Override
-    public List<MemePostSummaryResponse> findPostsWithTags(List<Long> postIds) {
-        return queryFactory
-                .select(Projections.fields(
-                        MemePostSummaryResponse.class,
-                        memePost.id.as("id"),
-                        memePost.imageUrl.as("imageUrl"),
-                        memePost.likeCount.as("likeCount"),
-                        memePost.viewCount.as("viewCount"),
-                        memePost.downloadCount.as("downloadCount"),
-                        memePostTag.tag.name.as("tags")
-                ))
-                .from(memePost)
-                .innerJoin(memePost.memePostTags, memePostTag)
-                .where(memePost.id.in(postIds))
-                .fetch();
-    }
     @Override
     public List<Long> findRelatedPostIdsByTagIds(List<Long> tagIds, Long currentPostId, Pageable pageable) {
         return queryFactory
@@ -116,7 +96,8 @@ public class MemePostRepositoryCustomImpl implements MemePostRepositoryCustom {
                 .where(
                         tagIn(tagIds),
                         memePost.id.ne(currentPostId),
-                        deletedAtIsNull()
+                        deletedAtIsNull(),
+                        processingStatusEq(ProcessingStatus.READY)
                 )
                 .limit(pageable.getPageSize() + 1)
                 .offset(pageable.getOffset())
@@ -131,6 +112,7 @@ public class MemePostRepositoryCustomImpl implements MemePostRepositoryCustom {
                 .innerJoin(memePost.user, user)
                 .where(
                         deletedAtIsNull(),
+                        processingStatusEq(ProcessingStatus.READY),
                         usernameEq(authorName)
                 )
                 .orderBy(memePost.createdAt.desc())
@@ -152,6 +134,13 @@ public class MemePostRepositoryCustomImpl implements MemePostRepositoryCustom {
 
     private BooleanExpression deletedAtIsNull() {
         return memePost.deletedAt.isNull();
+    }
+
+    private BooleanExpression processingStatusEq(ProcessingStatus status) {
+        if (status == null) {
+            return null;
+        }
+        return memePost.processingStatus.eq(status);
     }
 
     private BooleanExpression mediaTypeEq(MediaType mediaType) {
