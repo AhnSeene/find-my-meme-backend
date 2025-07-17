@@ -55,23 +55,25 @@ public class MemePostGetResponse {
 
     }
 
-    public MemePostGetResponse(MemePost memePost, boolean isOwner, boolean isLiked, List<String> tags) {
-        this.id = memePost.getId();
-        this.imageUrl = memePost.getImageUrl();
-        this.extension = memePost.getExtension().getValue();
-        this.height = memePost.getResolution().getHeight();
-        this.weight = memePost.getResolution().getWidth();
-        this.size = memePost.getSize();
-        this.originalFilename = memePost.getOriginalFilename();
-        this.likeCount = memePost.getLikeCount();
-        this.viewCount = memePost.getViewCount();
-        this.downloadCount = memePost.getDownloadCount();
-        this.username = memePost.getUser().getUsername();
-        this.userProfileImageUrl = memePost.getUser().getProfileImageUrl();
-        this.owner = isOwner;
-        this.isLiked = isLiked;
-        this.createdAt = memePost.getCreatedAt();
-        this.updatedAt = memePost.getUpdatedAt();
-        this.tags = tags;
+    public static MemePostGetResponse from(MemePost memePost, boolean isOwner, boolean isLiked, String fileBaseUrl) {
+        MemePostGetResponse response = new MemePostGetResponse();
+        response.id = memePost.getId();
+        response.imageUrl = fileBaseUrl + memePost.getImageUrl();
+        response.userProfileImageUrl = fileBaseUrl + memePost.getUser().getProfileImageUrl();
+        response.extension = memePost.getExtension().getValue();
+        response.height = memePost.getResolution().getHeight();
+        response.weight = memePost.getResolution().getWidth();
+        response.size = memePost.getSize();
+        response.originalFilename = memePost.getOriginalFilename();
+        response.likeCount = memePost.getLikeCount();
+        response.viewCount = memePost.getViewCount();
+        response.downloadCount = memePost.getDownloadCount();
+        response.username = memePost.getUser().getUsername();
+        response.owner = isOwner;
+        response.isLiked = isLiked;
+        response.createdAt = memePost.getCreatedAt();
+        response.updatedAt = memePost.getUpdatedAt();
+        response.tags = memePost.getTagNames();
+        return response;
     }
 }

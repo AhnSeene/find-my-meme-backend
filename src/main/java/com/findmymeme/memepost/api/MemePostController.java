@@ -126,6 +126,16 @@ public class MemePostController {
         return ResponseUtil.success(responses, SuccessCode.MEME_POST_AUTHOR_LIST);
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<MemePostUserSummaryResponse>> getMyMemePosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @CurrentUserId Long userId
+    ) {
+        MemePostUserSummaryResponse responses = memePostService.getMyMemePosts(page, size, userId);
+        return ResponseUtil.success(responses, SuccessCode.MEME_POST_MY_LIST);
+    }
+
     @GetMapping("/ranks/all")
     public ResponseEntity<ApiResponse<List<MemePostSummaryResponse>>> getRankedPostsAllPeriod(
             @RequestParam(name = "sort", defaultValue = "LIKE") Sort sort,
