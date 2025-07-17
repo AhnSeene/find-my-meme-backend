@@ -11,6 +11,13 @@ public class SecurityWhitelist {
             "/actuator/**"
     };
 
+    public static final String[] SWAGGER_URLS = {
+            "/swagger-ui.html",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/swagger-resources/**"
+    };
+
     public static final String[] PUBLIC_GET_URLS = {
             "/api/v1/find-posts/**",
             "/api/v1/tags",
