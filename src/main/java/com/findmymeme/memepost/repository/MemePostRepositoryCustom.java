@@ -9,9 +9,9 @@ import org.springframework.data.domain.Slice;
 import java.util.List;
 
 public interface MemePostRepositoryCustom {
-    List<MemePostSummaryResponse> findPostsWithTags(List<Long> postIds);
     Slice<Long> searchByCond(Pageable pageable, MemePostSearchCond cond);
     List<MemePostSummaryProjection> findPostDetailsByPostIds(List<Long> postIds);
     List<Long> findRelatedPostIdsByTagIds(List<Long> tagIds, Long currentPostId, Pageable pageable);
     Slice<Long> findMemePostIdsByUsername(Pageable pageable, String authorName);
+    Slice<Long> findMyMemePostIdsByUserId(Pageable pageable, Long userId);
 }

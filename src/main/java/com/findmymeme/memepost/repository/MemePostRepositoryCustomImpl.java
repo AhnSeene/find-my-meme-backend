@@ -82,7 +82,6 @@ public class MemePostRepositoryCustomImpl implements MemePostRepositoryCustom {
                         memePost.thumbnail657Url,
                         memePost.likeCount,
                         memePost.viewCount,
-                        memePost.downloadCount
                         memePost.downloadCount,
                         memePost.processingStatus
                 ))
@@ -131,6 +130,29 @@ public class MemePostRepositoryCustomImpl implements MemePostRepositoryCustom {
 
         return new SliceImpl<>(postIds, pageable, hasNext);
     }
+
+    @Override
+    public Slice<Long> findMyMemePostIdsByUserId(Pageable pageable, Long userId) {
+        List<Long> postIds = queryFactory
+                .select(memePost.id)
+                .from(memePost)
+                .where(
+                        deletedAtIsNull(),
+                        memePost.user.id.eq(userId)
+                )
+                .orderBy(memePost.createdAt.desc())
+                .limit(pageable.getPageSize() + 1)
+                .offset(pageable.getOffset())
+                .fetch();
+
+        boolean hasNext = postIds.size() > pageable.getPageSize();
+        if (hasNext) {
+            postIds.remove(postIds.size() - 1);
+        }
+
+        return new SliceImpl<>(postIds, pageable, hasNext);
+    }
+
 
     private BooleanExpression usernameEq(String username) {
         return memePost.user.username.eq(username);

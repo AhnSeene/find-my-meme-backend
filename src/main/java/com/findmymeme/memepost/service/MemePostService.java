@@ -213,6 +213,40 @@ public class MemePostService {
                 .build();
     }
 
+    public MemePostUserSummaryResponse getMyMemePosts(int page, int size, Long userId) {
+        User user = getUserById(userId);
+        UserProfileResponse userProfileResponse = new UserProfileResponse(user);
+        Pageable pageable = PageRequest.of(page, size);
+
+        Slice<Long> postIdSlice = memePostRepository.findMyMemePostIdsByUserId(pageable, userId);
+        List<Long> postIds = postIdSlice.getContent();
+
+        if (postIds.isEmpty()) {
+            return MemePostUserSummaryResponse.builder()
+                    .user(userProfileResponse)
+                    .memePosts(new MySlice<>(new SliceImpl<>(Collections.emptyList(), pageable, false)))
+                    .build();
+        }
+
+        List<MemePostSummaryProjection> postDetails = memePostRepository.findPostDetailsByPostIds(postIds);
+        Map<Long, List<String>> tagsGroupedByPostId = findTagNamesGroupedByPostIds(postIds);
+        Set<Long> likedPostIds = findLikedPostIds(postIds, Optional.of(userId));
+
+        Map<Long, MemePostSummaryProjection> postDetailsMap = postDetails.stream()
+                .collect(Collectors.toMap(MemePostSummaryProjection::getId, Function.identity()));
+
+        List<MemePostSummaryProjection> sortedPostDetails = postIds.stream()
+                .map(postDetailsMap::get)
+                .filter(Objects::nonNull)
+                .toList();
+
+        List<MemePostSummaryResponse> memePostSummaries = mapToSummaryResponse(sortedPostDetails, likedPostIds, tagsGroupedByPostId);
+        return MemePostUserSummaryResponse.builder()
+                .user(userProfileResponse)
+                .memePosts(new MySlice<>(new SliceImpl<>(memePostSummaries, pageable, postIdSlice.hasNext())))
+                .build();
+    }
+
     public List<MemePostSummaryResponse> getRankedPostsAllPeriod(int page, int size, Sort sort) {
         Pageable pageable = PageRequest.of(page, size);
         List<MemePost> memePosts = null;
