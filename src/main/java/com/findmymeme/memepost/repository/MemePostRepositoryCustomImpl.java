@@ -78,9 +78,13 @@ public class MemePostRepositoryCustomImpl implements MemePostRepositoryCustom {
                         MemePostSummaryProjection.class,
                         memePost.id,
                         memePost.imageUrl,
+                        memePost.thumbnail288Url,
+                        memePost.thumbnail657Url,
                         memePost.likeCount,
                         memePost.viewCount,
                         memePost.downloadCount
+                        memePost.downloadCount,
+                        memePost.processingStatus
                 ))
                 .from(memePost)
                 .where(memePost.id.in(postIds))
