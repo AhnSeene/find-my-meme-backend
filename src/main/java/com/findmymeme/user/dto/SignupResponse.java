@@ -10,7 +10,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class SignupResponse {
 
-    @Schema(description = "가입된 사용자 아이디", example = "meme_king")
+    @Schema(description = "가입된 사용자 아이디", example = "memeking")
     private final String username;
     @Schema(description = "가입된 사용자 이메일", example = "test@example.com")
     private final String email;

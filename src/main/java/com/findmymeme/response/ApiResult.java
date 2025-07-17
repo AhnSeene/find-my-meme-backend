@@ -8,23 +8,23 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @Builder
 @RequiredArgsConstructor
-public class ApiResponse<T> {
+public class ApiResult<T> {
 
     private final boolean success;
     private final String message;
     private final String code;
     private final T data;
 
-    public static <T> ApiResponse<T> success(String message, T data) {
-        return ApiResponse.<T>builder()
+    public static <T> ApiResult<T> success(String message, T data) {
+        return ApiResult.<T>builder()
                 .success(true)
                 .message(message)
                 .data(data)
                 .build();
     }
 
-    public static <T> ApiResponse<T> error(ErrorCode errorCode, T data) {
-        return ApiResponse.<T>builder()
+    public static <T> ApiResult<T> error(ErrorCode errorCode, T data) {
+        return ApiResult.<T>builder()
                 .success(false)
                 .message(errorCode.getMessage())
                 .code(errorCode.name())
@@ -32,8 +32,8 @@ public class ApiResponse<T> {
                 .build();
     }
 
-    public static <T> ApiResponse<T> error(String message, T data) {
-        return ApiResponse.<T>builder()
+    public static <T> ApiResult<T> error(String message, T data) {
+        return ApiResult.<T>builder()
                 .success(false)
                 .message(message)
                 .data(data)

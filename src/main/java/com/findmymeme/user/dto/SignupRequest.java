@@ -14,7 +14,7 @@ import lombok.Getter;
 @Getter
 public class SignupRequest {
 
-    @Schema(description = "사용자 아이디 (5~20자, 영문 소문자, 숫자)", example = "meme_king", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "사용자 아이디 (5~20자, 영문 소문자, 숫자)", example = "memeking", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "{username.notblank}")
     @Size(min = 5, max = 20, message = "{username.size}")
     @Pattern(regexp = "^[a-z0-9]+$", message = "{username.pattern}")

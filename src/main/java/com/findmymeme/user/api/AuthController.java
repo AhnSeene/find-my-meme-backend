@@ -2,7 +2,7 @@ package com.findmymeme.user.api;
 
 import com.findmymeme.config.jwt.JwtProperties;
 import com.findmymeme.exception.ErrorCode;
-import com.findmymeme.response.ApiResponse;
+import com.findmymeme.response.ApiResult;
 import com.findmymeme.response.SuccessCode;
 import com.findmymeme.response.ResponseUtil;
 import com.findmymeme.user.dto.*;
@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
@@ -34,22 +35,22 @@ public class AuthController {
 
     @Operation(summary = "회원가입", description = "새로운 사용자를 등록합니다.")
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "회원가입 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "입력값 유효성 검사 실패", content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "아이디 또는 이메일 중복", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+            @ApiResponse(responseCode = "201", description = "회원가입 성공"),
+            @ApiResponse(responseCode = "400", description = "입력값 유효성 검사 실패", content = @Content(schema = @Schema(implementation = ApiResult.class))),
+            @ApiResponse(responseCode = "409", description = "아이디 또는 이메일 중복", content = @Content(schema = @Schema(implementation = ApiResult.class)))
     })
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<SignupResponse>> signup(@Valid @RequestBody SignupRequest signupRequest) {
+    public ResponseEntity<ApiResult<SignupResponse>> signup(@Valid @RequestBody SignupRequest signupRequest) {
         return ResponseUtil.success(userService.signup(signupRequest), SuccessCode.SIGNUP);
     }
 
     @Operation(summary = "로그인", description = "아이디와 비밀번호로 로그인하고 Access Token을 발급받습니다. Refresh Token은 HttpOnly 쿠키로 설정됩니다.")
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "로그인 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "아이디 또는 비밀번호 틀림", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+            @ApiResponse(responseCode = "200", description = "로그인 성공"),
+            @ApiResponse(responseCode = "401", description = "아이디 또는 비밀번호 틀림", content = @Content(schema = @Schema(implementation = ApiResult.class)))
     })
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(
+    public ResponseEntity<ApiResult<LoginResponse>> login(
             @Valid @RequestBody LoginRequest request, @Parameter(hidden = true) HttpServletResponse response
     ) {
 
@@ -68,11 +69,11 @@ public class AuthController {
 
     @Operation(summary = "토큰 재발급", description = "HttpOnly 쿠키로 전달된 Refresh Token을 사용하여 새로운 Access Token을 재발급받습니다.")
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "토큰 재발급 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "유효하지 않거나 만료된 리프레시 토큰", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+            @ApiResponse(responseCode = "201", description = "토큰 재발급 성공"),
+            @ApiResponse(responseCode = "401", description = "유효하지 않거나 만료된 리프레시 토큰", content = @Content(schema = @Schema(implementation = ApiResult.class)))
     })
     @PostMapping("/reissue")
-    public ResponseEntity<ApiResponse<ReissueResponse>> reissueToken(
+    public ResponseEntity<ApiResult<ReissueResponse>> reissueToken(
             @Parameter(hidden = true) @CookieValue(value = "refresh") String refreshToken, @Parameter(hidden = true) HttpServletResponse response
     ) {
         TokenDto tokenDto = userService.reissueToken(refreshToken);
@@ -83,10 +84,10 @@ public class AuthController {
 
     @Operation(summary = "로그아웃", description = "서버에 저장된 Refresh Token을 삭제하고, 클라이언트의 Refresh Token 쿠키를 만료시킵니다.")
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "로그아웃 성공")
+            @ApiResponse(responseCode = "200", description = "로그아웃 성공")
     })
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(
+    public ResponseEntity<ApiResult<Void>> logout(
             @Parameter(hidden = true) @CookieValue(value = "refresh") String refreshToken, @Parameter(hidden = true) HttpServletResponse response
     ) {
         userService.logout(refreshToken);
