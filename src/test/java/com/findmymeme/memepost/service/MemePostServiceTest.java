@@ -6,18 +6,20 @@ import com.findmymeme.file.repository.FileMetaRepository;
 import com.findmymeme.file.service.FileStorageService;
 import com.findmymeme.memepost.domain.Extension;
 import com.findmymeme.memepost.domain.MemePost;
+import com.findmymeme.memepost.domain.ProcessingStatus;
 import com.findmymeme.memepost.domain.Resolution;
-import com.findmymeme.memepost.dto.MemePostGetResponse;
-import com.findmymeme.memepost.dto.MemePostUploadRequest;
-import com.findmymeme.memepost.dto.MemePostUploadResponse;
+import com.findmymeme.memepost.dto.*;
 import com.findmymeme.memepost.repository.MemePostLikeRepository;
 import com.findmymeme.memepost.repository.MemePostRepository;
 import com.findmymeme.memepost.repository.MemePostTagRepository;
+import com.findmymeme.response.MySlice;
+import com.findmymeme.user.domain.Role;
 import com.findmymeme.user.domain.User;
 import com.findmymeme.user.repository.UserRepository;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -25,6 +27,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Arrays;
@@ -32,6 +38,7 @@ import java.util.List;
 import java.util.Optional;
 
 
+import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.given;
@@ -55,6 +62,10 @@ class MemePostServiceTest {
     private ApplicationEventPublisher eventPublisher;
     @Mock
     private MemePostTagService memePostTagService;
+    @Mock
+    private MemePostTagRepository memePostTagRepository;
+    @Mock
+    private MemePostLikeRepository memePostLikeRepository;
 
 
 
@@ -208,6 +219,79 @@ class MemePostServiceTest {
 
     @Test
     void getMemePostsByAuthorNameWithLikeInfo() {
+    }
+
+
+    @Nested
+    @DisplayName("내 게시글 목록 조회")
+    class GetMyMemePosts {
+
+        @Test
+        @DisplayName("성공: 처리중, 실패 상태를 포함한 모든 내 게시물이 최신순으로 반환된다")
+        void givenMyPostsWithVariousStatuses_whenGetMyMemePosts_thenReturnsAllPosts() {
+            // given
+            Long userId = 1L;
+            Pageable pageable = PageRequest.of(0, 10);
+
+            User mockUser = User.builder().username("testUser").role(Role.ROLE_USER).build();
+            ReflectionTestUtils.setField(mockUser, "id", userId);
+
+            List<Long> postIds = List.of(101L, 102L, 103L);
+            Slice<Long> postIdSlice = new SliceImpl<>(postIds, pageable, false);
+
+            MemePostSummaryProjection projectionReady = MemePostSummaryProjection.builder().id(101L).processingStatus(ProcessingStatus.READY).build();
+            MemePostSummaryProjection projectionProcessing = MemePostSummaryProjection.builder().id(102L).processingStatus(ProcessingStatus.PROCESSING).build();
+            MemePostSummaryProjection projectionFailed = MemePostSummaryProjection.builder().id(103L).processingStatus(ProcessingStatus.FAILED).build();
+            List<MemePostSummaryProjection> projections = List.of(projectionReady, projectionProcessing, projectionFailed);
+
+            given(userRepository.findById(userId)).willReturn(Optional.of(mockUser));
+            given(memePostRepository.findMyMemePostIdsByUserId(pageable, userId)).willReturn(postIdSlice);
+            given(memePostRepository.findPostDetailsByPostIds(postIds)).willReturn(projections);
+            given(memePostTagRepository.findTagNamesInPostIds(postIds)).willReturn(Collections.emptyList());
+            given(memePostLikeRepository.findLikedPostIds(postIds, userId)).willReturn(Collections.emptyList());
+
+            // when
+            MemePostUserSummaryResponse response = memePostService.getMyMemePosts(0, 10, userId);
+
+            // then
+            assertThat(response).isNotNull();
+            MySlice<MemePostSummaryResponse> resultSlice = response.getMemePosts();
+            assertThat(resultSlice.getContent()).hasSize(3);
+
+            assertThat(resultSlice.getContent())
+                    .extracting(MemePostSummaryResponse::getProcessingStatus)
+                    .containsExactlyInAnyOrder(
+                            ProcessingStatus.READY,
+                            ProcessingStatus.PROCESSING,
+                            ProcessingStatus.FAILED
+                    );
+
+            verify(memePostRepository, times(1)).findMyMemePostIdsByUserId(any(Pageable.class), eq(userId));
+            verify(memePostRepository, times(1)).findPostDetailsByPostIds(eq(postIds));
+        }
+
+        @Test
+        @DisplayName("성공: 게시물이 하나도 없을 경우 빈 목록을 반환한다")
+        void givenNoPosts_whenGetMyMemePosts_thenReturnsEmptyList() {
+            // given
+            Long userId = 1L;
+            Pageable pageable = PageRequest.of(0, 10);
+            Slice<Long> emptySlice = new SliceImpl<>(Collections.emptyList(), pageable, false);
+
+            User mockUser = User.builder().username("testUser").role(Role.ROLE_USER).build();
+            ReflectionTestUtils.setField(mockUser, "id", userId);
+
+            given(userRepository.findById(userId)).willReturn(Optional.of(mockUser));
+            given(memePostRepository.findMyMemePostIdsByUserId(pageable, userId)).willReturn(emptySlice);
+
+            // when
+            MemePostUserSummaryResponse response = memePostService.getMyMemePosts(0, 10, userId);
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getMemePosts().getContent()).isEmpty();
+            assertThat(response.getMemePosts().isHasNext()).isFalse();
+        }
     }
 
     @Test

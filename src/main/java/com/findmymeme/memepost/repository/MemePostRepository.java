@@ -28,15 +28,16 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long>, MemeP
     Optional<MemePost> findByIdWithTags(@Param("id") Long id);
 
 
-    @Query("SELECT m FROM MemePost m WHERE m.deletedAt IS NULL ORDER BY m.viewCount DESC")
+    @Query("SELECT m FROM MemePost m WHERE m.deletedAt IS NULL  AND m.processingStatus = 'READY' ORDER BY m.viewCount DESC")
     List<MemePost> findTopByViewCount(Pageable pageable);
 
-    @Query("SELECT m FROM MemePost m WHERE m.deletedAt IS NULL ORDER BY m.likeCount DESC")
+    @Query("SELECT m FROM MemePost m WHERE m.deletedAt IS NULL  AND m.processingStatus = 'READY' ORDER BY m.likeCount DESC")
     List<MemePost> findTopByLikeCount(Pageable pageable);
 
     @Query("SELECT mpl.memePost " +
             "FROM MemePostLike mpl " +
             "WHERE mpl.createdAt BETWEEN :startOfWeek AND :endOfWeek " +
+            "AND mpl.memePost.deletedAt IS NULL AND mpl.memePost.processingStatus = 'READY' " +
             "GROUP BY mpl.memePost " +
             "ORDER BY COUNT(mpl.id) DESC")
     List<MemePost> findTopByLikeCountWithinPeriod(@Param("startOfWeek") LocalDateTime startOfWeek, @Param("endOfWeek") LocalDateTime endOfWeek, Pageable pageable);

@@ -72,7 +72,7 @@ public class MemePost extends BaseEntity {
 
     @Builder
     public MemePost(String imageUrl, String extension, Resolution resolution, Long size, String originalFilename,
-                    User user, String thumbnail288Url, String thumbnail657Url) {
+                    User user, String thumbnail288Url, String thumbnail657Url, ProcessingStatus processingStatus) {
         this.imageUrl = imageUrl;
         this.extension = Extension.from(extension);
         this.mediaType = MediaType.fromExtension(extension);
@@ -82,7 +82,7 @@ public class MemePost extends BaseEntity {
         this.user = user;
         this.thumbnail288Url = thumbnail288Url;
         this.thumbnail657Url = thumbnail657Url;
-        this.processingStatus = ProcessingStatus.PROCESSING;
+        this.processingStatus = (processingStatus != null) ? processingStatus :ProcessingStatus.PROCESSING;
     }
 
     public void addMemePostTag(MemePostTag memePostTag) {
