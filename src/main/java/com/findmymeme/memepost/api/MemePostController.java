@@ -179,26 +179,19 @@ public class MemePostController {
         return ResponseUtil.success(responses, SuccessCode.MEME_POST_MY_LIST);
     }
 
-    @Operation(summary = "밈 게시물 랭킹 조회 (전체 기간)", description = "전체 기간 동안 '좋아요' 또는 '조회수'가 높은 순서로 랭킹을 조회합니다.")
-    @GetMapping("/ranks/all")
-    public ResponseEntity<ApiResult<List<MemePostSummaryResponse>>> getRankedPostsAllPeriod(
-            @RequestParam(name = "sort", defaultValue = "LIKE") Sort sort,
-            @RequestParam(name = "page", defaultValue = "1") int page,
-            @RequestParam(name = "size", defaultValue = "10") int size
+    @Operation(summary = "밈 게시물 랭킹 목록 조회", description = "전체 기간 또는 특정 기간(주간/월간) 동안의 인기 게시물 목록을 조회합니다.")
+    @GetMapping("/ranked")
+    public ResponseEntity<ApiResult<MySlice<MemePostSummaryResponse>>> getRankedPosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @Parameter(description = "기간 (전체: ALL, 주간: WEEKLY, 월간: MONTHLY)", example = "ALL")
+            @RequestParam(defaultValue = "ALL") Period period,
+            @Parameter(description = "정렬 기준 (좋아요: LIKE, 조회수: VIEW). ※ `period`가 `ALL`일 때만 유효합니다.", example = "LIKE")
+            @RequestParam(defaultValue = "LIKE") Sort sort,
+            @Parameter(hidden = true) @CurrentUserId(required = false) Optional<Long> userId
     ) {
-        List<MemePostSummaryResponse> responses = memePostService.getRankedPostsAllPeriod(page, size, sort);
-        return ResponseUtil.success(responses, SuccessCode.MEME_POST_LIST);
-    }
-
-    @Operation(summary = "밈 게시물 랭킹 조회 (기간별)", description = "주간/월간 등 특정 기간 동안 '좋아요'가 높은 순서로 랭킹을 조회합니다.")
-    @GetMapping("/ranks/period")
-    public ResponseEntity<ApiResult<List<MemePostSummaryResponse>>> getRankedPostsWithPeriod(
-            @RequestParam(name = "period") Period period,
-            @RequestParam(name = "page", defaultValue = "1") int page,
-            @RequestParam(name = "size", defaultValue = "10") int size
-    ) {
-        List<MemePostSummaryResponse> responses = memePostService.getRankedPostsWithPeriod(page, size, period);
-        return ResponseUtil.success(responses, SuccessCode.MEME_POST_LIST);
+        Slice<MemePostSummaryResponse> result = memePostService.getRankedPosts(page, size, period, sort, userId);
+        return ResponseUtil.success(new MySlice<>(result), SuccessCode.MEME_POST_LIST);
     }
 
 }
