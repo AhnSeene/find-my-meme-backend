@@ -66,9 +66,8 @@ aws:
   lambda:
     function-name: ${LAMBDA_FUNCTION_NAME}
 
-
 allowed:
-  origins: "https://findmymeme.site,https://www.findmymeme.site"
+  origins: ${ALLOWED_ORIGIN}
 
 admin:
   username: ${ADMIN_USERNAME}
