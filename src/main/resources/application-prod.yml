@@ -65,6 +65,8 @@ aws:
     presigned-duration: 5
   lambda:
     function-name: ${LAMBDA_FUNCTION_NAME}
+  sqs:
+    image-completion-queue: ${IMAGE_COMPLETION_QUEUE}
 
 allowed:
   origins: ${ALLOWED_ORIGIN}

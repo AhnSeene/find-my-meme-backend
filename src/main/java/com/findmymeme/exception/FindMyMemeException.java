@@ -11,6 +11,11 @@ public class FindMyMemeException extends RuntimeException {
         this.errorCode = errorCode;
     }
 
+    public FindMyMemeException(String message, ErrorCode errorCode) {
+        super(message);
+        this.errorCode = errorCode;
+    }
+
     public FindMyMemeException(String message, Throwable cause, ErrorCode errorCode) {
         super(message, cause);
         this.errorCode = errorCode;
