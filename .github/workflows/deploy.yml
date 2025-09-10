@@ -49,6 +49,7 @@ jobs:
             echo "ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}" >> .env
             echo "LAMBDA_FUNCTION_NAME=${{ secrets.LAMBDA_FUNCTION_NAME }}" >> .env
             echo "ALLOWED_ORIGIN=${{ secrets.ALLOWED_ORIGIN }}" >> .env
+            echo "IMAGE_COMPLETION_QUEUE=${{ secrets.IMAGE_COMPLETION_QUEUE }}" >> .env
 
             docker-compose down
             docker image prune -a -f
