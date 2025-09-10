@@ -9,6 +9,7 @@ import com.findmymeme.file.repository.FileMetaRepository;
 import com.findmymeme.file.service.FileStorageService;
 import com.findmymeme.memepost.domain.MemePost;
 import com.findmymeme.memepost.domain.MemePostSort;
+import com.findmymeme.memepost.domain.ProcessingStatus;
 import com.findmymeme.memepost.dto.*;
 import com.findmymeme.memepost.dto.Sort;
 import com.findmymeme.memepost.repository.MemePostLikeRepository;
@@ -68,6 +69,22 @@ public class MemePostService {
             log.warn("MemePost 저장 실패: userId={}, permanentImageUrl={}", userId, permanentImageUrl, e);
             throw e;
         }
+    }
+
+    @Transactional
+    public void updatePostAfterProcessing(Long memePostId, String thumbnail288Url, String thumbnail657Url) {
+        MemePost memePost = getMemePostById(memePostId);
+        memePost.updateThumbnails(thumbnail288Url, thumbnail657Url);
+        memePost.changeProcessingStatus(ProcessingStatus.READY);
+    }
+
+
+    @Transactional
+    public void updatePostToFailed(Long memePostId, String errorMessage) {
+        memePostRepository.findById(memePostId).ifPresent(memePost -> {
+            memePost.changeProcessingStatus(ProcessingStatus.FAILED);
+            log.warn("MemePost(id:{}) 상태를 FAILED로 변경합니다. 원인: {}", memePostId, errorMessage);
+        });
     }
 
     @Transactional

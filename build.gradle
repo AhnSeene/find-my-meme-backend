@@ -53,6 +53,7 @@ dependencies {
 	//AWS
 	implementation platform("io.awspring.cloud:spring-cloud-aws-dependencies:${springCloudAwsVersion}")
 	implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3'
+	implementation 'io.awspring.cloud:spring-cloud-aws-starter-sqs'
 	implementation 'software.amazon.awssdk:lambda'
 
 	//XML binding

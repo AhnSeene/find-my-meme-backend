@@ -16,7 +16,7 @@ services:
       - "4566:4566"            # 모든 서비스의 공용 엔드포인트
       - "4510-4559:4510-4559"  # 레거시 개별 서비스 엔드포인트 (필요시)
     environment:
-      - SERVICES=s3,lambda     # 사용할 AWS 서비스 목록을 지정합니다.
+      - SERVICES=s3,lambda,sqs     # 사용할 AWS 서비스 목록을 지정합니다.
       - DEBUG=1                # 디버그 로그 활성화
       - PERSISTENCE=1          # 데이터 영속성 활성화를 명시
       - DATA_DIR=/var/lib/localstack/data

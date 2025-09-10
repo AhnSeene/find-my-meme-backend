@@ -63,10 +63,11 @@ file:
 aws:
   s3:
     bucket: find-my-meme
-
     presigned-duration: 5
   lambda:
     function-name: local-image-resizer
+  sqs:
+    image-completion-queue: local-image-complete-queue
 
 default:
   profile-image-url: images/6372d43a-81e8-4464-9998-4a1c1cd1267e.jpg
