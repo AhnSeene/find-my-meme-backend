@@ -4,9 +4,6 @@ spring:
       mode: never
       encoding: UTF-8
   datasource:
-#    url: jdbc:mysql://localhost:3306/findmymeme_db
-#    username: meme
-#    password: 1234
     url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1 # H2 인메모리 DB 설정
     driver-class-name: org.h2.Driver
     username: sa
@@ -17,10 +14,8 @@ spring:
 
     properties:
       hibernate:
-#        dialect: org.hibernate.dialect.MySQL8Dialect
         dialect: org.hibernate.dialect.H2Dialect
         format_sql: true
-        #        default_batch_fetch_size: 1000
         use_sql_comments: true
     open-in-view: false
     defer-datasource-initialization: true
@@ -33,14 +28,8 @@ spring:
     encoding: UTF-8
   cloud:
     aws:
-      credentials:
-        access-key: test
-        secret-key: test
-      region:
-        static: ap-northeast-2
-      endpoint: http://localhost:4566
-      s3:
-        path-style-access-enabled: true
+      auto:
+        enabled: false
 
 logging:
   level:

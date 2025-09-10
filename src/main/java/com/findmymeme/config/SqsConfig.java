@@ -12,7 +12,7 @@ public class SqsConfig {
 
     @Bean
     public SqsMessageListenerContainerFactory<Object> defaultSqsListenerContainerFactory(
-            SqsAsyncClient sqsAsyncClient, ErrorHandler<Object> sqsErrorHandler) {
+            SqsAsyncClient sqsAsyncClient) {
 
         return SqsMessageListenerContainerFactory
                 .builder()
