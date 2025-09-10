@@ -7,5 +7,6 @@ import lombok.Getter;
 @AllArgsConstructor
 public class MemePostCreatedEvent {
     private final Long memePostId;
+    private final Long userId;
     private final String s3ObjectKey;
 }
