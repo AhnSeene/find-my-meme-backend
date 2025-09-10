@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -101,7 +102,7 @@ public class MemePostController {
     public ResponseEntity<ApiResult<MySlice<MemePostSummaryResponse>>> searchMemePosts(
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 당 게시물 수", example = "10") @RequestParam(defaultValue = "10") int size,
-            @Parameter(description = "검색 조건") @ModelAttribute MemePostSearchCond searchCond,
+            @ParameterObject @ModelAttribute MemePostSearchCond searchCond,
             @Parameter(hidden = true) @CurrentUserId(required = false) Optional<Long> userId
     ) {
         Slice<MemePostSummaryResponse> responses = memePostService.getMemePostsWithLikeInfo(
