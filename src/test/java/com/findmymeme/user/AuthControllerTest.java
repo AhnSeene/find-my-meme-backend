@@ -1,8 +1,11 @@
 package com.findmymeme.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.findmymeme.common.queryconfig.QueryCountInspector;
+import com.findmymeme.config.jwt.JwtProperties;
 import com.findmymeme.exception.ErrorCode;
 import com.findmymeme.response.SuccessCode;
+import com.findmymeme.user.api.AuthController;
 import com.findmymeme.user.dto.SignupRequest;
 import com.findmymeme.user.dto.SignupResponse;
 import com.findmymeme.user.service.UserService;
@@ -14,6 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -22,12 +26,13 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebMvcTest(AuthController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class AuthControllerTest {
 
     @Autowired
@@ -38,6 +43,12 @@ class AuthControllerTest {
 
     @MockBean
     private UserService userService;
+
+    @MockBean
+    private QueryCountInspector queryCountInspector;
+
+    @MockBean
+    private JwtProperties jwtProperties;
 
     @BeforeEach
     void setUp() {
@@ -61,10 +72,11 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/v1/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(signupRequest))
+                        .with(csrf())
                 )
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-//                .andExpect(jsonPath("$.message").value(SuccessCode.USER_SIGNUP.getMessage()))
+                .andExpect(jsonPath("$.message").value(SuccessCode.SIGNUP.getMessage()))
                 .andExpect(jsonPath("$.data.username").value("testuser"))
                 .andExpect(jsonPath("$.data.email").value("test@example.com"));
 
@@ -88,6 +100,7 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/v1/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(signupRequest))
+                        .with(csrf())
                 )
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
