@@ -62,7 +62,7 @@ public class MemePostService {
             MemePost savedMemePost = memePostRepository.save(memePost);
             List<String> tagNames = memePostTagService.applyTagsToPost(request.getTags(), savedMemePost);
 
-            eventPublisher.publishEvent(new MemePostCreatedEvent(savedMemePost.getId(), permanentImageUrl));
+            eventPublisher.publishEvent(new MemePostCreatedEvent(savedMemePost.getId(), userId, permanentImageUrl));
             return new MemePostUploadResponse(memePost.getImageUrl(), tagNames);
         }
         catch (Exception e) {
