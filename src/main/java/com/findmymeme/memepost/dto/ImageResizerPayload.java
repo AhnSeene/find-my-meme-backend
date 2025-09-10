@@ -7,5 +7,6 @@ import lombok.Getter;
 @AllArgsConstructor
 public class ImageResizerPayload {
     private Long memePostId;
+    private Long userId;
     private String s3ObjectKey;
 }
