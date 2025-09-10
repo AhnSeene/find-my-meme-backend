@@ -127,6 +127,11 @@ public class MemePost extends BaseEntity {
         this.processingStatus = status;
     }
 
+    public void updateThumbnails(String thumbnail288Url, String thumbnail657Url) {
+        this.thumbnail288Url = thumbnail288Url;
+        this.thumbnail657Url = thumbnail657Url;
+    }
+
     public void softDelete() {
         this.deletedAt = LocalDateTime.now();
     }

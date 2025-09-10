@@ -25,3 +25,6 @@ awslocal lambda create-function \
   --zip-file fileb:///tmp/lambda-dummy/dummy-handler.zip
 
 echo "Mock Lambda function 'local-image-resizer' created."
+
+awslocal sqs create-queue --queue-name local-image-complete-queue
+echo "SQS queue 'local-image-complete-queue' created."
