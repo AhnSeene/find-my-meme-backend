@@ -33,7 +33,7 @@ class LambdaServiceTest {
     @Test
     void invokeImageResizeLambda_Success() throws JsonProcessingException {
         // given
-        MemePostCreatedEvent event = new MemePostCreatedEvent(589820L, "images/memes/test.jpg");
+        MemePostCreatedEvent event = new MemePostCreatedEvent(589820L, 1L, "images/memes/test.jpg");
         String functionName = "ResizeImage-prod";
         String payloadJson = "{\"memePostId\":589820,\"s3ObjectKey\":\"images/memes/test.jpg\"}";
 
