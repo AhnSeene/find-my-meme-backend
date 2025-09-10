@@ -25,7 +25,7 @@ public class LambdaService {
     private final AwsLambdaProperties awsLambdaProperties;
 
     public void invokeImageResizeLambda(MemePostCreatedEvent event) {
-        ImageResizerPayload payload = new ImageResizerPayload(event.getMemePostId(), event.getS3ObjectKey());
+        ImageResizerPayload payload = new ImageResizerPayload(event.getMemePostId(), event.getUserId(), event.getS3ObjectKey());
         InvokeResponse response;
         try {
             SdkBytes payloadBytes = SdkBytes.fromUtf8String(objectMapper.writeValueAsString(payload));
