@@ -1,7 +1,10 @@
 package com.findmymeme;
 
 import com.findmymeme.memepost.service.ImageCompletionListener;
+import io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration;
+import io.awspring.cloud.autoconfigure.sqs.SqsAutoConfiguration;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import software.amazon.awssdk.services.lambda.LambdaClient;
@@ -10,6 +13,10 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 @SpringBootTest
+@EnableAutoConfiguration(exclude = {
+		SqsAutoConfiguration.class,
+		S3AutoConfiguration.class
+})
 class FindMyMemeApplicationTests {
 	@MockBean
 	private S3Client s3Client;
@@ -23,7 +30,6 @@ class FindMyMemeApplicationTests {
 	@MockBean
 	private SqsAsyncClient sqsAsyncClient;
 
-	// SqsAsyncClient에 의존하는 리스너도 Mocking 해주는 것이 안전합니다.
 	@MockBean
 	private ImageCompletionListener imageCompletionListener;
 	@Test
