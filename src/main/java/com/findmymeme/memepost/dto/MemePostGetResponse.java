@@ -1,5 +1,7 @@
 package com.findmymeme.memepost.dto;
 
+import com.findmymeme.memepost.domain.Extension;
+import com.findmymeme.memepost.domain.MediaType;
 import com.findmymeme.memepost.domain.MemePost;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -7,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Schema(description = "밈 게시물 상세 조회 응답 DTO")
@@ -16,6 +19,9 @@ public class MemePostGetResponse {
 
     @Schema(description = "게시물 ID", example = "1")
     private Long id;
+
+    @Schema(description = "렌더링에 필요한 모든 미디어 정보")
+    private MediaInfo mediaInfo;
     @Schema(description = "이미지의 전체 URL", example = "http://localhost:8080/images/memes/2023/10/asdf-qwer-1234.jpg")
     private String imageUrl;
     @Schema(description = "파일 확장자", example = "jpg")
@@ -49,24 +55,21 @@ public class MemePostGetResponse {
     @Schema(description = "게시물에 달린 태그 목록", example = "[\"유머\", \"동물\", \"강아지\"]")
     private List<String> tags;
 
+
     @Builder
-    public MemePostGetResponse(Long id, String imageUrl, String extension,
-                               int height, int weight, Long size, String originalFilename,
+    public MemePostGetResponse(Long id, MediaInfo mediaInfo, Long size,
                                Long likeCount, Long viewCount, Long downloadCount,
-                               String username, String userProfileImageUrl, boolean isLiked,
+                               String username, String userProfileImageUrl, boolean owner, boolean isLiked,
                                LocalDateTime createdAt, LocalDateTime updatedAt, List<String> tags) {
         this.id = id;
-        this.imageUrl = imageUrl;
-        this.extension = extension;
-        this.height = height;
-        this.weight = weight;
+        this.mediaInfo = mediaInfo;
         this.size = size;
-        this.originalFilename = originalFilename;
         this.likeCount = likeCount;
         this.viewCount = viewCount;
         this.downloadCount = downloadCount;
         this.username = username;
         this.userProfileImageUrl = userProfileImageUrl;
+        this.owner = owner;
         this.isLiked = isLiked;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -75,24 +78,33 @@ public class MemePostGetResponse {
     }
 
     public static MemePostGetResponse from(MemePost memePost, boolean isOwner, boolean isLiked, String fileBaseUrl) {
-        MemePostGetResponse response = new MemePostGetResponse();
-        response.id = memePost.getId();
-        response.imageUrl = fileBaseUrl + memePost.getImageUrl();
-        response.userProfileImageUrl = fileBaseUrl + memePost.getUser().getProfileImageUrl();
-        response.extension = memePost.getExtension().getValue();
-        response.height = memePost.getResolution().getHeight();
-        response.weight = memePost.getResolution().getWidth();
-        response.size = memePost.getSize();
-        response.originalFilename = memePost.getOriginalFilename();
-        response.likeCount = memePost.getLikeCount();
-        response.viewCount = memePost.getViewCount();
-        response.downloadCount = memePost.getDownloadCount();
-        response.username = memePost.getUser().getUsername();
-        response.owner = isOwner;
-        response.isLiked = isLiked;
-        response.createdAt = memePost.getCreatedAt();
-        response.updatedAt = memePost.getUpdatedAt();
-        response.tags = memePost.getTagNames();
-        return response;
+        return MemePostGetResponse.builder()
+                .id(memePost.getId())
+                .mediaInfo(MediaInfo.from(new MemePostAdapter(memePost), fileBaseUrl))
+                .size(memePost.getSize())
+                .likeCount(memePost.getLikeCount())
+                .viewCount(memePost.getViewCount())
+                .downloadCount(memePost.getDownloadCount())
+                .username(memePost.getUser().getUsername())
+                .userProfileImageUrl(fileBaseUrl + memePost.getUser().getProfileImageUrl())
+                .owner(isOwner)
+                .isLiked(isLiked)
+                .createdAt(memePost.getCreatedAt())
+                .updatedAt(memePost.getUpdatedAt())
+                .tags(memePost.getTagNames())
+                .build();
+    }
+
+    private static class MemePostAdapter implements MediaDataProvider {
+        private final MemePost memePost;
+
+        public MemePostAdapter(MemePost memePost) { this.memePost = memePost; }
+
+        @Override public String getImageUrl() { return memePost.getImageUrl(); }
+        @Override public String getThumbnail288Url() { return memePost.getThumbnail288Url(); }
+        @Override public String getThumbnail657Url() { return memePost.getThumbnail657Url(); }
+        @Override public MediaType getMediaType() { return memePost.getMediaType(); }
+        @Override public Extension getExtension() { return memePost.getExtension(); }
+        @Override public String getOriginalFilename() { return memePost.getOriginalFilename(); }
     }
 }

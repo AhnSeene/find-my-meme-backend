@@ -4,6 +4,7 @@ import com.findmymeme.file.domain.FileMeta;
 import com.findmymeme.file.domain.FileType;
 import com.findmymeme.file.repository.FileMetaRepository;
 import com.findmymeme.file.service.FileStorageService;
+import com.findmymeme.memepost.domain.MediaType;
 import com.findmymeme.memepost.domain.Extension;
 import com.findmymeme.memepost.domain.MemePost;
 import com.findmymeme.memepost.domain.ProcessingStatus;
@@ -33,6 +34,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -239,9 +241,30 @@ class MemePostServiceTest {
             List<Long> postIds = List.of(101L, 102L, 103L);
             Slice<Long> postIdSlice = new SliceImpl<>(postIds, pageable, false);
 
-            MemePostSummaryProjection projectionReady = MemePostSummaryProjection.builder().id(101L).processingStatus(ProcessingStatus.READY).build();
-            MemePostSummaryProjection projectionProcessing = MemePostSummaryProjection.builder().id(102L).processingStatus(ProcessingStatus.PROCESSING).build();
-            MemePostSummaryProjection projectionFailed = MemePostSummaryProjection.builder().id(103L).processingStatus(ProcessingStatus.FAILED).build();
+            MemePostSummaryProjection projectionReady = MemePostSummaryProjection.builder()
+                    .id(101L)
+                    .processingStatus(ProcessingStatus.READY)
+                    .mediaType(MediaType.STATIC)
+                    .extension(Extension.JPG)
+                    .imageUrl("test.jpg")
+                    .originalFilename("test.jpg")
+                    .build();
+            MemePostSummaryProjection projectionProcessing = MemePostSummaryProjection.builder()
+                    .id(102L)
+                    .processingStatus(ProcessingStatus.PROCESSING)
+                    .mediaType(MediaType.STATIC)
+                    .extension(Extension.PNG)
+                    .imageUrl("test.png")
+                    .originalFilename("test.png")
+                    .build();
+            MemePostSummaryProjection projectionFailed = MemePostSummaryProjection.builder()
+                    .id(103L)
+                    .processingStatus(ProcessingStatus.FAILED)
+                    .mediaType(MediaType.ANIMATED)
+                    .extension(Extension.GIF)
+                    .imageUrl("test.gif")
+                    .originalFilename("test.gif")
+                    .build();
             List<MemePostSummaryProjection> projections = List.of(projectionReady, projectionProcessing, projectionFailed);
 
             given(userRepository.findById(userId)).willReturn(Optional.of(mockUser));
@@ -294,11 +317,118 @@ class MemePostServiceTest {
         }
     }
 
-    @Test
-    void getRankedPostsAllPeriod() {
+    @Nested
+    @DisplayName("랭킹 게시글 목록 조회")
+    class GetRankedPosts {
+
+        @Test
+        @DisplayName("성공: '전체 기간', '좋아요순'으로 랭킹을 조회하면 올바른 Repository 메서드를 호출한다")
+        void givenAllPeriodAndLikeSort_whenGetRankedPosts_thenCallsCorrectRepositoryMethod() {
+            // given
+            int page = 0;
+            int size = 10;
+            Period period = Period.ALL;
+            Sort sort = Sort.LIKE;
+            Optional<Long> userId = Optional.of(1L);
+            Pageable pageable = PageRequest.of(page, size);
+
+            List<Long> postIds = List.of(10L, 20L, 30L);
+            Slice<Long> postIdSlice = new SliceImpl<>(postIds, pageable, false);
+
+            given(memePostRepository.findTopPostIdsByLikeCount(pageable)).willReturn(postIdSlice);
+            mockFetchDetails(postIds, userId);
+
+            // when
+            Slice<MemePostSummaryResponse> result = memePostService.getRankedPosts(page, size, period, sort, userId);
+
+            // then
+            verify(memePostRepository, times(1)).findTopPostIdsByLikeCount(pageable);
+            verify(memePostRepository, never()).findTopPostIdsByViewCount(any());
+            verify(memePostRepository, never()).findTopPostIdsByLikeCountWithinPeriod(any(), any(), any());
+
+            assertThat(result.getContent()).hasSize(3);
+            assertThat(result.getContent().get(0).getId()).isEqualTo(10L);
+        }
+
+        @Test
+        @DisplayName("성공: '전체 기간', '조회수순'으로 랭킹을 조회하면 올바른 Repository 메서드를 호출한다")
+        void givenAllPeriodAndViewSort_whenGetRankedPosts_thenCallsCorrectRepositoryMethod() {
+            // given
+            int page = 0;
+            int size = 10;
+            Period period = Period.ALL;
+            Sort sort = Sort.VIEW;
+            Optional<Long> userId = Optional.of(1L);
+            Pageable pageable = PageRequest.of(page, size);
+
+            List<Long> postIds = List.of(15L, 25L, 35L);
+            Slice<Long> postIdSlice = new SliceImpl<>(postIds, pageable, false);
+
+            given(memePostRepository.findTopPostIdsByViewCount(pageable)).willReturn(postIdSlice);
+            mockFetchDetails(postIds, userId);
+
+            // when
+            Slice<MemePostSummaryResponse> result = memePostService.getRankedPosts(page, size, period, sort, userId);
+
+            // then
+            verify(memePostRepository, times(1)).findTopPostIdsByViewCount(pageable);
+            verify(memePostRepository, never()).findTopPostIdsByLikeCount(any());
+            verify(memePostRepository, never()).findTopPostIdsByLikeCountWithinPeriod(any(), any(), any());
+
+            assertThat(result.getContent()).hasSize(3);
+            assertThat(result.getContent().get(0).getId()).isEqualTo(15L);
+        }
+
+        @Test
+        @DisplayName("성공: '주간' 랭킹을 조회하면 올바른 Repository 메서드를 호출한다")
+        void givenWeeklyPeriod_whenGetRankedPosts_thenCallsCorrectRepositoryMethod() {
+            // given
+            int page = 0;
+            int size = 10;
+            Period period = Period.WEEK;
+            Sort sort = Sort.LIKE; // 기간이 정해지면 sort는 무시됨
+            Optional<Long> userId = Optional.of(1L);
+            Pageable pageable = PageRequest.of(page, size);
+
+            List<Long> postIds = List.of(11L, 22L, 33L);
+            Slice<Long> postIdSlice = new SliceImpl<>(postIds, pageable, false);
+
+            given(memePostRepository.findTopPostIdsByLikeCountWithinPeriod(any(LocalDateTime.class), any(LocalDateTime.class), eq(pageable)))
+                    .willReturn(postIdSlice);
+            mockFetchDetails(postIds, userId);
+
+            // when
+            Slice<MemePostSummaryResponse> result = memePostService.getRankedPosts(page, size, period, sort, userId);
+
+            // then
+            verify(memePostRepository, times(1)).findTopPostIdsByLikeCountWithinPeriod(any(LocalDateTime.class), any(LocalDateTime.class), eq(pageable));
+            verify(memePostRepository, never()).findTopPostIdsByLikeCount(any());
+            verify(memePostRepository, never()).findTopPostIdsByViewCount(any());
+
+            assertThat(result.getContent()).hasSize(3);
+            assertThat(result.getContent().get(0).getId()).isEqualTo(11L);
+        }
     }
 
-    @Test
-    void getRankedPostsWithPeriod() {
+
+    private void mockFetchDetails(List<Long> postIds, Optional<Long> userId) {
+        if (postIds.isEmpty()) {
+            return;
+        }
+        List<MemePostSummaryProjection> projections = postIds.stream()
+                .map(id -> MemePostSummaryProjection.builder()
+                        .id(id)
+                        .mediaType(MediaType.STATIC)
+                        .extension(Extension.JPG)
+                        .imageUrl("test.jpg")
+                        .originalFilename("test.jpg")
+                        .build())
+                .toList();
+
+        given(memePostRepository.findPostDetailsByPostIds(postIds)).willReturn(projections);
+        given(memePostTagRepository.findTagNamesInPostIds(postIds)).willReturn(Collections.emptyList());
+        if (userId.isPresent()) {
+            given(memePostLikeRepository.findLikedPostIds(postIds, userId.get())).willReturn(Collections.emptyList());
+        }
     }
 }
