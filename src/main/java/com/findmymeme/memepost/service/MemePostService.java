@@ -15,6 +15,8 @@ import com.findmymeme.memepost.dto.Sort;
 import com.findmymeme.memepost.repository.MemePostLikeRepository;
 import com.findmymeme.memepost.repository.MemePostRepository;
 import com.findmymeme.memepost.dto.MemePostTagProjection;
+import com.findmymeme.notification.domain.MemePostUploadFailEvent;
+import com.findmymeme.notification.domain.MemePostUploadSuccessEvent;
 import com.findmymeme.response.MySlice;
 import com.findmymeme.memepost.repository.MemePostTagRepository;
 import com.findmymeme.user.domain.User;
@@ -72,19 +74,22 @@ public class MemePostService {
     }
 
     @Transactional
-    public void updatePostAfterProcessing(Long memePostId, String thumbnail288Url, String thumbnail657Url) {
+    public void updatePostAfterProcessing(Long memePostId, Long userId, String thumbnail288Url, String thumbnail657Url) {
         MemePost memePost = getMemePostById(memePostId);
         memePost.updateThumbnails(thumbnail288Url, thumbnail657Url);
         memePost.changeProcessingStatus(ProcessingStatus.READY);
+        log.info("Create MemePostUploadSuccessEvent event memePostId: {} userId : {}", memePostId, userId);
+        eventPublisher.publishEvent(new MemePostUploadSuccessEvent(userId, memePostId));
     }
 
 
     @Transactional
-    public void updatePostToFailed(Long memePostId, String errorMessage) {
+    public void updatePostToFailed(Long memePostId, Long userId, String errorMessage) {
         memePostRepository.findById(memePostId).ifPresent(memePost -> {
             memePost.changeProcessingStatus(ProcessingStatus.FAILED);
             log.warn("MemePost(id:{}) 상태를 FAILED로 변경합니다. 원인: {}", memePostId, errorMessage);
         });
+        eventPublisher.publishEvent(new MemePostUploadFailEvent(userId, memePostId));
     }
 
     @Transactional
@@ -127,27 +132,7 @@ public class MemePostService {
         Pageable pageable = PageRequest.of(page, size, sort.toSort());
 
         Slice<Long> postIdSlice = memePostRepository.searchByCond(pageable, searchCond);
-        List<Long> postIds = postIdSlice.getContent();
-
-        if (postIds.isEmpty()) {
-            return new SliceImpl<>(Collections.emptyList(), pageable, postIdSlice.hasNext());
-        }
-
-        List<MemePostSummaryProjection> postDetails = memePostRepository.findPostDetailsByPostIds(postIds);
-        Map<Long, List<String>> tagsGroupedByPostId = findTagNamesGroupedByPostIds(postIds);
-        Set<Long> likedPostIds = findLikedPostIds(postIds, userId);
-
-        Map<Long, MemePostSummaryProjection> postDetailsMap = postDetails.stream()
-                .collect(Collectors.toMap(MemePostSummaryProjection::getId, Function.identity()));
-
-        List<MemePostSummaryProjection> sortedPostDetails = postIds.stream()
-                .map(postDetailsMap::get)
-                .filter(Objects::nonNull)
-                .toList();
-
-        List<MemePostSummaryResponse> memePostSummaries = mapToSummaryResponse(sortedPostDetails, likedPostIds, tagsGroupedByPostId);
-
-        return new SliceImpl<>(memePostSummaries, pageable, postIdSlice.hasNext());
+        return fetchDetailsAndMapToResponse(postIdSlice, pageable, userId);
     }
 
     public List<MemePostSummaryResponse> getRecommendedPostsWithLikeInfo(Long memePostId, int size, Optional<Long> userId) {
@@ -202,13 +187,59 @@ public class MemePostService {
         UserProfileResponse userProfileResponse = UserProfileResponse.from(author, fileBaseUrl);
         Pageable pageable = PageRequest.of(page, size);
         Slice<Long> postIdSlice = memePostRepository.findMemePostIdsByUsername(pageable, authorName);
-        List<Long> postIds = postIdSlice.getContent();
 
+        Slice<MemePostSummaryResponse> memePostSummaries = fetchDetailsAndMapToResponse(postIdSlice, pageable, userId);
+
+        return MemePostUserSummaryResponse.builder()
+                .user(userProfileResponse)
+                .memePosts(new MySlice<>(memePostSummaries))
+                .build();
+    }
+
+    public MemePostUserSummaryResponse getMyMemePosts(int page, int size, Long userId) {
+        User user = getUserById(userId);
+        UserProfileResponse userProfileResponse = UserProfileResponse.from(user, fileBaseUrl);
+        Pageable pageable = PageRequest.of(page, size);
+        Slice<Long> postIdSlice = memePostRepository.findMyMemePostIdsByUserId(pageable, userId);
+
+        Slice<MemePostSummaryResponse> memePostSummaries = fetchDetailsAndMapToResponse(postIdSlice, pageable, Optional.of(userId));
+
+        return MemePostUserSummaryResponse.builder()
+                .user(userProfileResponse)
+                .memePosts(new MySlice<>(memePostSummaries))
+                .build();
+    }
+
+    public Slice<MemePostSummaryResponse> getRankedPosts(int page, int size, Period period, Sort sort, Optional<Long> userId) {
+        Pageable pageable = PageRequest.of(page, size);
+        Slice<Long> postIdSlice;
+
+        if (period == Period.ALL) {
+            postIdSlice = getRankedPostIdsForAllPeriod(pageable, sort);
+        } else {
+            postIdSlice = getRankedPostIdsWithPeriod(pageable, period);
+        }
+
+        return fetchDetailsAndMapToResponse(postIdSlice, pageable, userId);
+    }
+
+    private Slice<Long> getRankedPostIdsForAllPeriod(Pageable pageable, Sort sort) {
+        return switch (sort) {
+            case LIKE -> memePostRepository.findTopPostIdsByLikeCount(pageable);
+            case VIEW -> memePostRepository.findTopPostIdsByViewCount(pageable);
+        };
+    }
+
+    private Slice<Long> getRankedPostIdsWithPeriod(Pageable pageable, Period period) {
+        LocalDateTime startDateTime = period.getStartDateTime();
+        LocalDateTime endDateTime = period.getEndDateTime();
+        return memePostRepository.findTopPostIdsByLikeCountWithinPeriod(startDateTime, endDateTime, pageable);
+    }
+
+    private Slice<MemePostSummaryResponse> fetchDetailsAndMapToResponse(Slice<Long> postIdSlice, Pageable pageable, Optional<Long> userId) {
+        List<Long> postIds = postIdSlice.getContent();
         if (postIds.isEmpty()) {
-            return MemePostUserSummaryResponse.builder()
-                    .user(userProfileResponse)
-                    .memePosts(new MySlice<>(new SliceImpl<>(Collections.emptyList(), pageable, false)))
-                    .build();
+            return new SliceImpl<>(Collections.emptyList(), pageable, postIdSlice.hasNext());
         }
 
         List<MemePostSummaryProjection> postDetails = memePostRepository.findPostDetailsByPostIds(postIds);
@@ -224,69 +255,7 @@ public class MemePostService {
                 .toList();
 
         List<MemePostSummaryResponse> memePostSummaries = mapToSummaryResponse(sortedPostDetails, likedPostIds, tagsGroupedByPostId);
-        return MemePostUserSummaryResponse.builder()
-                .user(userProfileResponse)
-                .memePosts(new MySlice<>(new SliceImpl<>(memePostSummaries, pageable, postIdSlice.hasNext())))
-                .build();
-    }
-
-    public MemePostUserSummaryResponse getMyMemePosts(int page, int size, Long userId) {
-        User user = getUserById(userId);
-        UserProfileResponse userProfileResponse = UserProfileResponse.from(user, fileBaseUrl);
-        Pageable pageable = PageRequest.of(page, size);
-
-        Slice<Long> postIdSlice = memePostRepository.findMyMemePostIdsByUserId(pageable, userId);
-        List<Long> postIds = postIdSlice.getContent();
-
-        if (postIds.isEmpty()) {
-            return MemePostUserSummaryResponse.builder()
-                    .user(userProfileResponse)
-                    .memePosts(new MySlice<>(new SliceImpl<>(Collections.emptyList(), pageable, false)))
-                    .build();
-        }
-
-        List<MemePostSummaryProjection> postDetails = memePostRepository.findPostDetailsByPostIds(postIds);
-        Map<Long, List<String>> tagsGroupedByPostId = findTagNamesGroupedByPostIds(postIds);
-        Set<Long> likedPostIds = findLikedPostIds(postIds, Optional.of(userId));
-
-        Map<Long, MemePostSummaryProjection> postDetailsMap = postDetails.stream()
-                .collect(Collectors.toMap(MemePostSummaryProjection::getId, Function.identity()));
-
-        List<MemePostSummaryProjection> sortedPostDetails = postIds.stream()
-                .map(postDetailsMap::get)
-                .filter(Objects::nonNull)
-                .toList();
-
-        List<MemePostSummaryResponse> memePostSummaries = mapToSummaryResponse(sortedPostDetails, likedPostIds, tagsGroupedByPostId);
-        return MemePostUserSummaryResponse.builder()
-                .user(userProfileResponse)
-                .memePosts(new MySlice<>(new SliceImpl<>(memePostSummaries, pageable, postIdSlice.hasNext())))
-                .build();
-    }
-
-    public List<MemePostSummaryResponse> getRankedPostsAllPeriod(int page, int size, Sort sort) {
-        Pageable pageable = PageRequest.of(page, size);
-        List<MemePost> memePosts = null;
-        if (sort.equals(Sort.LIKE)) {
-            memePosts = memePostRepository.findTopByLikeCount(pageable);
-        }
-        if (sort.equals(Sort.VIEW)) {
-            memePosts = memePostRepository.findTopByViewCount(pageable);
-        }
-        return memePosts.stream()
-                .map(post -> MemePostSummaryResponse.from(post, false, getTagNames(post.getId()), fileBaseUrl))
-                .toList();
-    }
-
-    public List<MemePostSummaryResponse> getRankedPostsWithPeriod(int page, int size, Period period) {
-        LocalDateTime startDateTime = period.getStartDateTime();
-        LocalDateTime endDateTime = period.getEndDateTime();
-        Pageable pageable = PageRequest.of(page, size);
-        List<MemePost> memePosts = memePostRepository.findTopByLikeCountWithinPeriod(startDateTime, endDateTime, pageable);
-
-        return memePosts.stream()
-                .map(post -> MemePostSummaryResponse.from(post, false, getTagNames(post.getId()), fileBaseUrl))
-                .toList();
+        return new SliceImpl<>(memePostSummaries, pageable, postIdSlice.hasNext());
     }
 
     private List<MemePostSummaryResponse> mapToSummaryResponse(

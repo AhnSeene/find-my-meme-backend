@@ -13,7 +13,7 @@
 
   
          
-🔗 **웹사이트:** [https://findmymeme.site](https://findmymeme.site)  
+🔗 **웹사이트:** [https://findmymeme.online](https://findmymeme.online)  
 ### 🚀 주요 기능 
 **FindMyMeme**는 밈을 업로드하고 검색하며, 찾고 싶은 밈을 찾는 질문 글을 올릴 수 있습니다.
 
@@ -27,7 +27,7 @@
 - **AWS S3 + CloudFront** - 이미지 저장 및 전송 최적화
 
 ### **📌 Frontend (React)**
-- **React.js + Vite** - 빠른 개발 환경
+- **React.js** - 빠른 개발 환경
 - **React Query** - API 데이터 캐싱
 - **Axios** - HTTP 요청 처리
 

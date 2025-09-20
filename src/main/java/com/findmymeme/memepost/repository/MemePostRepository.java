@@ -28,19 +28,20 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long>, MemeP
     Optional<MemePost> findByIdWithTags(@Param("id") Long id);
 
 
-    @Query("SELECT m FROM MemePost m WHERE m.deletedAt IS NULL  AND m.processingStatus = 'READY' ORDER BY m.viewCount DESC")
-    List<MemePost> findTopByViewCount(Pageable pageable);
+    @Query("SELECT m.id FROM MemePost m WHERE m.deletedAt IS NULL AND m.processingStatus = 'READY' ORDER BY m.viewCount DESC")
+    Slice<Long> findTopPostIdsByViewCount(Pageable pageable);
 
-    @Query("SELECT m FROM MemePost m WHERE m.deletedAt IS NULL  AND m.processingStatus = 'READY' ORDER BY m.likeCount DESC")
-    List<MemePost> findTopByLikeCount(Pageable pageable);
+    @Query("SELECT m.id FROM MemePost m WHERE m.deletedAt IS NULL AND m.processingStatus = 'READY' ORDER BY m.likeCount DESC")
+    Slice<Long> findTopPostIdsByLikeCount(Pageable pageable);
 
-    @Query("SELECT mpl.memePost " +
+
+    @Query("SELECT mpl.memePost.id " +
             "FROM MemePostLike mpl " +
-            "WHERE mpl.createdAt BETWEEN :startOfWeek AND :endOfWeek " +
+            "WHERE mpl.createdAt BETWEEN :startDateTime AND :endDateTime " +
             "AND mpl.memePost.deletedAt IS NULL AND mpl.memePost.processingStatus = 'READY' " +
-            "GROUP BY mpl.memePost " +
+            "GROUP BY mpl.memePost.id " +
             "ORDER BY COUNT(mpl.id) DESC")
-    List<MemePost> findTopByLikeCountWithinPeriod(@Param("startOfWeek") LocalDateTime startOfWeek, @Param("endOfWeek") LocalDateTime endOfWeek, Pageable pageable);
+    Slice<Long> findTopPostIdsByLikeCountWithinPeriod(@Param("startDateTime") LocalDateTime startDateTime, @Param("endDateTime") LocalDateTime endDateTime, Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT mp FROM MemePost mp WHERE mp.id = :id AND mp.deletedAt IS NULL")
