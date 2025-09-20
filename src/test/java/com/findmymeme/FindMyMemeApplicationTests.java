@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import software.amazon.awssdk.services.lambda.LambdaClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -32,6 +33,9 @@ class FindMyMemeApplicationTests {
 
 	@MockBean
 	private ImageCompletionListener imageCompletionListener;
+
+	@MockBean
+	private RedisMessageListenerContainer redisContainer;
 	@Test
 	void contextLoads() {
 	}
