@@ -15,6 +15,8 @@ import com.findmymeme.memepost.dto.Sort;
 import com.findmymeme.memepost.repository.MemePostLikeRepository;
 import com.findmymeme.memepost.repository.MemePostRepository;
 import com.findmymeme.memepost.dto.MemePostTagProjection;
+import com.findmymeme.notification.domain.MemePostUploadFailEvent;
+import com.findmymeme.notification.domain.MemePostUploadSuccessEvent;
 import com.findmymeme.response.MySlice;
 import com.findmymeme.memepost.repository.MemePostTagRepository;
 import com.findmymeme.user.domain.User;
@@ -72,19 +74,22 @@ public class MemePostService {
     }
 
     @Transactional
-    public void updatePostAfterProcessing(Long memePostId, String thumbnail288Url, String thumbnail657Url) {
+    public void updatePostAfterProcessing(Long memePostId, Long userId, String thumbnail288Url, String thumbnail657Url) {
         MemePost memePost = getMemePostById(memePostId);
         memePost.updateThumbnails(thumbnail288Url, thumbnail657Url);
         memePost.changeProcessingStatus(ProcessingStatus.READY);
+        log.info("Create MemePostUploadSuccessEvent event memePostId: {} userId : {}", memePostId, userId);
+        eventPublisher.publishEvent(new MemePostUploadSuccessEvent(userId, memePostId));
     }
 
 
     @Transactional
-    public void updatePostToFailed(Long memePostId, String errorMessage) {
+    public void updatePostToFailed(Long memePostId, Long userId, String errorMessage) {
         memePostRepository.findById(memePostId).ifPresent(memePost -> {
             memePost.changeProcessingStatus(ProcessingStatus.FAILED);
             log.warn("MemePost(id:{}) 상태를 FAILED로 변경합니다. 원인: {}", memePostId, errorMessage);
         });
+        eventPublisher.publishEvent(new MemePostUploadFailEvent(userId, memePostId));
     }
 
     @Transactional
