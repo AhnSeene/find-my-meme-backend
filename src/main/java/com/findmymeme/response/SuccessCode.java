@@ -45,8 +45,9 @@ public enum SuccessCode {
     MEME_POST_AUTHOR_LIST(HttpStatus.OK),
     MEME_POST_LIKE(HttpStatus.OK),
     MEME_POST_DELETE(HttpStatus.OK),
-    MEME_POST_MY_LIST(HttpStatus.OK);
+    MEME_POST_MY_LIST(HttpStatus.OK),
 
+    NOTIFICATION_LIST(HttpStatus.OK);
     private final HttpStatus status;
     private static final ResourceBundle messages = ResourceBundle.getBundle("messages");
 

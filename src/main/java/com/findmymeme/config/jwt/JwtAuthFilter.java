@@ -29,6 +29,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
+    private static final String SSE_TOKEN_PARAM = "token";
+    private static final String SSE_CONNECTION_URI = "/api/v1/sse/notifications";
 
     private final JwtTokenProvider jwtTokenProvider;
     private final ObjectMapper objectMapper;
@@ -43,6 +45,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
+
+        if (request.getMethod().equalsIgnoreCase("OPTIONS")) {
+            chain.doFilter(request, response);
+            return;
+        }
 
         String jwt = resolveToken(request);
 
@@ -76,6 +83,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)) {
             return bearerToken.substring(BEARER_PREFIX.length());
+        }
+        if (request.getRequestURI().equals(SSE_CONNECTION_URI)) {
+            String queryToken = request.getParameter(SSE_TOKEN_PARAM);
+            if (StringUtils.hasText(queryToken)) {
+                return queryToken;
+            }
         }
         return null;
     }

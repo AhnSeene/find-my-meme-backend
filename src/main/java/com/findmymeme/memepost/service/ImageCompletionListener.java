@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,6 +27,7 @@ public class ImageCompletionListener {
     private final MemePostService memePostService;
     private final Validator validator;
 
+    @Transactional
     @SqsListener("${aws.sqs.image-completion-queue}")
     public void handleImageCompletion(@Payload ImageCompletionDto dto, Acknowledgement ack) {
         log.info("SQS message received. postId={}, status={}", dto.getMemePostId(), dto.getStatus());
@@ -58,16 +60,12 @@ public class ImageCompletionListener {
     }
 
     private void processSuccess(ImageCompletionDto dto) {
-        memePostService.updatePostAfterProcessing(
-                dto.getMemePostId(),
-                dto.getThumbnail288Url(),
-                dto.getThumbnail657Url()
-        );
+        memePostService.updatePostAfterProcessing(dto.getMemePostId(), dto.getUserId(), dto.getThumbnail288Url(), dto.getThumbnail657Url());
         log.info("Post updated successfully. postId={}", dto.getMemePostId());
     }
 
     private void processFailure(ImageCompletionDto dto, String errorMessage) {
-        memePostService.updatePostToFailed(dto.getMemePostId(), errorMessage);
+        memePostService.updatePostToFailed(dto.getMemePostId(), dto.getUserId(), errorMessage);
         log.warn("Failure status message processed. postId={}, reason={}", dto.getMemePostId(), errorMessage);
     }
 
@@ -78,7 +76,7 @@ public class ImageCompletionListener {
             log.warn("Non-retryable error. Message will be acknowledged. postId={}, reason={}",
                     dto.getMemePostId(), rootCause.getMessage());
             if (dto.getMemePostId() != null) {
-                memePostService.updatePostToFailed(dto.getMemePostId(), rootCause.getMessage());
+                memePostService.updatePostToFailed(dto.getMemePostId(), dto.getUserId(), rootCause.getMessage());
             }
             ack.acknowledge();
         } else {
