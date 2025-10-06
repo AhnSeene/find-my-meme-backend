@@ -7,6 +7,7 @@ import com.findmymeme.file.domain.FileMeta;
 import com.findmymeme.file.domain.FileType;
 import com.findmymeme.file.repository.FileMetaRepository;
 import com.findmymeme.file.service.FileStorageService;
+import com.findmymeme.memepost.domain.InvocationSource;
 import com.findmymeme.memepost.domain.MemePost;
 import com.findmymeme.memepost.domain.MemePostSort;
 import com.findmymeme.memepost.domain.ProcessingStatus;
@@ -74,12 +75,19 @@ public class MemePostService {
     }
 
     @Transactional
-    public void updatePostAfterProcessing(Long memePostId, Long userId, String thumbnail288Url, String thumbnail657Url) {
-        MemePost memePost = getMemePostById(memePostId);
-        memePost.updateThumbnails(thumbnail288Url, thumbnail657Url);
+    public void updatePostAfterProcessing(ImageCompletionDto dto) {
+        MemePost memePost = getMemePostById(dto.getMemePostId());
+        memePost.updateThumbnails(dto.getThumbnail288Url(), dto.getThumbnail657Url());
         memePost.changeProcessingStatus(ProcessingStatus.READY);
-        log.info("Create MemePostUploadSuccessEvent event memePostId: {} userId : {}", memePostId, userId);
-        eventPublisher.publishEvent(new MemePostUploadSuccessEvent(userId, memePostId));
+
+        log.info("Post thumbnail updated. postId={}, invocationSource={}", dto.getMemePostId(), dto.getInvocationSource());
+
+        if (dto.getInvocationSource() == null || dto.getInvocationSource() == InvocationSource.USER_UPLOAD) {
+            log.info("Publishing upload success notification for postId: {}", dto.getMemePostId());
+            eventPublisher.publishEvent(new MemePostUploadSuccessEvent(dto.getUserId(), dto.getMemePostId()));
+        } else {
+            log.info("Skipping notification for postId: {} as invocationSource is '{}'", dto.getMemePostId(), dto.getInvocationSource());
+        }
     }
 
 
