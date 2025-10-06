@@ -1,5 +1,6 @@
 package com.findmymeme.memepost.dto;
 
+import com.findmymeme.memepost.domain.InvocationSource;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -26,4 +27,5 @@ public class ImageCompletionDto {
     @NotBlank(message = "thumbnail657Url은 비어있을 수 없습니다.")
     private String thumbnail657Url;
     private String status;
+    private InvocationSource invocationSource;
 }

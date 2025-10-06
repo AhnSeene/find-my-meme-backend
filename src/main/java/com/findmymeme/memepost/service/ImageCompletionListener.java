@@ -60,7 +60,7 @@ public class ImageCompletionListener {
     }
 
     private void processSuccess(ImageCompletionDto dto) {
-        memePostService.updatePostAfterProcessing(dto.getMemePostId(), dto.getUserId(), dto.getThumbnail288Url(), dto.getThumbnail657Url());
+        memePostService.updatePostAfterProcessing(dto);
         log.info("Post updated successfully. postId={}", dto.getMemePostId());
     }
 
