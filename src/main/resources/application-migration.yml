@@ -1,0 +1,5 @@
+spring:
+  # 이 설정이 핵심입니다. 웹 서버(Tomcat)를 실행하지 않고,
+  # CommandLineRunner 실행 후 애플리케이션을 바로 종료시킵니다.
+  main:
+    web-application-type: none
