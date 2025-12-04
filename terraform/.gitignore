@@ -1,0 +1,14 @@
+# .gitignore
+.terraform/
+.terraform.lock.hcl
+
+# 상태 파일
+*.tfstate
+*.tfstate.backup
+
+*.tfvars
+*.auto.tfvars
+
+crash.log
+
+zip/
