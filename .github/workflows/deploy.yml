@@ -32,7 +32,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Push Docker image
-        uses: docker/build-push-action@
+        uses: docker/build-push-action@v5
         with:
           context: .
           push: true
