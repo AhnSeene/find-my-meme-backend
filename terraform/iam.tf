@@ -23,8 +23,15 @@ resource "aws_iam_policy" "lambda_custom_policy" {
     Statement = [
       {
         Effect = "Allow"
-        Action = ["s3:PutObject", "s3:GetObject"]
-        Resource = "${aws_s3_bucket.image_bucket.arn}/*"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          aws_s3_bucket.image_bucket.arn,
+          "${aws_s3_bucket.image_bucket.arn}/*"
+        ]
       },
       {
         Effect = "Allow"
