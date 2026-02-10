@@ -10,6 +10,9 @@ resource "aws_instance" "web" {
   key_name = var.ec2_key_name
 
   tags = { Name = "${var.project_name}-server" }
+  lifecycle {
+    ignore_changes = [ami]
+  }
 }
 
 resource "aws_eip" "web_eip" {

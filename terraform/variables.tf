@@ -58,10 +58,10 @@ variable "ec2_instance_type" {
   default = "t3.micro"
 }
 
-variable "my_home_ip" {
-  description = "my ip for ssh access"
-  type = string
-}
+# variable "my_home_ip" {
+#   description = "my ip for ssh access"
+#   type = string
+# }
 
 variable "ec2_key_name" {
   description = "AWS 콘솔에서 미리 만들어둔 EC2 키 페어 이름"
