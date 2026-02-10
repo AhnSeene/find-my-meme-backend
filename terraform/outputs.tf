@@ -33,3 +33,13 @@ output "redis_endpoint" {
   description = "Redis Host 주소"
   value       = aws_elasticache_replication_group.redis.primary_endpoint_address
 }
+
+output "sqs_image_queue_url" {
+  description = "이미지 처리 완료 SQS URL (IMAGE_COMPLETION_QUEUE)"
+  value       = aws_sqs_queue.image_queue.url
+}
+
+output "s3_image_bucket_name" {
+  description = "이미지 S3 버킷명 (AWS_BUCKET)"
+  value       = aws_s3_bucket.image_bucket.id
+}
