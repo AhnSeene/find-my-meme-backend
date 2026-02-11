@@ -45,3 +45,13 @@ resource "aws_route_table_association" "public" {
   subnet_id = aws_subnet.public_subnet[count.index].id
   route_table_id = aws_route_table.public.id
 }
+
+# S3 Gateway Endpoint (무료, VPC 내부 경로로 S3 접근)
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id       = aws_vpc.main.id
+  service_name = "com.amazonaws.${var.aws_seoul_region}.s3"
+
+  route_table_ids = [aws_route_table.public.id]
+
+  tags = { Name = "${var.project_name}-s3-endpoint" }
+}
