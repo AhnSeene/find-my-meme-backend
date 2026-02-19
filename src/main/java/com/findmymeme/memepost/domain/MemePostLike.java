@@ -1,7 +1,6 @@
 package com.findmymeme.memepost.domain;
 
 import com.findmymeme.BaseEntity;
-import com.findmymeme.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -20,17 +19,15 @@ public class MemePostLike extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "meme_post_id", nullable = false)
-    private MemePost memePost;
+    @Column(name = "meme_post_id", nullable = false)
+    private Long memePostId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     @Builder
-    public MemePostLike(MemePost memePost, User user) {
-        this.memePost = memePost;
-        this.user = user;
+    public MemePostLike(Long memePostId, Long userId) {
+        this.memePostId = memePostId;
+        this.userId = userId;
     }
 }
