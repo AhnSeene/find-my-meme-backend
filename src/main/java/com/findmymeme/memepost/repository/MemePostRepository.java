@@ -35,11 +35,12 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long>, MemeP
     Slice<Long> findTopPostIdsByLikeCount(Pageable pageable);
 
 
-    @Query("SELECT mpl.memePost.id " +
-            "FROM MemePostLike mpl " +
-            "WHERE mpl.createdAt BETWEEN :startDateTime AND :endDateTime " +
-            "AND mpl.memePost.deletedAt IS NULL AND mpl.memePost.processingStatus = 'READY' " +
-            "GROUP BY mpl.memePost.id " +
+    @Query("SELECT mpl.memePostId " +
+            "FROM MemePostLike mpl, MemePost mp " +
+            "WHERE mp.id = mpl.memePostId " +
+            "AND mpl.createdAt BETWEEN :startDateTime AND :endDateTime " +
+            "AND mp.deletedAt IS NULL AND mp.processingStatus = 'READY' " +
+            "GROUP BY mpl.memePostId " +
             "ORDER BY COUNT(mpl.id) DESC")
     Slice<Long> findTopPostIdsByLikeCountWithinPeriod(@Param("startDateTime") LocalDateTime startDateTime, @Param("endDateTime") LocalDateTime endDateTime, Pageable pageable);
 
@@ -63,4 +64,5 @@ public interface MemePostRepository extends JpaRepository<MemePost, Long>, MemeP
     @Query("UPDATE MemePost m SET m.viewCount = m.viewCount + :increment WHERE m.id = :postId")
     void batchIncrementViewCount(@Param("postId") Long postId, @Param("increment") Long increment);
 
+    boolean existsByIdAndDeletedAtIsNull(Long id);
 }
