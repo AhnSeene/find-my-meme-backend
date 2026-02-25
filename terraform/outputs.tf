@@ -34,6 +34,11 @@ output "redis_endpoint" {
   value       = aws_elasticache_replication_group.redis.primary_endpoint_address
 }
 
+output "sqs_image_input_queue_url" {
+  description = "이미지 처리 입력 SQS URL (IMAGE_PROCESSING_INPUT_QUEUE)"
+  value       = aws_sqs_queue.image_input_queue.url
+}
+
 output "sqs_image_queue_url" {
   description = "이미지 처리 완료 SQS URL (IMAGE_COMPLETION_QUEUE)"
   value       = aws_sqs_queue.image_queue.url

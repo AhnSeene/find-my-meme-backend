@@ -45,15 +45,27 @@ resource "aws_lambda_function" "resize_function" {
 
   environment {
     variables = {
-      SQS_QUEUE_URL = aws_sqs_queue.image_queue.url
+      SQS_QUEUE_URL  = aws_sqs_queue.image_queue.url
+      IMAGE_BUCKET   = aws_s3_bucket.image_bucket.id
     }
   }
-  timeout     = 600 # 10분
+  timeout     = 300 # 5분 
   memory_size = 3008
 
   source_code_hash = filebase64sha256("${path.module}/zip/ResizeImage.zip")
 
   tags = { Name = "${var.project_name}-lambda" }
+}
+
+# SQS → Lambda 이벤트 소스 매핑
+resource "aws_lambda_event_source_mapping" "sqs_to_lambda" {
+  event_source_arn = aws_sqs_queue.image_input_queue.arn
+  function_name    = aws_lambda_function.resize_function.arn
+  batch_size       = 1 # 한 번에 1개 메시지 처리
+  enabled          = true
+
+  # 실패 시 설정
+  function_response_types = ["ReportBatchItemFailures"] # 부분 실패 지원
 }
 
 /*

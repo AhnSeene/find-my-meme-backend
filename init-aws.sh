@@ -26,5 +26,34 @@ awslocal lambda create-function \
 
 echo "Mock Lambda function 'local-image-resizer' created."
 
-awslocal sqs create-queue --queue-name local-image-complete-queue
+# SQS 입력 큐 생성 (Server → SQS → Lambda)
+awslocal sqs create-queue --queue-name local-image-input-queue-dlq
+echo "SQS DLQ 'local-image-input-queue-dlq' created."
+
+awslocal sqs create-queue \
+  --queue-name local-image-input-queue \
+  --attributes '{
+    "VisibilityTimeout": "330",
+    "RedrivePolicy": "{\"deadLetterTargetArn\":\"arn:aws:sqs:ap-northeast-2:000000000000:local-image-input-queue-dlq\",\"maxReceiveCount\":\"3\"}"
+  }'
+echo "SQS queue 'local-image-input-queue' created."
+
+# SQS 완료 큐 생성 (Lambda → SQS → Server)
+awslocal sqs create-queue --queue-name local-image-complete-queue-dlq
+echo "SQS DLQ 'local-image-complete-queue-dlq' created."
+
+awslocal sqs create-queue \
+  --queue-name local-image-complete-queue \
+  --attributes '{
+    "VisibilityTimeout": "30",
+    "RedrivePolicy": "{\"deadLetterTargetArn\":\"arn:aws:sqs:ap-northeast-2:000000000000:local-image-complete-queue-dlq\",\"maxReceiveCount\":\"5\"}"
+  }'
 echo "SQS queue 'local-image-complete-queue' created."
+
+# Lambda → SQS 이벤트 소스 매핑
+awslocal lambda create-event-source-mapping \
+  --function-name local-image-resizer \
+  --event-source-arn arn:aws:sqs:ap-northeast-2:000000000000:local-image-input-queue \
+  --batch-size 1 \
+  --enabled
+echo "Lambda event source mapping created (SQS → Lambda)."
