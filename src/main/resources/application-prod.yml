@@ -66,6 +66,7 @@ aws:
   lambda:
     function-name: ${LAMBDA_FUNCTION_NAME}
   sqs:
+    image-input-queue: ${IMAGE_INPUT_QUEUE}
     image-completion-queue: ${IMAGE_COMPLETION_QUEUE}
 
 allowed:

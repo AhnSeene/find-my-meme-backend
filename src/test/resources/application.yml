@@ -56,7 +56,8 @@ aws:
   lambda:
     function-name: local-image-resizer
   sqs:
-    image-completion-queue: local-image-complete-queue
+    image-input-queue: test-image-input-queue
+    image-completion-queue: test-image-complete-queue
 
 default:
   profile-image-url: images/6372d43a-81e8-4464-9998-4a1c1cd1267e.jpg

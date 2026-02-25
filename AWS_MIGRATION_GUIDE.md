@@ -1,13 +1,29 @@
 # AWS 계정 마이그레이션 가이드
 
+## 목차
+- [1. 사전 준비](#1-사전-준비)
+- [2. Terraform 설정](#2-terraform-설정)
+- [3. S3 데이터 마이그레이션](#3-s3-데이터-마이그레이션)
+- [4. RDS 데이터 마이그레이션](#4-rds-데이터-마이그레이션)
+- [5. 애플리케이션 설정 업데이트](#5-애플리케이션-설정-업데이트)
+- [6. GitHub Actions 업데이트](#6-github-actions-업데이트)
+- [7. 배포 및 확인](#7-배포-및-확인)
+- [8. 정리 작업](#8-정리-작업)
+- [체크리스트](#체크리스트)
+
 ## 개요
-구계정(A)에서 신계정(B)으로 AWS 인프라 마이그레이션 절차
+구계정(A)에서 신계정(B)으로 AWS 인프라 마이그레이션 가이드입니다.
+
+AWS 프리티어 만료에 따라 신규 계정으로 인프라를 이관하며, 유지보수성과 확장성을 위해 IaC 도구인 Terraform을 도입했습니다. 데이터를 이관하는 전체 과정을 정리합니다.
+   
+*Terraform 코드는 이 프로젝트의 `/terraform` 디렉토리에서 확인할 수 있습니다.*
+
 
 ---
 
 ## 1. 사전 준비
 
-### 1.0 구계정 CloudFront CNAME 삭제 (필수!)
+### 1.0 구계정 CloudFront CNAME 삭제
 
 > **중요:** CloudFront의 대체 도메인(CNAME)은 전 세계적으로 고유해야 함.
 > 구계정에서 삭제하지 않으면 신계정에서 같은 도메인으로 CloudFront 생성 불가
@@ -28,6 +44,7 @@
 - Access Key 생성 → 저장
 
 ### 1.2 AWS CLI 프로필 설정
+[new]에 신계정, [old]에 구계정의 access, secret key를 넣어주세요.
 ```bash
 # ~/.aws/credentials
 [new]
@@ -58,6 +75,29 @@ aws_secret_access_key = ...
 ---
 
 ## 2. Terraform 설정
+### 2.0 Terraform 인프라 구축 (참고)
+프로젝트 루트 내 `terraform/` 디렉토리를 생성하여 인프라 코드를 중앙 관리하도록 구성했습니다.
+
+```
+terraform/
+├── main.tf            # Provider 설정 (Seoul/Virginia 리전, Profile 분리)
+├── variables.tf       # 변수 선언
+├── terraform.tfvars   # 민감 정보 (DB Password 등, gitignore 처리)
+├── vpc.tf             # VPC, Subnet(Public/Private), IGW, Route Table
+├── security-group.tf  # ALB, EC2, RDS, Redis Security Group
+├── iam.tf             # IAM Role, Policy (EC2, Lambda)
+├── backend.tf         # EC2, EIP, ALB, Target Group, RDS, ElastiCache
+├── storage-cdn.tf     # S3 Bucket, CloudFront, OAC, Bucket Policy, CORS
+├── sqs.tf             # SQS Queue, DLQ
+├── lambda.tf          # Lambda Function, Layer
+├── route53.tf         # Route53 A Record (API, CDN, Frontend)
+└── outputs.tf         # 주요 리소스 엔드포인트 출력
+```
+
+**주요 설계 사항:**
+- **보안:** 민감한 정보(DB 비밀번호 등)는 `terraform.tfvars`로 분리하여 `.gitignore` 처리.
+- **계정 분리:** AWS CLI Profile을 `[new]`, `[old]`로 구분하여 배포 실수 방지.
+- **순환 의존성 해결:** S3 버킷 정책과 CloudFront 간의 의존성 문제(S3 Policy는 CloudFront ARN이 필요하고, CloudFront는 S3가 필요함)를 해결하기 위해 리소스 생성(1차) → 변수 주입 → 정책 연결(2차) 순서로 배포 진행.
 
 ### 2.1 State 파일 초기화 (중요!)
 구계정 리소스 참조하는 state 삭제:
@@ -71,7 +111,11 @@ terraform init
 
 ### 2.2 terraform.tfvars 업데이트
 ```hcl
+# EC2 키페어
 ec2_key_name = "신계정-키페어-이름"
+
+# 구계정에서 가져올 AMI, RDS 스냅샷
+migration_ami_id = "ami-..."
 
 # S3 버킷명 (글로벌 유니크해야 함 - 구계정과 다른 이름 필요)
 s3_image_bucket    = "my-app-image-v2"
@@ -80,7 +124,6 @@ s3_frontend_bucket = "my-app-frontend-v2"
 # 신계정 ACM 인증서 ARN
 acm_certificate_arn_seoul = "arn:aws:acm:ap-northeast-2:신계정ID:certificate/..."
 acm_certificate_arn_us    = "arn:aws:acm:us-east-1:신계정ID:certificate/..."
-
 ```
 
 ### 2.3 Terraform 적용
@@ -110,10 +153,16 @@ Remove-Item -Recurse -Force ./images, ./front
 ---
 
 ## 4. RDS 데이터 마이그레이션
+신계정(프리티어)에서 구계정의 RDS 스냅샷을 복원하려 하면 아래 에러가 발생합니다.
 
-### 4.1 구계정 RDS 접속 준비 (스냅샷 복원 시)
+> `FreeTierRestrictionError: Cross Account operations aren't available with free plan accounts.`
 
-퍼블릭 접근 가능하게 복원:
+프리티어 계정은 크로스 계정 작업이 지원되지 않으므로, 스냅샷 공유 대신 `mysqldump`로 데이터를 이관했습니다.
+
+### 4.1 구계정 RDS 접속 준비
+
+구계정의 RDS는 private 서브넷에 있어 외부에서 직접 접속할 수 없으므로, 스냅샷을 퍼블릭 접근 가능한 환경으로 복원합니다.
+
 1. RDS → 스냅샷 → 스냅샷에서 복원
 2. **VPC**: Default VPC 선택 (커스텀 VPC는 private 서브넷이라 외부 접속 불가)
 3. **퍼블릭 액세스**: 예
@@ -187,16 +236,16 @@ terraform output
 ## 6. GitHub Actions 업데이트
 
 ### 6.1 변경할 Secrets
-| Secret | 설명 |
-|--------|------|
-| EC2_HOST | 신계정 EC2 퍼블릭 IP |
-| SSH_PRIVATE_KEY | 신계정 키페어 private key |
-| DB_HOST | 신계정 RDS 엔드포인트 |
-| REDIS_HOST | 신계정 Redis 엔드포인트 |
-| AWS_ACCESS_KEY | 신계정 IAM Access Key |
-| AWS_SECRET_KEY | 신계정 IAM Secret Key |
-| AWS_BUCKET | 신계정 S3 버킷명 |
-| IMAGE_COMPLETION_QUEUE | 신계정 SQS URL |
+| Secret                 | 설명                       |
+|------------------------|----------------------------|
+| EC2_HOST               | 신계정 EC2 퍼블릭 IP       |
+| SSH_PRIVATE_KEY        | 신계정 키페어 private key   |
+| DB_HOST                | 신계정 RDS 엔드포인트       |
+| REDIS_HOST             | 신계정 Redis 엔드포인트     |
+| AWS_ACCESS_KEY         | 신계정 IAM Access Key      |
+| AWS_SECRET_KEY         | 신계정 IAM Secret Key      |
+| AWS_BUCKET             | 신계정 S3 버킷명            |
+| IMAGE_COMPLETION_QUEUE | 신계정 SQS URL             |
 
 ### 6.2 (선택) .env 통합 관리
 모든 환경변수를 하나의 Secret으로:
@@ -214,7 +263,7 @@ script: |
 ```bash
 # GitHub Actions 트리거 또는 수동 배포 후
 # Health Check
-curl https://api.yourdomain.com/health
+curl https://api.findmymeme.online/health
 
 # ALB Target Group 상태 확인
 AWS 콘솔 → EC2 → Target Groups → Health Status
@@ -270,9 +319,16 @@ AWS 콘솔 → Billing → Bills
 
 ---
 
-### 8.3 신계정에서 AMI생성
-혹시 모를 대비를 위해 AMI를 신계정에서 생성하고 terraform.tfvars 아래 수정. 구계정에 공유한 ami 제거하기 위해서 
-migration_ami_id = "ami-..."
+### 8.3 신계정에서 AMI 생성
+
+마이그레이션 완료 후 신계정 EC2에서 AMI를 새로 생성합니다. 이렇게 하면 구계정에서 공유받은 AMI 의존성을 제거할 수 있고, 추후 EC2 재생성 시에도 활용할 수 있습니다.
+
+1. AWS 콘솔 → EC2 → 인스턴스 → 이미지 생성(AMI)
+2. `terraform.tfvars`의 AMI ID를 신계정 AMI로 변경:
+   ```hcl
+   migration_ami_id = "ami-신계정AMI"
+   ```
+3. 구계정에서 공유한 AMI 공유 해제
 
 ## 체크리스트
 

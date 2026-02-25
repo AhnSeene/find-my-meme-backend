@@ -14,7 +14,7 @@ resource "aws_iam_role" "lambda_resize_role" {
   })
 }
 
-# 람다 정책 생성 (S3 접근 + SQS 메시지 전송 통합)
+# 람다 정책 생성 (S3 접근 + SQS 송수신)
 resource "aws_iam_policy" "lambda_custom_policy" {
   name = "${var.project_name}-lambda-policy"
 
@@ -37,6 +37,15 @@ resource "aws_iam_policy" "lambda_custom_policy" {
         Effect = "Allow"
         Action = "sqs:SendMessage"
         Resource = aws_sqs_queue.image_queue.arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes"
+        ]
+        Resource = aws_sqs_queue.image_input_queue.arn
       },
       {
         Effect = "Allow"
@@ -74,7 +83,7 @@ resource "aws_iam_role" "ec2_app_role" {
   })
 }
 
-# EC2 정책 (SQS 소비 + Lambda 호출 + S3 접근)
+# EC2 정책 (SQS 송수신 + S3 접근)
 resource "aws_iam_policy" "ec2_custom_policy" {
   name = "${var.project_name}-ec2-policy"
 
@@ -83,17 +92,17 @@ resource "aws_iam_policy" "ec2_custom_policy" {
     Statement = [
       {
         Effect = "Allow"
+        Action = "sqs:SendMessage"
+        Resource = aws_sqs_queue.image_input_queue.arn
+      },
+      {
+        Effect = "Allow"
         Action = [
           "sqs:ReceiveMessage",
           "sqs:DeleteMessage",
           "sqs:GetQueueAttributes"
         ],
         Resource = aws_sqs_queue.image_queue.arn
-      },
-      {
-        Effect = "Allow"
-        Action = "lambda:InvokeFunction",
-        Resource = "*"
       },
       {
         Effect = "Allow"
