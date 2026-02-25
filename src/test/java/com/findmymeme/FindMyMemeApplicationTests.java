@@ -3,6 +3,7 @@ package com.findmymeme;
 import com.findmymeme.memepost.service.ImageCompletionListener;
 import io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration;
 import io.awspring.cloud.autoconfigure.sqs.SqsAutoConfiguration;
+import io.awspring.cloud.sqs.operations.SqsTemplate;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,6 +31,9 @@ class FindMyMemeApplicationTests {
 
 	@MockBean
 	private SqsAsyncClient sqsAsyncClient;
+
+	@MockBean
+	private SqsTemplate sqsTemplate;
 
 	@MockBean
 	private ImageCompletionListener imageCompletionListener;
