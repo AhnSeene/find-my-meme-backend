@@ -29,4 +29,15 @@ public class NotificationEventListener {
                 Map.of("memePostId", event.memePostId())
         );
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleUploadFail(MemePostUploadFailEvent event) {
+        log.warn("Handling MemePostUploadFailEvent for userId: {}, memePostId: {}", event.userId(), event.memePostId());
+        notificationService.createNotification(
+                event.userId(),
+                NotificationType.MEME_POST_UPLOAD_FAIL,
+                Map.of("memePostId", event.memePostId())
+        );
+    }
 }
