@@ -133,6 +133,17 @@ public class MemePostController {
             @PathVariable("memePostId") Long memePostId,
             @Parameter(hidden = true) @CurrentUserId Long userId
     ) {
+        return ResponseUtil.success(memePostLikeService.toggleLikeDb(memePostId, userId),
+                SuccessCode.MEME_POST_LIKE
+        );
+    }
+
+    @Operation(summary = "밈 게시물 좋아요 토글 (Redis)", description = "Redis Write-Back 전략으로 좋아요를 토글합니다.")
+    @PostMapping("/{memePostId}/toggleLike/redis")
+    public ResponseEntity<ApiResult<MemePostLikeResponse>> toggleLikeMemePostRedis(
+            @PathVariable("memePostId") Long memePostId,
+            @Parameter(hidden = true) @CurrentUserId Long userId
+    ) {
         return ResponseUtil.success(memePostLikeService.toggleLike(memePostId, userId),
                 SuccessCode.MEME_POST_LIKE
         );
